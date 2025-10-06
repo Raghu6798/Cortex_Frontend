@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // CORRECTED IMPORT PATH
+import { Input } from './Input';// CORRECTED IMPORT PATH
 import { Label } from '@/components/ui/label';
 import { Progress } from "@/components/ui/progress";
 import {
@@ -303,3 +303,4 @@ const ComingSoonStep = () => (
         <p className="text-sm text-white/70">This framework is not yet configurable via the UI. You can proceed to create a default version.</p>
     </div>
 );
+

@@ -26,19 +26,14 @@ type Framework = string;
 
 const configSchema = z.object({
   apiKey: z.string().min(1, { message: 'API Key is required.' }),
-  modelName: z.string().default('gpt-4o-mini'),
-  temperature: z.coerce
-    .number()
+  modelName: z.string(),
+  temperature: z.number()
     .min(0, "Must be at least 0")
-    .max(2, "Must be at most 2")
-    .default(0.7),
+    .max(2, "Must be at most 2"),
   baseUrl: z
     .string()
-    .url({ message: "Must be a valid URL." })
-    .optional()
-    .or(z.literal(''))
-    .default('https://api.openai.com/v1'),
-  systemPrompt: z.string().optional().default('You are a helpful AI assistant.'),
+    .url({ message: "Must be a valid URL." }),
+  systemPrompt: z.string(),
 });
 type ConfigFormData = z.infer<typeof configSchema>;
 
@@ -66,7 +61,7 @@ const frameworks = {
 };
 
 const STEPS = [
-  { id: 'architecture', title: 'Architecture' },
+  { id: 'architecture', title: 'Architecture' },``
   { id: 'framework', title: 'Framework' },
   { id: 'configure', title: 'Configure' },
   { id: 'review', title: 'Review & Create' },
@@ -218,7 +213,7 @@ const StepFramework = ({ architecture, onSelect }: { architecture: Architecture;
 
 const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<ConfigFormData>; defaultValues: Partial<ConfigFormData> }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
-    resolver: zodResolver(configSchema),
+      resolver: zodResolver(configSchema),
     // CORRECTED DEFAULT VALUES LOGIC
     defaultValues: defaultValues,
   });
@@ -277,15 +272,15 @@ const StepReview = ({ agentState }: { agentState: AgentState }) => {
 
 
 //--- HELPER & UI COMPONENTS ---
-const ChoiceCard = ({ icon, title, description, onClick }: { icon: React.ReactNode; title: string; description: string; onClick: () => void; }) => (
+const ChoiceCard = ({ title, description, onClick }: { icon: React.ReactNode; title: string; description: string; onClick: () => void; }) => (
   <button onClick={onClick} className="p-6 border-2 border-gray-700 rounded-lg text-left hover:border-purple-500 hover:bg-purple-900/20 transition-all group">
-    <div className="text-purple-400 mb-2 group-hover:scale-110 transition-transform">{React.cloneElement(icon as React.ReactElement, { size: 32 })}</div>
+    <div className="text-purple-400 mb-2 group-hover:scale-110 transition-transform"><CheckCircle2/></div>
     <h3 className="font-semibold text-lg text-white">{title}</h3>
     <p className="text-sm text-white/70">{description}</p>
   </button>
 );
 
-const FrameworkCard = ({ id, name, logo, onClick }: { id: string; name: string; logo: string | null; onClick: () => void; }) => (
+const FrameworkCard = ({  name, logo, onClick }: { id: string; name: string; logo: string | null; onClick: () => void; }) => (
   <button onClick={onClick} className="p-4 border-2 border-gray-700 rounded-lg text-center hover:border-purple-500 hover:bg-purple-900/20 transition-all flex flex-col items-center justify-center h-28">
     {logo ? (
       <Image src={logo} alt={name} width={32} height={32} className="mb-2 h-8 w-8 object-contain" />

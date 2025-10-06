@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 // 1. Import your new NeonGradientCard component
 import { NeonGradientCard } from './NeonGradientCard';
 

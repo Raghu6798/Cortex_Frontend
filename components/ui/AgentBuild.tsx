@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from './Input';
+import { Input } from '@/components/ui/input'; // CORRECTED IMPORT PATH
 import { Label } from '@/components/ui/label';
 import { Progress } from "@/components/ui/progress";
 import {
@@ -24,12 +24,11 @@ import {
 type Architecture = 'mono' | 'multi';
 type Framework = string;
 
-// FINAL CORRECTED ZOD SCHEMA
 const configSchema = z.object({
   apiKey: z.string().min(1, { message: 'API Key is required.' }),
   modelName: z.string().default('gpt-4o-mini'),
   temperature: z.coerce
-    .number() // REMOVED the custom error message object from here
+    .number()
     .min(0, "Must be at least 0")
     .max(2, "Must be at most 2")
     .default(0.7),
@@ -220,13 +219,8 @@ const StepFramework = ({ architecture, onSelect }: { architecture: Architecture;
 const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<ConfigFormData>; defaultValues: Partial<ConfigFormData> }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
-    defaultValues: {
-        apiKey: defaultValues.apiKey || '',
-        modelName: defaultValues.modelName || 'gpt-4o-mini',
-        temperature: defaultValues.temperature || 0.7,
-        baseUrl: defaultValues.baseUrl || 'https://api.openai.com/v1',
-        systemPrompt: defaultValues.systemPrompt || 'You are a helpful AI assistant.',
-    }
+    // CORRECTED DEFAULT VALUES LOGIC
+    defaultValues: defaultValues,
   });
 
   return (

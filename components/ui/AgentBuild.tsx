@@ -26,15 +26,19 @@ type Framework = string;
 
 const configSchema = z.object({
   apiKey: z.string().min(1, { message: 'API Key is required.' }),
-  modelName: z.string(),
-  temperature: z.number()
+  modelName: z.string().default('gpt-4o-mini'), // Provide a default value
+  temperature: z.coerce.number() // Coerce input value to a number
     .min(0, "Must be at least 0")
-    .max(2, "Must be at most 2"),
+    .max(2, "Must be at most 2")
+    .default(1.0), // Provide a default value
   baseUrl: z
     .string()
-    .url({ message: "Must be a valid URL." }),
-  systemPrompt: z.string(),
+    .url({ message: "Must be a valid URL." })
+    .optional() // Make the field optional
+    .or(z.literal('')), // Also allow an empty string
+  systemPrompt: z.string().optional().default(''), // Make optional with a default
 });
+
 type ConfigFormData = z.infer<typeof configSchema>;
 
 export interface AgentState {

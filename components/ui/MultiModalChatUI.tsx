@@ -44,7 +44,7 @@ type ChatSession = { id: string; userId: string; title: string; messages: Messag
 
 // --- AXIOS INSTANCE ---
 const apiClient = axios.create({
-  baseURL: 'https://cortex-8app.onrender.com',
+  baseURL: 'http://127.0.0.1:8000',
 });
 
 // --- SKELETON LOADER COMPONENTS ---

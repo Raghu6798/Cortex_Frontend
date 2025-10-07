@@ -215,16 +215,25 @@ const StepFramework = ({ architecture, onSelect }: { architecture: Architecture;
   );
 };
 
+
 const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<ConfigFormData>; defaultValues: Partial<ConfigFormData> }) => {
+  // THE FIX IS HERE: Initialize the form with guaranteed default values.
   const { register, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
-      resolver: zodResolver(configSchema),
-    // CORRECTED DEFAULT VALUES LOGIC
-    defaultValues: defaultValues,
+    resolver: zodResolver(configSchema),
+    defaultValues: {
+      // Explicitly define fallbacks for all fields
+      apiKey: defaultValues.apiKey || '',
+      modelName: defaultValues.modelName || 'gpt-4o-mini',
+      temperature: defaultValues.temperature || 1.0,
+      baseUrl: defaultValues.baseUrl || '',
+      systemPrompt: defaultValues.systemPrompt || '',
+    },
   });
 
   return (
     <div>
       <StepHeader title="Configure LangChain Agent" description="Provide API credentials and settings for your agent." />
+      {/* The form itself does not need any changes */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 max-w-lg mx-auto">
         <div>
           <Label htmlFor="apiKey">API Key</Label>
@@ -233,13 +242,14 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
         </div>
         <div>
           <Label htmlFor="baseUrl">Base URL</Label>
+          {/* We must tell react-hook-form how to handle a value that could be null/undefined */}
           <Input id="baseUrl" type="text" {...register('baseUrl')} className={cn(errors.baseUrl && 'border-destructive')} />
           {errors.baseUrl && <p className="text-sm text-destructive mt-1">{errors.baseUrl.message}</p>}
         </div>
         <div>
           <Label htmlFor="temperature">Temperature</Label>
           <Input id="temperature" type="number" step="0.1" {...register('temperature')} className={cn(errors.temperature && 'border-destructive')} />
-          {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message}</p>}
+          {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message as string}</p>}
         </div>
          <div>
           <Label htmlFor="systemPrompt">System Prompt</Label>
@@ -252,6 +262,7 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
     </div>
   );
 };
+
 
 const StepReview = ({ agentState }: { agentState: AgentState }) => {
     const frameworkName = (agentState.architecture && frameworks[agentState.architecture]?.find(f => f.id === agentState.framework)?.name) || agentState.framework;

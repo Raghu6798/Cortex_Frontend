@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { z } from 'zod';
@@ -8,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from './Input';// CORRECTED IMPORT PATH
+import { Input } from './Input';
 import { Label } from '@/components/ui/label';
 import { Progress } from "@/components/ui/progress";
 import {
@@ -20,23 +18,28 @@ import {
   BrainCircuit,
 } from 'lucide-react';
 
-//--- TYPES AND SCHEMAS ---
+//--- TYPES AND SCHEMAS (FINALIZED) ---
 type Architecture = 'mono' | 'multi';
 type Framework = string;
 
+// FINAL, CORRECTED ZOD SCHEMA
 const configSchema = z.object({
   apiKey: z.string().min(1, { message: 'API Key is required.' }),
-  modelName: z.string().default('gpt-4o-mini'), // Provide a default value
-  temperature: z.coerce.number() // Coerce input value to a number
+  modelName: z.string().default('gpt-4o-mini'),
+  temperature: z.coerce // Use coerce to handle string-to-number conversion from input
+    .number()
     .min(0, "Must be at least 0")
     .max(2, "Must be at most 2")
-    .default(1.0), // Provide a default value
-  baseUrl: z
-    .string()
-    .url({ message: "Must be a valid URL." })
-    .optional() // Make the field optional
-    .or(z.literal('')), // Also allow an empty string
-  systemPrompt: z.string().optional().default(''), // Make optional with a default
+    .default(1.0),
+  // Use z.union to explicitly allow a valid URL OR an empty string.
+  // This makes the inferred type a simple 'string'.
+  baseUrl: z.union([
+      z.string().url({ message: "Must be a valid URL." }),
+      z.literal('')
+    ])
+    .default(''),
+  // Remove .optional() and just use .default() to ensure the inferred type is 'string'.
+  systemPrompt: z.string().default(''),
 });
 
 type ConfigFormData = z.infer<typeof configSchema>;
@@ -73,114 +76,116 @@ const STEPS = [
 
 //--- MAIN COMPONENT ---
 export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (config: AgentState) => void; }) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [agentState, setAgentState] = useState<AgentState>({ architecture: null, framework: null, settings: {} });
+    // ... (No changes needed in the main component logic)
+    const [currentStep, setCurrentStep] = useState(0);
+    const [direction, setDirection] = useState(1);
+    const [agentState, setAgentState] = useState<AgentState>({ architecture: null, framework: null, settings: {} });
 
-  const progress = ((currentStep + 1) / STEPS.length) * 100;
+    const progress = ((currentStep + 1) / STEPS.length) * 100;
 
-  const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
-      setDirection(1);
-      setCurrentStep(currentStep + 1);
-    }
-  };
+    const handleNext = () => {
+        if (currentStep < STEPS.length - 1) {
+        setDirection(1);
+        setCurrentStep(currentStep + 1);
+        }
+    };
 
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setDirection(-1);
-      setCurrentStep(currentStep - 1);
-    }
-  };
+    const handlePrev = () => {
+        if (currentStep > 0) {
+        setDirection(-1);
+        setCurrentStep(currentStep - 1);
+        }
+    };
 
-  const handleSelection = (key: 'architecture' | 'framework', value: Architecture | Framework) => {
-    setAgentState((prev) => ({ ...prev, [key]: value }));
-    handleNext();
-  };
+    const handleSelection = (key: 'architecture' | 'framework', value: Architecture | Framework) => {
+        setAgentState((prev) => ({ ...prev, [key]: value }));
+        handleNext();
+    };
 
-  const handleConfigSubmit = (settings: ConfigFormData) => {
-    setAgentState((prev) => ({ ...prev, settings }));
-    handleNext();
-  };
+    const handleConfigSubmit = (settings: ConfigFormData) => {
+        setAgentState((prev) => ({ ...prev, settings }));
+        handleNext();
+    };
 
-  const handleFinalSubmit = () => {
-    console.log('Final Agent Configuration:', agentState);
-    onAgentCreated(agentState);
-  };
+    const handleFinalSubmit = () => {
+        console.log('Final Agent Configuration:', agentState);
+        onAgentCreated(agentState);
+    };
 
-  const isNextDisabled = () => {
-    if (currentStep === 0 && !agentState.architecture) return true;
-    if (currentStep === 1 && !agentState.framework) return true;
-    if (currentStep === 2 && agentState.framework === 'langchain' && Object.keys(agentState.settings).length === 0) return true;
-    return false;
-  };
+    const isNextDisabled = () => {
+        if (currentStep === 0 && !agentState.architecture) return true;
+        if (currentStep === 1 && !agentState.framework) return true;
+        if (currentStep === 2 && agentState.framework === 'langchain' && Object.keys(agentState.settings).length === 0) return true;
+        return false;
+    };
 
-  const variants = {
-    enter: (direction: number) => ({ opacity: 0, x: direction > 0 ? 50 : -50 }),
-    center: { opacity: 1, x: 0 },
-    exit: (direction: number) => ({ opacity: 0, x: direction > 0 ? -50 : 50 }),
-  };
+    const variants = {
+        enter: (direction: number) => ({ opacity: 0, x: direction > 0 ? 50 : -50 }),
+        center: { opacity: 1, x: 0 },
+        exit: (direction: number) => ({ opacity: 0, x: direction > 0 ? -50 : 50 }),
+    };
 
-  return (
-    <div className="w-full max-w-3xl mx-auto p-6 rounded-lg shadow-lg bg-black/30 border border-white/15">
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <Progress value={progress} className="h-2 bg-white/10" />
-        <div className="flex justify-between mt-2">
-          {STEPS.map((step, i) => (
-            <div key={step.id} className="flex flex-col items-center">
-              <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors',
-                  i < currentStep ? 'bg-purple-600 text-white' :
-                  i === currentStep ? 'bg-purple-600 text-white ring-2 ring-purple-400/50' :
-                  'bg-gray-700 text-gray-400')}>
-                {i < currentStep ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
-              </div>
-              <span className="text-xs mt-1 hidden sm:block text-white/80">{step.title}</span>
+    return (
+        <div className="w-full max-w-3xl mx-auto p-6 rounded-lg shadow-lg bg-black/30 border border-white/15">
+        {/* Progress Bar */}
+        <div className="mb-8">
+            <Progress value={progress} className="h-2 bg-white/10" />
+            <div className="flex justify-between mt-2">
+            {STEPS.map((step, i) => (
+                <div key={step.id} className="flex flex-col items-center">
+                <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors',
+                    i < currentStep ? 'bg-purple-600 text-white' :
+                    i === currentStep ? 'bg-purple-600 text-white ring-2 ring-purple-400/50' :
+                    'bg-gray-700 text-gray-400')}>
+                    {i < currentStep ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
+                </div>
+                <span className="text-xs mt-1 hidden sm:block text-white/80">{step.title}</span>
+                </div>
+            ))}
             </div>
-          ))}
         </div>
-      </div>
 
-      {/* Step Content */}
-      <div className="overflow-hidden relative h-96">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentStep}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.3 }}
-            className="absolute w-full"
-          >
-            {currentStep === 0 && <StepArchitecture onSelect={(arch) => handleSelection('architecture', arch)} />}
-            {currentStep === 1 && agentState.architecture && <StepFramework architecture={agentState.architecture} onSelect={(fw) => handleSelection('framework', fw)} />}
-            {currentStep === 2 && agentState.framework === 'langchain' && <StepConfigure onSubmit={handleConfigSubmit} defaultValues={agentState.settings} />}
-            {currentStep === 2 && agentState.framework !== 'langchain' && <ComingSoonStep />}
-            {currentStep === 3 && <StepReview agentState={agentState} />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+        {/* Step Content */}
+        <div className="overflow-hidden relative h-96">
+            <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+                key={currentStep}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="absolute w-full"
+            >
+                {currentStep === 0 && <StepArchitecture onSelect={(arch) => handleSelection('architecture', arch)} />}
+                {currentStep === 1 && agentState.architecture && <StepFramework architecture={agentState.architecture} onSelect={(fw) => handleSelection('framework', fw)} />}
+                {currentStep === 2 && agentState.framework === 'langchain' && <StepConfigure onSubmit={handleConfigSubmit} defaultValues={agentState.settings} />}
+                {currentStep === 2 && agentState.framework !== 'langchain' && <ComingSoonStep />}
+                {currentStep === 3 && <StepReview agentState={agentState} />}
+            </motion.div>
+            </AnimatePresence>
+        </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-4 mt-4 border-t border-white/15">
-        <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0} className={cn(currentStep === 0 && 'invisible')}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back
-        </Button>
-        {currentStep === STEPS.length - 1 ? (
-          <Button onClick={handleFinalSubmit} className="bg-purple-600 hover:bg-purple-500">
-            Create Agent <CheckCircle2 className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
-          <Button onClick={handleNext} disabled={isNextDisabled()} className={cn(isNextDisabled() && 'invisible', 'bg-purple-600 hover:bg-purple-500')}>
-            Next <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </div>
-  );
+        {/* Navigation */}
+        <div className="flex justify-between pt-4 mt-4 border-t border-white/15">
+            <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0} className={cn(currentStep === 0 && 'invisible')}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+            {currentStep === STEPS.length - 1 ? (
+            <Button onClick={handleFinalSubmit} className="bg-purple-600 hover:bg-purple-500">
+                Create Agent <CheckCircle2 className="ml-2 h-4 w-4" />
+            </Button>
+            ) : (
+            <Button onClick={handleNext} disabled={isNextDisabled()} className={cn(isNextDisabled() && 'invisible', 'bg-purple-600 hover:bg-purple-500')}>
+                Next <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            )}
+        </div>
+        </div>
+    );
 }
+
 
 //--- STEP SUB-COMPONENTS ---
 
@@ -217,14 +222,13 @@ const StepFramework = ({ architecture, onSelect }: { architecture: Architecture;
 
 
 const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<ConfigFormData>; defaultValues: Partial<ConfigFormData> }) => {
-  // THE FIX IS HERE: Initialize the form with guaranteed default values.
   const { register, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
+    // This part remains crucial to prevent undefined values during initial render
     defaultValues: {
-      // Explicitly define fallbacks for all fields
       apiKey: defaultValues.apiKey || '',
       modelName: defaultValues.modelName || 'gpt-4o-mini',
-      temperature: defaultValues.temperature || 1.0,
+      temperature: defaultValues.temperature ?? 1.0, // Use nullish coalescing for numbers
       baseUrl: defaultValues.baseUrl || '',
       systemPrompt: defaultValues.systemPrompt || '',
     },
@@ -233,7 +237,6 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
   return (
     <div>
       <StepHeader title="Configure LangChain Agent" description="Provide API credentials and settings for your agent." />
-      {/* The form itself does not need any changes */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 max-w-lg mx-auto">
         <div>
           <Label htmlFor="apiKey">API Key</Label>
@@ -242,18 +245,17 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
         </div>
         <div>
           <Label htmlFor="baseUrl">Base URL</Label>
-          {/* We must tell react-hook-form how to handle a value that could be null/undefined */}
-          <Input id="baseUrl" type="text" {...register('baseUrl')} className={cn(errors.baseUrl && 'border-destructive')} />
+          <Input id="baseUrl" type="text" placeholder="https://api.openai.com/v1" {...register('baseUrl')} className={cn(errors.baseUrl && 'border-destructive')} />
           {errors.baseUrl && <p className="text-sm text-destructive mt-1">{errors.baseUrl.message}</p>}
         </div>
         <div>
           <Label htmlFor="temperature">Temperature</Label>
           <Input id="temperature" type="number" step="0.1" {...register('temperature')} className={cn(errors.temperature && 'border-destructive')} />
-          {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message as string}</p>}
+          {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message}</p>}
         </div>
          <div>
           <Label htmlFor="systemPrompt">System Prompt</Label>
-          <Input id="systemPrompt" type="text" {...register('systemPrompt')} />
+          <Input id="systemPrompt" type="text" placeholder="You are a helpful assistant." {...register('systemPrompt')} />
         </div>
         <Button type="submit" className="w-full !mt-6 bg-purple-600 hover:bg-purple-500">
           Save Configuration <ArrowRight className="ml-2 h-4 w-4" />
@@ -262,7 +264,6 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
     </div>
   );
 };
-
 
 const StepReview = ({ agentState }: { agentState: AgentState }) => {
     const frameworkName = (agentState.architecture && frameworks[agentState.architecture]?.find(f => f.id === agentState.framework)?.name) || agentState.framework;

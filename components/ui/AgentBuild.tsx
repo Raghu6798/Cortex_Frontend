@@ -65,7 +65,7 @@ const frameworks = {
 };
 
 const STEPS = [
-  { id: 'architecture', title: 'Architecture' },``
+  { id: 'architecture', title: 'Architecture' },
   { id: 'framework', title: 'Framework' },
   { id: 'configure', title: 'Configure' },
   { id: 'review', title: 'Review & Create' },

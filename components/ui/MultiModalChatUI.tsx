@@ -8,14 +8,13 @@ import NextImage from 'next/image';
 import { SectionReveal } from './SectionReveal';
 import { useAuth, SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import {
-  Plus, SendHorizonal, Bot, User, Trash2, Settings,Paperclip, X, Image as ImageIcon, Video, FileText
+  Plus, SendHorizonal, Bot, User, Trash2, Settings, Paperclip, X, Image as ImageIcon, Video, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { MagicCard } from './MagicCard';
-import { Skeleton } from './skeleton'; // Import the new skeleton component
+import { Skeleton } from './skeleton';
+import apiClient from '@/lib/apiClient';
 
 // --- FRAMEWORK CONFIGURATION & TYPES ---
 const FRAMEWORK_DETAILS = {
@@ -27,28 +26,21 @@ const FRAMEWORK_DETAILS = {
 };
 type AgentFramework = keyof typeof FRAMEWORK_DETAILS;
 
-// --- ZOD SCHEMA & TYPES ---
-const agentConfigSchema = z.object({
-  api_key: z.string().trim().min(1, 'API Key is required.'),
-  model_name: z.string().trim().min(1, 'Model Name is required.'),
-  temperature: z.number().min(0).max(2),
-  top_p: z.number().min(0).max(1),
-  top_k: z.number().min(0).optional().nullable(),
-  system_prompt: z.string().optional(),
-  base_url: z.string().url().optional().or(z.literal('')),
-});
-type AgentConfig = z.infer<typeof agentConfigSchema>;
+// --- TYPES (Zod schema replaced with Interface) ---
+interface AgentConfig {
+  api_key: string;
+  model_name: string;
+  temperature: number;
+  top_p: number;
+  top_k?: number | null;
+  system_prompt?: string;
+  base_url?: string;
+}
 
 type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: File[]; };
 type ChatSession = { id: string; userId: string; title: string; messages: Message[]; agentConfig: AgentConfig | null; memoryUsage: number; framework: AgentFramework; };
 
-// --- AXIOS INSTANCE ---
-const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
-});
-
 // --- SKELETON LOADER COMPONENTS ---
-
 const ChatUISkeleton = () => (
     <div className="flex h-screen w-full bg-[#0d1117] text-gray-200 font-sans">
         {/* Sidebar Skeleton */}
@@ -100,12 +92,6 @@ const MessageItemSkeleton = () => (
 // --- MAIN CHAT UI COMPONENT ---
 const MultiModalChatUI = () => {
   const { getToken, userId } = useAuth();
-
-  useEffect(() => {
-    const requestInterceptor = apiClient.interceptors.request.use(async (config) => { const token = await getToken(); if (token) { config.headers.Authorization = `Bearer ${token}`; } return config; }, (error) => Promise.reject(error));
-    return () => { apiClient.interceptors.request.eject(requestInterceptor); };
-  }, [getToken]);
-
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -117,28 +103,26 @@ const MultiModalChatUI = () => {
     const fetchSessions = async () => {
       if (userId) {
         try {
-          const response = await apiClient.get('/chat/sessions');
-          if (response.data && response.data.length > 0) {
-            setSessions(response.data);
-            setActiveSessionId(response.data[0].id);
+          const token = await getToken();
+          if (!token) throw new Error("User is not authenticated.");
+          const response = await apiClient.get('/sessions/', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.data?.sessions && response.data.sessions.length > 0) {
+            setSessions(response.data.sessions);
+            setActiveSessionId(response.data.sessions[0].id);
             setCurrentView('chat');
           }
         } catch (error) { console.error("Failed to fetch sessions:", error); }
         finally { setIsSessionsLoaded(true); }
       } else {
-        setIsSessionsLoaded(true); // If no user, stop loading state
+        setIsSessionsLoaded(true);
       }
     };
     if (!isSessionsLoaded) {
       fetchSessions();
     }
-  }, [userId, isSessionsLoaded]);
-
-  useEffect(() => {
-    const saveSession = async () => { if (activeSession) { try { await apiClient.post('/chat/sessions', { session: activeSession }); } catch (error) { console.error("Failed to save session:", error); } } };
-    const debounceSave = setTimeout(() => { if (isSessionsLoaded) { saveSession(); } }, 1000);
-    return () => clearTimeout(debounceSave);
-  }, [sessions, activeSession, isSessionsLoaded]);
+  }, [userId, isSessionsLoaded, getToken]);
 
   const createNewSession = (framework: AgentFramework) => {
     if (!userId) return;
@@ -148,24 +132,48 @@ const MultiModalChatUI = () => {
     setCurrentView('chat');
   };
 
-  const updateSessionConfig = (config: AgentConfig) => {
+  const updateSessionConfig = async (config: AgentConfig) => {
     if (!activeSessionId) return;
-    setSessions(sessions.map(s => s.id === activeSessionId ? { ...s, agentConfig: config } : s));
+    try {
+        const token = await getToken();
+        if (!token) throw new Error("User is not authenticated.");
+        await apiClient.put(`/sessions/${activeSessionId}`, { agent_config: config }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        setSessions(sessions.map(s => s.id === activeSessionId ? { ...s, agentConfig: config } : s));
+    } catch (error) {
+        console.error("Failed to update session config on backend:", error);
+        alert("Could not save agent configuration. Please try again.");
+    }
   };
-
+  
   const addMessageToSession = async (message: Message) => {
     if (!activeSessionId || !activeSession?.agentConfig || !activeSession?.framework) return;
+    
     setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, message] }));
     setIsLoading(true);
+
     try {
-      const endpoint = activeSession.framework === 'langchain' ? '/chat/invoke' : '/llama-index-workflows/react-agent';
-      const requestBody = activeSession.framework === 'langchain' ? { ...activeSession.agentConfig, message: message.text } : { openai_api_key: activeSession.agentConfig.api_key, message: message.text };
-      const response = await apiClient.post(endpoint, requestBody);
+      const token = await getToken();
+      if (!token) throw new Error("User is not authenticated.");
+      
+      const endpoint = '/chat/invoke';
+      const requestBody = { ...activeSession.agentConfig, message: message.text, tools: [] };
+
+      const response = await apiClient.post(endpoint, requestBody, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
       const agentResponse: Message = { id: `msg-agent-${Date.now()}`, sender: 'agent', text: response.data.response };
       setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, agentResponse] }));
+
     } catch (error) {
       let errorMessageText = 'An unknown error occurred.';
-      if (axios.isAxiosError(error) && error.response) { errorMessageText = error.response.data.detail?.error || error.response.data.detail || 'Error from server.'; } else if (error instanceof Error) { errorMessageText = error.message; }
+      if (axios.isAxiosError(error) && error.response) { 
+        errorMessageText = error.response.data.detail?.error || error.response.data.detail || 'Error from server.'; 
+      } else if (error instanceof Error) { 
+        errorMessageText = error.message; 
+      }
       const errorMessage: Message = { id: `msg-error-${Date.now()}`, sender: 'agent', text: `Error: ${errorMessageText}` };
       setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, errorMessage] }));
     } finally {
@@ -219,17 +227,35 @@ const ChatHistorySidebar = ({ sessions, activeSessionId, onSelectSession, onNewS
     <aside className="w-72 bg-[#161b22] p-4 flex flex-col border-r border-gray-700">
         <button onClick={onNewSession} className="flex items-center justify-between w-full px-4 py-2 mb-4 text-sm font-medium rounded-md bg-gray-700 hover:bg-gray-600 transition-colors"> New Chat <Plus size={18} /> </button>
         <div className="flex-1 overflow-y-auto space-y-2">
-            {sessions.map(session => (<div key={session.id} onClick={() => onSelectSession(session.id)} className={cn("flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors", activeSessionId === session.id ? "bg-gray-600" : "hover:bg-gray-700")}><NextImage src={FRAMEWORK_DETAILS[session.framework].logo} alt={`${FRAMEWORK_DETAILS[session.framework].name} Logo`} width={20} height={20} className="rounded-full"/><span className="text-sm truncate flex-1">{session.title}</span><button className="text-gray-500 hover:text-gray-300 p-1"><Trash2 size={14} /></button></div>))}
+            {sessions.map(session => (
+                <div key={session.id} onClick={() => onSelectSession(session.id)} className={cn("flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors", activeSessionId === session.id ? "bg-gray-600" : "hover:bg-gray-700")}>
+                    <NextImage src={FRAMEWORK_DETAILS[session.framework].logo} alt={`${FRAMEWORK_DETAILS[session.framework].name} Logo`} width={20} height={20} className="rounded-full"/>
+                    <span className="text-sm truncate flex-1">{session.title}</span>
+                    <button className="text-gray-500 hover:text-gray-300 p-1"><Trash2 size={14} /></button>
+                </div>
+            ))}
         </div>
     </aside>
 );
 
-// --- Sub-component: Agent Configuration Form ---
+// --- Sub-component: Agent Configuration Form (Refactored without Zod) ---
 const AgentConfigForm = ({ onSubmit }: { onSubmit: (config: AgentConfig) => void }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<AgentConfig>({ resolver: zodResolver(agentConfigSchema), defaultValues: { api_key: "", model_name: "gpt-4o-mini", temperature: 0.7, top_p: 0.9, system_prompt: "You are a helpful AI assistant.", base_url: "", top_k: 40, }, });
+  const { register, handleSubmit, formState: { errors } } = useForm<AgentConfig>({
+    defaultValues: {
+      api_key: "",
+      model_name: "gpt-4o-mini",
+      temperature: 0.7,
+      top_p: 0.9,
+      system_prompt: "You are a helpful AI assistant.",
+      base_url: "",
+      top_k: 40,
+    },
+  });
+
   const onFormSubmit: SubmitHandler<AgentConfig> = data => onSubmit(data);
   const inputStyle = "mt-1 w-full bg-[#0d1117] border border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none";
   const errorText = "text-red-400 text-xs mt-1";
+
   return (
     <div className="flex-1 flex items-center justify-center p-8 bg-[#0d1117]">
       <MagicCard className="w-full max-w-2xl rounded-lg" gradientFrom="#a855f7" gradientTo="#9333ea" gradientSize={400} gradientColor={"#262626"}>
@@ -237,15 +263,42 @@ const AgentConfigForm = ({ onSubmit }: { onSubmit: (config: AgentConfig) => void
           <div className="flex items-center gap-3 mb-6"><Settings className="text-purple-400" /><h2 className="text-xl font-bold">Configure Your Agent</h2></div>
           <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className="text-sm font-medium">Model Name</label><input {...register('model_name')} className={inputStyle} placeholder="gpt-4o-mini" />{errors.model_name && <p className={errorText}>{errors.model_name.message}</p>}</div>
-              <div><label className="text-sm font-medium">API Key</label><input type="password" {...register('api_key')} className={inputStyle} placeholder="sk-..." />{errors.api_key && <p className={errorText}>{errors.api_key.message}</p>}</div>
+              <div>
+                <label className="text-sm font-medium">Model Name</label>
+                <input {...register('model_name', { required: 'Model Name is required.' })} className={inputStyle} placeholder="gpt-4o-mini" />
+                {errors.model_name && <p className={errorText}>{errors.model_name.message}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium">API Key</label>
+                <input type="password" {...register('api_key', { required: 'API Key is required.' })} className={inputStyle} placeholder="sk-..." />
+                {errors.api_key && <p className={errorText}>{errors.api_key.message}</p>}
+              </div>
             </div>
-            <div><label className="text-sm font-medium">Base URL (Optional)</label><input {...register('base_url')} className={inputStyle} placeholder="https://api.openai.com/v1" />{errors.base_url && <p className={errorText}>{errors.base_url.message}</p>}</div>
-            <div><label className="text-sm font-medium">System Prompt</label><textarea {...register('system_prompt')} rows={3} className={`${inputStyle} resize-none`} /></div>
+            <div>
+              <label className="text-sm font-medium">Base URL (Optional)</label>
+              <input {...register('base_url', { pattern: { value: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/, message: "Please enter a valid URL." } })} className={inputStyle} placeholder="https://api.openai.com/v1" />
+              {errors.base_url && <p className={errorText}>{errors.base_url.message}</p>}
+            </div>
+            <div>
+              <label className="text-sm font-medium">System Prompt</label>
+              <textarea {...register('system_prompt')} rows={3} className={`${inputStyle} resize-none`} />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div><label className="text-sm font-medium">Temperature</label><input type="number" step="0.01" {...register('temperature', { valueAsNumber: true })} className={inputStyle} />{errors.temperature && <p className={errorText}>{errors.temperature.message}</p>}</div>
-              <div><label className="text-sm font-medium">Top P</label><input type="number" step="0.01" {...register('top_p', { valueAsNumber: true })} className={inputStyle} />{errors.top_p && <p className={errorText}>{errors.top_p.message}</p>}</div>
-              <div><label className="text-sm font-medium">Top K (Optional)</label><input type="number" {...register('top_k', { valueAsNumber: true })} className={inputStyle} />{errors.top_k && <p className={errorText}>{errors.top_k.message}</p>}</div>
+              <div>
+                <label className="text-sm font-medium">Temperature</label>
+                <input type="number" step="0.01" {...register('temperature', { valueAsNumber: true, min: { value: 0, message: "Min 0" }, max: { value: 2, message: "Max 2" } })} className={inputStyle} />
+                {errors.temperature && <p className={errorText}>{errors.temperature.message}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium">Top P</label>
+                <input type="number" step="0.01" {...register('top_p', { valueAsNumber: true, min: { value: 0, message: "Min 0" }, max: { value: 1, message: "Max 1" } })} className={inputStyle} />
+                {errors.top_p && <p className={errorText}>{errors.top_p.message}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium">Top K (Optional)</label>
+                <input type="number" {...register('top_k', { valueAsNumber: true })} className={inputStyle} />
+                {errors.top_k && <p className={errorText}>{errors.top_k.message}</p>}
+              </div>
             </div>
             <button type="submit" className="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-md font-semibold transition-colors">Start Chat</button>
           </form>

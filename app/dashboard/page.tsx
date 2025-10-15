@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
   const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
+  const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
 
   // Simulate data fetching for the dashboard
   useEffect(() => {
@@ -76,10 +77,18 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Clear the initial config when we navigate away from the chat view
+  useEffect(() => {
+    if (activeView !== 'chat') {
+      setInitialAgentConfig(null);
+    }
+  }, [activeView]);
+
 
   const handleAgentCreated = (config: AgentState) => {
     console.log("A new agent was created with this configuration:", config);
-    setActiveView('chat');
+    setInitialAgentConfig(config); // Store the config
+    setActiveView('chat'); // Switch to the chat view
   };
 
   const getHeaderText = () => {
@@ -104,7 +113,7 @@ export default function DashboardPage() {
 
   const renderContent = () => {
     if (activeView === 'builder') return <AgentBuilder onAgentCreated={handleAgentCreated} />;
-    if (activeView === 'chat') return <MultiModalChatUI />;
+    if (activeView === 'chat') return <MultiModalChatUI initialAgentConfig={initialAgentConfig} />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;

@@ -229,7 +229,7 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
   const { register, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
     defaultValues: {
       apiKey: defaultValues.apiKey || '',
-      modelName: defaultValues.modelName || 'gpt-4o-mini',
+      modelName: defaultValues.modelName || 'meta-llama/llama-4-maverick-17b-128e-instruct',
       temperature: defaultValues.temperature ?? 1.0,
       baseUrl: defaultValues.baseUrl || '',
       systemPrompt: defaultValues.systemPrompt || '',

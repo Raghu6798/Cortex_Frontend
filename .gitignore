@@ -45,3 +45,4 @@ next-env.d.ts
 
 agents.md
 test.ts
+/lib/generated/prisma

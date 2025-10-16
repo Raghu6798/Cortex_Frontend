@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from './Input';
 import { Label } from '@/components/ui/label';
 import { Progress } from "@/components/ui/progress";
+import ProviderSelector from './ProviderSelector';
 import {
   CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, Globe, KeyRound, PlusCircle, Trash2, BookText
 } from 'lucide-react';
@@ -22,6 +23,8 @@ interface ConfigFormData {
   temperature: number;
   baseUrl: string;
   systemPrompt: string;
+  providerId: string;
+  modelId: string;
 }
 
 // Tool Configuration
@@ -119,7 +122,13 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
 
     const handleFinalSubmit = () => {
         console.log('Final Agent Configuration:', agentState);
-        onAgentCreated(agentState);
+        // Add provider and model info to the agent state
+        const enhancedAgentState = {
+            ...agentState,
+            provider_id: agentState.settings.providerId,
+            model_id: agentState.settings.modelId
+        };
+        onAgentCreated(enhancedAgentState);
     };
 
     const isNextDisabled = () => {
@@ -226,25 +235,98 @@ const StepFramework = ({ architecture, onSelect }: { architecture: 'mono' | 'mul
 };
 
 const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<ConfigFormData>; defaultValues: Partial<ConfigFormData> }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<ConfigFormData>({
+  const [selectedProvider, setSelectedProvider] = useState(defaultValues.providerId || '');
+  const [selectedModel, setSelectedModel] = useState(defaultValues.modelId || '');
+  
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ConfigFormData>({
     defaultValues: {
       apiKey: defaultValues.apiKey || '',
-      modelName: defaultValues.modelName || 'meta-llama/llama-4-maverick-17b-128e-instruct',
-      temperature: defaultValues.temperature ?? 1.0,
+      modelName: defaultValues.modelName || '',
+      temperature: defaultValues.temperature ?? 0.7,
       baseUrl: defaultValues.baseUrl || '',
       systemPrompt: defaultValues.systemPrompt || '',
+      providerId: defaultValues.providerId || '',
+      modelId: defaultValues.modelId || '',
     },
   });
 
+  const handleProviderChange = (providerId: string) => {
+    setSelectedProvider(providerId);
+    setValue('providerId', providerId);
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    setValue('modelId', modelId);
+    setValue('modelName', modelId);
+  };
+
   return (
     <div>
-      <StepHeader title="Configure LangChain Agent" description="Provide API credentials and settings for your agent." />
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 max-w-lg mx-auto">
-        <div><Label htmlFor="apiKey">API Key</Label><Input id="apiKey" type="password" placeholder="sk-..." {...register('apiKey', { required: 'API Key is required.' })} className={cn(errors.apiKey && 'border-destructive')}/>{errors.apiKey && <p className="text-sm text-destructive mt-1">{errors.apiKey.message}</p>}</div>
-        <div><Label htmlFor="baseUrl">Base URL</Label><Input id="baseUrl" type="text" placeholder="https://api.openai.com/v1" {...register('baseUrl')} className={cn(errors.baseUrl && 'border-destructive')}/>{errors.baseUrl && <p className="text-sm text-destructive mt-1">{errors.baseUrl.message}</p>}</div>
-        <div><Label htmlFor="temperature">Temperature</Label><Input id="temperature" type="number" step="0.1" {...register('temperature', { valueAsNumber: true, min: 0, max: 2 })} className={cn(errors.temperature && 'border-destructive')}/>{errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message}</p>}</div>
-        <div><Label htmlFor="systemPrompt">System Prompt</Label><Input id="systemPrompt" type="text" placeholder="You are a helpful assistant." {...register('systemPrompt')} /></div>
-        <Button type="submit" className="w-full !mt-6 bg-purple-600 hover:bg-purple-500">Save Configuration & Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
+      <StepHeader title="Configure LangChain Agent" description="Select your LLM provider and model, then configure the settings." />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
+        {/* Provider and Model Selection */}
+        <div className="bg-black/20 p-6 rounded-lg border border-white/15">
+          <ProviderSelector
+            selectedProvider={selectedProvider}
+            selectedModel={selectedModel}
+            onProviderChange={handleProviderChange}
+            onModelChange={handleModelChange}
+          />
+        </div>
+
+        {/* API Configuration */}
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="apiKey">API Key</Label>
+            <Input 
+              id="apiKey" 
+              type="password" 
+              placeholder="sk-..." 
+              {...register('apiKey', { required: 'API Key is required.' })} 
+              className={cn(errors.apiKey && 'border-destructive')}
+            />
+            {errors.apiKey && <p className="text-sm text-destructive mt-1">{errors.apiKey.message}</p>}
+          </div>
+          
+          <div>
+            <Label htmlFor="baseUrl">Base URL (Optional)</Label>
+            <Input 
+              id="baseUrl" 
+              type="text" 
+              placeholder="https://api.openai.com/v1" 
+              {...register('baseUrl')} 
+              className={cn(errors.baseUrl && 'border-destructive')}
+            />
+            {errors.baseUrl && <p className="text-sm text-destructive mt-1">{errors.baseUrl.message}</p>}
+          </div>
+          
+          <div>
+            <Label htmlFor="temperature">Temperature</Label>
+            <Input 
+              id="temperature" 
+              type="number" 
+              step="0.1" 
+              {...register('temperature', { valueAsNumber: true, min: 0, max: 2 })} 
+              className={cn(errors.temperature && 'border-destructive')}
+            />
+            {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message}</p>}
+          </div>
+          
+          <div>
+            <Label htmlFor="systemPrompt">System Prompt</Label>
+            <Input 
+              id="systemPrompt" 
+              type="text" 
+              placeholder="You are a helpful assistant." 
+              {...register('systemPrompt')} 
+            />
+          </div>
+        </div>
+        
+        <Button type="submit" className="w-full !mt-6 bg-purple-600 hover:bg-purple-500">
+          Save Configuration & Continue <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
       </form>
     </div>
   );

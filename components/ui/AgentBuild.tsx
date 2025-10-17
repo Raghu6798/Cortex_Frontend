@@ -2,7 +2,7 @@
 "use client";
 
 
-import React, { useState } from 'react'; // <-- THE FIX IS HERE
+import React, { useState, useRef, forwardRef } from 'react'; // <-- THE FIX IS HERE
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import Image from 'next/image';
@@ -12,9 +12,30 @@ import { Input } from './Input';
 import { Label } from '@/components/ui/label';
 import { Progress } from "@/components/ui/progress";
 import ProviderSelector from './ProviderSelector';
+import { AnimatedBeam } from './AnimatedBeamComponent';
 import {
-  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, Globe, KeyRound, PlusCircle, Trash2, BookText
+  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, Globe, PlusCircle, Trash2
 } from 'lucide-react';
+
+// Circle component
+const Circle = forwardRef<
+  HTMLDivElement,
+  { className?: string; children?: React.ReactNode }
+>(({ className, children }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "z-10 flex size-16 items-center justify-center rounded-full border-2 bg-black border-white/20 p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]",
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+})
+
+Circle.displayName = "Circle"
 
 //--- TYPES AND SCHEMAS ---
 
@@ -107,7 +128,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
         }
     };
 
-    const handleSelection = (key: 'architecture' | 'framework', value: any) => {
+    const handleSelection = (key: 'architecture' | 'framework', value: string) => {
         setAgentState((prev) => ({ ...prev, [key]: value }));
         handleNext();
     };
@@ -164,7 +185,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 ))}
                 </div>
             </div>
-            <div className="overflow-hidden relative h-[650px]"> {/* Adjusted height for more space */}
+            <div className="overflow-hidden relative h-[900px]"> {/* Increased height for more space */}
                 <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                     key={currentStep}
@@ -240,7 +261,17 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
   const [selectedProvider, setSelectedProvider] = useState(defaultValues.providerId || '');
   const [selectedModel, setSelectedModel] = useState(defaultValues.modelId || '');
   
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ConfigFormData>({
+  // Refs for AnimatedBeam
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cortexRef = useRef<HTMLDivElement>(null);
+  const nvidiaRef = useRef<HTMLDivElement>(null);
+  const groqRef = useRef<HTMLDivElement>(null);
+  const cerebrasRef = useRef<HTMLDivElement>(null);
+  const mistralRef = useRef<HTMLDivElement>(null);
+  const sambanovaRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+  
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<ConfigFormData>({
     defaultValues: {
       apiKey: defaultValues.apiKey || '',
       modelName: defaultValues.modelName || '',
@@ -263,9 +294,135 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
     setValue('modelName', modelId);
   };
 
+  // Provider data from logos.txt
+  const providers = [
+    { id: 'nvidia_nim', name: 'NVIDIA NIM', logo: 'https://developer-blogs.nvidia.com/wp-content/uploads/2024/03/nim-inference-microservices-1024x576.png', ref: nvidiaRef },
+    { id: 'groq', name: 'Groq', logo: 'https://cdn.brandfetch.io/idxygbEPCQ/w/201/h/201/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1668515712972', ref: groqRef },
+    { id: 'cerebras', name: 'Cerebras', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/cerebras-color.png', ref: cerebrasRef },
+    { id: 'mistral', name: 'Mistral', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfBpAyt03guidOXPIaR3o28eNlVqemSOjQEg&s', ref: mistralRef },
+    { id: 'sambanova', name: 'SambaNova', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBdHN5aZkfTgTr3F1CeJjgLG5jVHElmPatfA&s', ref: sambanovaRef }
+  ];
+
   return (
     <div>
       <StepHeader title="Configure LangChain Agent" description="Select your LLM provider and model, then configure the settings." />
+      
+      {/* Integration Visualization - Always visible */}
+      <div className="mb-8">
+        <div
+          className="relative flex h-[350px] w-full items-center justify-center overflow-hidden p-6"
+          ref={containerRef}
+        >
+          <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-10">
+            <div className="flex flex-col justify-center gap-1">
+              <Circle ref={nvidiaRef}>
+                <Image 
+                  src="https://developer-blogs.nvidia.com/wp-content/uploads/2024/03/nim-inference-microservices-1024x576.png" 
+                  alt="NVIDIA NIM" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain"
+                />
+              </Circle>
+              <Circle ref={groqRef}>
+                <Image 
+                  src="https://cdn.brandfetch.io/idxygbEPCQ/w/201/h/201/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1668515712972" 
+                  alt="Groq" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain"
+                />
+              </Circle>
+              <Circle ref={cerebrasRef}>
+                <Image 
+                  src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/cerebras-color.png" 
+                  alt="Cerebras" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain"
+                />
+              </Circle>
+              <Circle ref={mistralRef}>
+                <Image 
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfBpAyt03guidOXPIaR3o28eNlVqemSOjQEg&s" 
+                  alt="Mistral" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain"
+                />
+              </Circle>
+              <Circle ref={sambanovaRef}>
+                <Image 
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBdHN5aZkfTgTr3F1CeJjgLG5jVHElmPatfA&s" 
+                  alt="SambaNova" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain"
+                />
+              </Circle>
+            </div>
+            <div className="flex flex-col justify-center">
+              <Circle ref={cortexRef} className="size-16">
+                <Image 
+                  src="/download.png" 
+                  alt="Cortex" 
+                  width={48} 
+                  height={48} 
+                  className="object-contain"
+                />
+              </Circle>
+            </div>
+            <div className="flex flex-col justify-center">
+              <Circle ref={userRef}>
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </Circle>
+            </div>
+          </div>
+
+          <AnimatedBeam
+            containerRef={containerRef}
+            fromRef={nvidiaRef}
+            toRef={cortexRef}
+          />
+          <AnimatedBeam
+            containerRef={containerRef}
+            fromRef={groqRef}
+            toRef={cortexRef}
+          />
+          <AnimatedBeam
+            containerRef={containerRef}
+            fromRef={cerebrasRef}
+            toRef={cortexRef}
+          />
+          <AnimatedBeam
+            containerRef={containerRef}
+            fromRef={mistralRef}
+            toRef={cortexRef}
+          />
+          <AnimatedBeam
+            containerRef={containerRef}
+            fromRef={sambanovaRef}
+            toRef={cortexRef}
+          />
+          <AnimatedBeam
+            containerRef={containerRef}
+            fromRef={cortexRef}
+            toRef={userRef}
+          />
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
         {/* Provider and Model Selection */}
         <div className="bg-black/20 p-6 rounded-lg border border-white/15">
@@ -335,7 +492,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
     setTools(tools.filter(t => t.id !== id));
   };
   
-  const updateToolField = (id: string, field: keyof ToolConfig, value: any) => {
+  const updateToolField = (id: string, field: keyof ToolConfig, value: string | ToolParam[]) => {
     setTools(tools.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
@@ -458,7 +615,7 @@ const StepReview = ({ agentState }: { agentState: AgentState }) => {
 
 //--- HELPER & UI COMPONENTS ---
 const ChoiceCard = ({ icon, title, description, onClick }: { icon: React.ReactNode; title: string; description: string; onClick: () => void; }) => (
-  <button onClick={onClick} className="p-6 border-2 border-gray-700 rounded-lg text-left hover:border-purple-500 hover:bg-purple-900/20 transition-all group flex flex-col items-center text-center">
+  <button onClick={onClick} className="p-6 border-2 border-gray-700 rounded-lg hover:border-purple-500 hover:bg-purple-900/20 transition-all group flex flex-col items-center text-center">
     <div className="text-purple-400 mb-2 group-hover:scale-110 transition-transform">{icon}</div>
     <h3 className="font-semibold text-lg text-white">{title}</h3>
     <p className="text-sm text-white/70">{description}</p>

@@ -1,4 +1,6 @@
+// components/ui/AgentBuild.tsx
 "use client";
+
 
 import React, { useState } from 'react'; // <-- THE FIX IS HERE
 import { motion, AnimatePresence } from 'framer-motion';
@@ -162,7 +164,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 ))}
                 </div>
             </div>
-            <div className="overflow-hidden relative h-[450px]"> {/* Adjusted height for more space */}
+            <div className="overflow-hidden relative h-[650px]"> {/* Adjusted height for more space */}
                 <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                     key={currentStep}
@@ -289,17 +291,7 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
             {errors.apiKey && <p className="text-sm text-destructive mt-1">{errors.apiKey.message}</p>}
           </div>
           
-          <div>
-            <Label htmlFor="baseUrl">Base URL (Optional)</Label>
-            <Input 
-              id="baseUrl" 
-              type="text" 
-              placeholder="https://api.openai.com/v1" 
-              {...register('baseUrl')} 
-              className={cn(errors.baseUrl && 'border-destructive')}
-            />
-            {errors.baseUrl && <p className="text-sm text-destructive mt-1">{errors.baseUrl.message}</p>}
-          </div>
+
           
           <div>
             <Label htmlFor="temperature">Temperature</Label>

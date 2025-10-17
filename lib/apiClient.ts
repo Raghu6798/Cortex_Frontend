@@ -1,3 +1,5 @@
+// lib/apiClient.ts
+
 // API client configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -22,9 +24,6 @@ export interface Model {
   display_name: string;
   description?: string;
   context_length: number;
-  input_cost_per_token: number;
-  output_cost_per_token: number;
-  is_active: boolean;
 }
 
 class ApiClient {
@@ -34,67 +33,64 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-    
-    // Get auth token from Clerk (if available)
-    const token = typeof window !== 'undefined' ? 
-      (window as any).__clerk?.session?.getToken?.() : null;
-    
-    const defaultHeaders = {
+  // This private method handles all requests, including auth
+  private async request<T>(endpoint: string, options: RequestInit = {}, token?: string): Promise<T> {
+    // Construct the full URL. Handles both relative and absolute endpoints.
+    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
+
+    const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
     };
+
+    // If a token exists, add it to the Authorization header
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(url, {
       ...options,
       headers: {
         ...defaultHeaders,
-        ...options.headers,
+        ...options.headers, // Allow overriding default headers
       },
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("API Error Response:", errorBody);
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
-
-    return response.json();
+    
+    // Handle responses that might not have a JSON body
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        return response.json();
+    }
+    return Promise.resolve() as Promise<T>;
   }
 
-  // Provider endpoints
-  async getProviders(): Promise<Provider[]> {
-    return this.request<Provider[]>('/api/v1/providers');
+  // Public GET method
+  async get<T>(endpoint: string, options: RequestInit = {}, token?: string): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'GET' }, token);
   }
 
-  async getProviderModels(providerId: string): Promise<Model[]> {
-    return this.request<Model[]>(`/api/v1/providers/${providerId}/models`);
-  }
-
-  async syncProviders(): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/api/v1/providers/sync', {
+  // Public POST method
+  async post<T>(endpoint: string, data: any, options: RequestInit = {}, token?: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
       method: 'POST',
-    });
+      body: JSON.stringify(data),
+    }, token);
   }
 
-  async testProvider(providerId: string): Promise<{
-    provider: string;
-    status: string;
-    models_count: number;
-    models: Array<{ id: string; name: string }>;
-  }> {
-    return this.request(`/api/v1/providers/${providerId}/test`);
+  // --- Your specific provider endpoints can now use these helpers ---
+
+  async getProviders(token?: string): Promise<Provider[]> {
+    return this.get<Provider[]>('/api/v1/providers', {}, token);
   }
 
-  async testChatCompletion(providerId: string, request: {
-    messages: Array<{ role: string; content: string }>;
-    model: string;
-    temperature?: number;
-    max_tokens?: number;
-  }): Promise<any> {
-    return this.request(`/api/v1/providers/${providerId}/chat`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+  async testChatCompletion(providerId: string, requestBody: any, token?: string): Promise<any> {
+    return this.post(`/api/v1/providers/${providerId}/chat`, requestBody, {}, token);
   }
 }
 

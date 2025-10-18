@@ -45,7 +45,8 @@ export interface ToolConfig {
   api_method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   api_headers: ToolParam[];
   api_query_params: ToolParam[];
-  // Future: api_body_params: ToolParam[];
+  api_path_params: ToolParam[];
+  request_payload: string;
 }
 
 // Main Agent State
@@ -194,7 +195,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg bg-black/30 border border-white/15">
+        <div className="w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg bg-black/30 border border-white/15 flex flex-col min-h-[500px] max-h-[1200px]">
             <div className="mb-8">
                 <Progress value={progress} className="h-2 bg-white/10" />
                 <div className="flex justify-between mt-2">
@@ -211,28 +212,30 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 ))}
                 </div>
             </div>
-            <div className="overflow-hidden relative h-[900px]"> {/* Increased height for more space */}
-                <AnimatePresence mode="wait" custom={direction}>
-                <motion.div
-                    key={currentStep}
-                    custom={direction}
-                    variants={variants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.3 }}
-                    className="absolute w-full"
-                >
-                    {currentStep === 0 && <StepArchitecture onSelect={(arch) => handleSelection('architecture', arch)} />}
-                    {currentStep === 1 && agentState.architecture && <StepFramework architecture={agentState.architecture} onSelect={(fw) => handleSelection('framework', fw)} />}
-                    {currentStep === 2 && agentState.framework === 'langchain' && <StepConfigure onSubmit={handleConfigSubmit} defaultValues={agentState.settings} />}
-                    {currentStep === 2 && agentState.framework !== 'langchain' && <ComingSoonStep />}
-                    {currentStep === 3 && <StepConfigureTools onSubmit={handleToolsSubmit} defaultTools={agentState.tools}/>}
-                    {currentStep === 4 && <StepReview agentState={agentState} />}
-                </motion.div>
-                </AnimatePresence>
+            <div className="flex-1 flex flex-col min-h-0"> {/* Flexible container */}
+                <div className="flex-1 flex items-start justify-center py-8 overflow-y-auto"> {/* Content with consistent padding and scroll */}
+                    <AnimatePresence mode="wait" custom={direction}>
+                    <motion.div
+                        key={currentStep}
+                        custom={direction}
+                        variants={variants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.3 }}
+                        className="w-full max-w-4xl mx-auto"
+                    >
+                        {currentStep === 0 && <StepArchitecture onSelect={(arch) => handleSelection('architecture', arch)} />}
+                        {currentStep === 1 && agentState.architecture && <StepFramework architecture={agentState.architecture} onSelect={(fw) => handleSelection('framework', fw)} />}
+                        {currentStep === 2 && agentState.framework === 'langchain' && <StepConfigure onSubmit={handleConfigSubmit} defaultValues={agentState.settings} />}
+                        {currentStep === 2 && agentState.framework !== 'langchain' && <ComingSoonStep />}
+                        {currentStep === 3 && <StepConfigureTools onSubmit={handleToolsSubmit} defaultTools={agentState.tools}/>}
+                        {currentStep === 4 && <StepReview agentState={agentState} />}
+                    </motion.div>
+                    </AnimatePresence>
+                </div>
             </div>
-            <div className="flex justify-between pt-4 mt-4 border-t border-white/15">
+            <div className="flex justify-between pt-6 border-t border-white/15 mt-auto">
                 <Button 
                     variant="outline" 
                     onClick={handlePrev} 
@@ -278,7 +281,7 @@ const StepHeader = ({ title, description }: { title: string; description: string
 );
 
 const StepArchitecture = ({ onSelect }: { onSelect: (arch: 'mono' | 'multi') => void; }) => (
-    <div>
+    <div className="w-full">
       <StepHeader title="Select Agent Architecture" description="Choose between a single agent or a team of collaborating agents." />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-lg mx-auto">
         <ChoiceCard icon={<Bot />} title="Mono-Agent" description="A single, powerful agent for handling various tasks." onClick={() => onSelect('mono')} />
@@ -290,7 +293,7 @@ const StepArchitecture = ({ onSelect }: { onSelect: (arch: 'mono' | 'multi') => 
 const StepFramework = ({ architecture, onSelect }: { architecture: 'mono' | 'multi'; onSelect: (fw: string) => void; }) => {
     const availableFrameworks = frameworks[architecture];
     return (
-      <div>
+      <div className="w-full">
         <StepHeader title="Choose Your Framework" description={`Select the ${architecture === 'mono' ? 'mono-agent' : 'multi-agent'} framework you want to build with.`} />
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {availableFrameworks.map((fw) => (
@@ -332,10 +335,9 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
 
 
   return (
-    <div>
+    <div className="w-full">
       <StepHeader title="Configure LangChain Agent" description="Select your LLM provider and model, then configure the settings." />
       
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
         {/* Provider and Model Selection */}
         <div className="bg-black/20 p-6 rounded-lg border border-white/15">
@@ -396,10 +398,12 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
 };
 
 const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: ToolConfig[]) => void; defaultTools: ToolConfig[] }) => {
-  const [tools, setTools] = useState<ToolConfig[]>(defaultTools.length > 0 ? defaultTools : []);
+  const [tools, setTools] = useState<ToolConfig[]>(defaultTools.length > 0 ? defaultTools : [
+    { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], request_payload: '' }
+  ]);
 
   const addTool = () => {
-    setTools([...tools, { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [] }]);
+    setTools([...tools, { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], request_payload: '' }]);
   };
 
   const removeTool = (id: string) => {
@@ -410,7 +414,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
     setTools(tools.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
-  const updateToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params', paramId: string, field: 'key' | 'value', value: string) => {
+  const updateToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string, field: 'key' | 'value', value: string) => {
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
       const updatedParams = tool[paramType].map(p => p.id === paramId ? { ...p, [field]: value } : p);
@@ -418,7 +422,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
     }));
   };
 
-  const addToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params') => {
+  const addToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params') => {
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
       const newParam: ToolParam = { id: `param-${Date.now()}`, key: '', value: '' };
@@ -426,7 +430,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
     }));
   };
 
-  const removeToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params', paramId: string) => {
+  const removeToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string) => {
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
       return { ...tool, [paramType]: tool[paramType].filter(p => p.id !== paramId) };
@@ -434,24 +438,83 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
   };
 
   return (
-    <div>
+    <div className="w-full">
       <StepHeader title="Configure Agent Tools (Optional)" description="Define external APIs your agent can call. The LLM will decide when to use them." />
-      <div className="space-y-4 max-h-80 overflow-y-auto pr-2 pb-4">
-        {tools.map((tool) => (
-          <div key={tool.id} className="p-4 border border-white/15 rounded-lg bg-black/20 space-y-3">
+      <div className="space-y-4 min-h-[200px] max-h-[800px] overflow-y-auto scrollbar-hide">
+        <AnimatePresence>
+          {tools.map((tool) => (
+            <motion.div 
+              key={tool.id} 
+              initial={{ opacity: 0, height: 0, y: -20 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="p-4 border border-white/15 rounded-lg bg-black/20 space-y-3"
+            >
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-lg text-purple-300">New API Tool</h3>
               <Button size="icon" variant="ghost" className="text-red-400 hover:bg-red-900/50 hover:text-red-300" onClick={() => removeTool(tool.id)}><Trash2 size={16} /></Button>
             </div>
             <div className="space-y-2">
-              <Input placeholder="Tool Name (e.g., searchWeather)" value={tool.name} onChange={e => updateToolField(tool.id, 'name', e.target.value)} />
-              <Input placeholder="Description (e.g., 'Finds the weather for a city')" value={tool.description} onChange={e => updateToolField(tool.id, 'description', e.target.value)} />
+              <Input 
+                placeholder="Tool Name (e.g., searchWeather)" 
+                value={tool.name} 
+                onChange={e => updateToolField(tool.id, 'name', e.target.value)}
+                className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+              />
+              <Input 
+                placeholder="Description (e.g., 'Finds the weather for a city')" 
+                value={tool.description} 
+                onChange={e => updateToolField(tool.id, 'description', e.target.value)}
+                className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+              />
               <div className="flex gap-2">
                 <select value={tool.api_method} onChange={e => updateToolField(tool.id, 'api_method', e.target.value as ToolConfig['api_method'])} className="bg-black/50 border border-white/15 rounded-md px-2 py-2 text-sm">
                   <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
                 </select>
-                <Input placeholder="API URL (e.g., https://api.weather.com/find)" value={tool.api_url} onChange={e => updateToolField(tool.id, 'api_url', e.target.value)} />
+                <Input 
+                  placeholder="API URL (e.g., https://api.weather.com/find)" 
+                  value={tool.api_url} 
+                  onChange={e => updateToolField(tool.id, 'api_url', e.target.value)}
+                  className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                />
               </div>
+            </div>
+
+            {/* Request Payload */}
+            <div className="space-y-2 pt-2">
+              <h4 className="text-sm font-medium text-white/80">Request Payload (Optional)</h4>
+              <textarea
+                placeholder="Enter JSON payload (e.g., {&quot;name&quot;: &quot;{{userName}}&quot;, &quot;email&quot;: &quot;{{userEmail}}&quot;})"
+                value={tool.request_payload}
+                onChange={e => updateToolField(tool.id, 'request_payload', e.target.value)}
+                className="flex min-h-[100px] w-full rounded-md border border-white/15 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={4}
+              />
+              <p className="text-xs text-white/60">Use placeholders like {"{{variableName}}"} for dynamic values</p>
+            </div>
+
+            {/* Path Parameters */}
+            <div className="space-y-2 pt-2">
+              <h4 className="text-sm font-medium text-white/80">Path Parameters</h4>
+              {tool.api_path_params.map(p => (
+                <div key={p.id} className="flex gap-2 items-center">
+                  <Input 
+                    placeholder="key (e.g., 'userId')" 
+                    value={p.key} 
+                    onChange={e => updateToolParam(tool.id, 'api_path_params', p.id, 'key', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                  />
+                  <Input 
+                    placeholder="value (e.g., '{{userId}}')" 
+                    value={p.value} 
+                    onChange={e => updateToolParam(tool.id, 'api_path_params', p.id, 'value', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_path_params', p.id)}><Trash2 size={14}/></Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_path_params')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Path Param</Button>
             </div>
 
             {/* Query Parameters */}
@@ -459,12 +522,22 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
               <h4 className="text-sm font-medium text-white/80">Query Parameters</h4>
               {tool.api_query_params.map(p => (
                 <div key={p.id} className="flex gap-2 items-center">
-                  <Input placeholder="key (e.g., 'city')" value={p.key} onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'key', e.target.value)} />
-                  <Input placeholder="value (e.g., '{{city}}')" value={p.value} onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'value', e.target.value)} />
+                  <Input 
+                    placeholder="key (e.g., 'city')" 
+                    value={p.key} 
+                    onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'key', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                  />
+                  <Input 
+                    placeholder="value (e.g., '{{city}}')" 
+                    value={p.value} 
+                    onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'value', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                  />
                   <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_query_params', p.id)}><Trash2 size={14}/></Button>
                 </div>
               ))}
-              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_query_params')}><PlusCircle size={14} className="mr-2"/>Add Query Param</Button>
+              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_query_params')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Query Param</Button>
             </div>
 
             {/* Headers */}
@@ -472,19 +545,38 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
               <h4 className="text-sm font-medium text-white/80">Headers</h4>
               {tool.api_headers.map(h => (
                 <div key={h.id} className="flex gap-2 items-center">
-                  <Input placeholder="Header Name (e.g., 'Authorization')" value={h.key} onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'key', e.target.value)} />
-                  <Input placeholder="Header Value (e.g., 'Bearer ...')" value={h.value} onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'value', e.target.value)} />
+                  <Input 
+                    placeholder="Header Name (e.g., 'Authorization')" 
+                    value={h.key} 
+                    onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'key', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                  />
+                  <Input 
+                    placeholder="Header Value (e.g., 'Bearer ...')" 
+                    value={h.value} 
+                    onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'value', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                  />
                   <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_headers', h.id)}><Trash2 size={14}/></Button>
                 </div>
               ))}
-              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_headers')}><PlusCircle size={14} className="mr-2"/>Add Header</Button>
+              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_headers')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Header</Button>
             </div>
 
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
       <div className="flex justify-between pt-4 border-t border-white/10">
-        <Button variant="outline" onClick={addTool}><PlusCircle size={16} className="mr-2"/>Add New Tool</Button>
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Button variant="outline" onClick={addTool} className="bg-white text-black hover:bg-gray-100 border-white"><PlusCircle size={16} className="mr-2"/>Add New Tool</Button>
+        </motion.div>
+      </div>
+         <div className="flex justify-between pt-4 border-t border-white/10">
         <Button onClick={() => onSubmit(tools)} className="bg-purple-600 hover:bg-purple-500">Save Tools & Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
       </div>
     </div>

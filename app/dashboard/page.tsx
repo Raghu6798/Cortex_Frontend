@@ -6,11 +6,12 @@ import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContai
 import { Users, LayoutDashboard } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
-import MultiModalChatUI from '@/components/ui/MultiModalChatUI';
-import AgentBuilder, { AgentState } from '@/components/ui/AgentBuild';
-import { NumberTicker } from '@/components/ui/CountingNumbers';
+import MultiModalChatUI from '@/components/ui/agents_ui/MultiModalChatUI';
+import AgentBuilder, { AgentState } from '@/components/ui/agents_ui/AgentBuild';
+import AgentList from '@/components/ui/agents_ui/AgentList';
+import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton'; // Import the Skeleton component
+import { Skeleton } from '@/components/ui/shadcn/skeleton'; // Import the Skeleton component
 
 // --- MOCK DATA ---
 const latencyData = [{ time: "12:00", latency: 85 }, { time: "12:01", latency: 95 }, { time: "12:02", latency: 140 }, { time: "12:03", latency: 110 }, { time: "12:04", latency: 180 }, { time: "12:05", latency: 130 }, { time: "12:06", latency: 125 }];
@@ -64,7 +65,7 @@ export default function DashboardPage() {
   const { user } = useUser();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
 
@@ -91,10 +92,24 @@ export default function DashboardPage() {
     setActiveView('chat'); // Switch to the chat view
   };
 
+  const handleAgentSelect = (agent: { id: string; architecture: string; framework: string; settings: Record<string, unknown>; tools: Record<string, unknown>[] }) => {
+    // Convert the agent from the API to AgentState format
+    const agentState: AgentState = {
+      architecture: agent.architecture as 'mono' | 'multi',
+      framework: agent.framework,
+      settings: agent.settings,
+      tools: (agent.tools || []) as Record<string, unknown>[] // Type assertion for now
+    };
+    
+    setInitialAgentConfig(agentState);
+    setActiveView('chat');
+  };
+
   const getHeaderText = () => {
     switch (activeView) {
       case 'builder': return 'Create a New Custom Agent';
       case 'chat': return 'Custom Agent Chat';
+      case 'agents': return 'Your Agents';
       case 'dashboard':
       default:
         return `Welcome Back, ${user?.firstName || 'Developer'}!`;
@@ -105,6 +120,7 @@ export default function DashboardPage() {
     switch (activeView) {
       case 'builder': return 'Follow the steps to configure your new agent.';
       case 'chat': return 'Interact with your configured and saved agents.';
+      case 'agents': return 'Manage and interact with your configured AI agents.';
       case 'dashboard':
       default:
         return "Here's a live overview of your agent operations.";
@@ -114,6 +130,7 @@ export default function DashboardPage() {
   const renderContent = () => {
     if (activeView === 'builder') return <AgentBuilder onAgentCreated={handleAgentCreated} />;
     if (activeView === 'chat') return <MultiModalChatUI initialAgentConfig={initialAgentConfig} />;
+    if (activeView === 'agents') return <AgentList onAgentSelect={handleAgentSelect} onCreateNew={() => setActiveView('builder')} showHeader={false} />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;
@@ -127,6 +144,8 @@ export default function DashboardPage() {
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
         onNewAgentClick={() => setActiveView('builder')}
+        activeView={activeView}
+        onViewChange={setActiveView}
       />
 
       <main className={cn(
@@ -139,15 +158,15 @@ export default function DashboardPage() {
             <h2 className="text-3xl font-bold tracking-tight">{getHeaderText()}</h2>
             <p className="text-white/60 mt-1">{getHeaderSubtitle()}</p>
           </div>
-          {activeView !== 'dashboard' && (
-            <button
-              onClick={() => setActiveView('dashboard')}
-              className="flex items-center gap-2 rounded-lg py-2 px-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors"
-            >
-              <LayoutDashboard size={18} />
-              <span className="text-sm font-medium">Dashboard</span>
-            </button>
-          )}
+           {activeView !== 'dashboard' && (
+             <button
+               onClick={() => setActiveView('dashboard')}
+               className="flex items-center gap-2 rounded-lg py-2 px-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+             >
+               <LayoutDashboard size={18} />
+               <span className="text-sm font-medium">Dashboard</span>
+             </button>
+           )}
         </header>
 
         {renderContent()}

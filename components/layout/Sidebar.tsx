@@ -8,6 +8,8 @@ import {
   MessageSquare,
   PlusCircle,
   Puzzle,
+  LayoutDashboard,
+  Bot,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -17,10 +19,17 @@ interface SidebarProps {
   isExpanded: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-  onNewAgentClick: () => void; // New prop to handle click
+  onNewAgentClick: () => void;
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat';
+  onViewChange?: (view: 'dashboard' | 'agents' | 'builder' | 'chat') => void;
 }
 
-const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick }: SidebarProps) => {
+const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView, onViewChange }: SidebarProps) => {
+  const navigationItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
+    { name: 'Your Agents', icon: Bot, view: 'agents' as const },
+  ];
+
   const features = [
     { name: 'LLM Provider Switching', icon: Puzzle },
     { name: 'Agent Runtime & Files', icon: FileJson },
@@ -55,11 +64,34 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick }: Si
             isExpanded ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'
           )}
         >
-          Agenta
+          Cortex 
         </span>
       </div>
 
       <nav className="flex flex-col gap-2 p-4 flex-grow">
+        {/* Navigation Items */}
+        {navigationItems.map((item) => (
+          <button
+            key={item.name}
+            onClick={() => onViewChange?.(item.view)}
+            className={cn(
+              'flex items-center gap-4 rounded-lg p-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors',
+              activeView === item.view && 'bg-white/10 text-white'
+            )}
+          >
+            <item.icon className="h-6 w-6 flex-shrink-0" />
+            <span
+              className={cn(
+                'text-sm font-medium overflow-hidden whitespace-nowrap',
+                'transition-all duration-200',
+                isExpanded ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'
+              )}
+            >
+              {item.name}
+            </span>
+          </button>
+        ))}
+
         {/* Custom Agent Builder is now a special button */}
         <button
           onClick={onNewAgentClick}

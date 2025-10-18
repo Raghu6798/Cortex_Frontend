@@ -2,40 +2,20 @@
 "use client";
 
 
-import React, { useState, useRef, forwardRef } from 'react'; // <-- THE FIX IS HERE
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from './Input';
-import { Label } from '@/components/ui/label';
-import { Progress } from "@/components/ui/progress";
+import { Button } from '@/components/ui/shadcn/button';
+import { Input } from '@/components/ui/shadcn/Input';
+import { Label } from '@/components/ui/shadcn/label';
+import { Progress } from "@/components/ui/shadcn/progress";
 import ProviderSelector from './ProviderSelector';
-import { AnimatedBeam } from './AnimatedBeamComponent';
 import {
   CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, Globe, PlusCircle, Trash2
 } from 'lucide-react';
 
-// Circle component
-const Circle = forwardRef<
-  HTMLDivElement,
-  { className?: string; children?: React.ReactNode }
->(({ className, children }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "z-10 flex size-16 items-center justify-center rounded-full border-2 bg-black border-white/20 p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]",
-        className
-      )}
-    >
-      {children}
-    </div>
-  )
-})
-
-Circle.displayName = "Circle"
 
 //--- TYPES AND SCHEMAS ---
 
@@ -134,6 +114,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     };
 
     const handleConfigSubmit = (settings: ConfigFormData) => {
+        console.log('Form submitted with settings:', settings);
         setAgentState((prev) => ({ ...prev, settings }));
         handleNext();
     };
@@ -143,21 +124,66 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
       handleNext();
     }
 
-    const handleFinalSubmit = () => {
+    const handleFinalSubmit = async () => {
         console.log('Final Agent Configuration:', agentState);
-        // Add provider and model info to the agent state
-        const enhancedAgentState = {
-            ...agentState,
-            provider_id: agentState.settings.providerId,
-            model_id: agentState.settings.modelId
-        };
-        onAgentCreated(enhancedAgentState);
+        
+        try {
+            // Create agent in database
+            const agentData = {
+                name: `${agentState.framework} Agent`,
+                description: `A ${agentState.architecture} agent built with ${agentState.framework}`,
+                architecture: agentState.architecture,
+                framework: agentState.framework,
+                settings: agentState.settings,
+                tools: agentState.tools || []
+            };
+
+            const response = await fetch('/api/agents', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(agentData),
+            });
+
+            if (response.ok) {
+                const createdAgent = await response.json();
+                console.log('Agent created successfully:', createdAgent);
+                
+                // Add provider and model info to the agent state
+                const enhancedAgentState = {
+                    ...agentState,
+                    AgentId: createdAgent.id, // Backend returns AgentId as 'id' in response
+                    provider_id: agentState.settings.providerId,
+                    model_id: agentState.settings.modelId
+                };
+                onAgentCreated(enhancedAgentState);
+            } else {
+                console.error('Failed to create agent:', await response.text());
+                // Still call onAgentCreated for now, but show error
+                const enhancedAgentState = {
+                    ...agentState,
+                    provider_id: agentState.settings.providerId,
+                    model_id: agentState.settings.modelId
+                };
+                onAgentCreated(enhancedAgentState);
+            }
+        } catch (error) {
+            console.error('Error creating agent:', error);
+            // Fallback - still call onAgentCreated
+            const enhancedAgentState = {
+                ...agentState,
+                provider_id: agentState.settings.providerId,
+                model_id: agentState.settings.modelId
+            };
+            onAgentCreated(enhancedAgentState);
+        }
     };
 
     const isNextDisabled = () => {
         if (currentStep === 0 && !agentState.architecture) return true;
         if (currentStep === 1 && !agentState.framework) return true;
-        if (currentStep === 2 && agentState.framework === 'langchain' && Object.keys(agentState.settings).length === 0) return true;
+        // For step 2 (configure), allow Next button to be visible - form submission handles navigation
         return false;
     };
 
@@ -207,15 +233,33 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 </AnimatePresence>
             </div>
             <div className="flex justify-between pt-4 mt-4 border-t border-white/15">
-                <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0} className={cn(currentStep === 0 && 'invisible')}>
+                <Button 
+                    variant="outline" 
+                    onClick={handlePrev} 
+                    disabled={currentStep === 0} 
+                    className={cn(
+                        currentStep === 0 && 'invisible',
+                        'bg-white text-black hover:bg-gray-100 border-white'
+                    )}
+                >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 {currentStep === STEPS.length - 1 ? (
-                <Button onClick={handleFinalSubmit} className="bg-purple-600 hover:bg-purple-500">
+                <Button 
+                    onClick={handleFinalSubmit} 
+                    className="bg-white text-black hover:bg-gray-100"
+                >
                     Create Agent <CheckCircle2 className="ml-2 h-4 w-4" />
                 </Button>
                 ) : (
-                <Button onClick={handleNext} disabled={isNextDisabled()} className={cn(isNextDisabled() && 'invisible', 'bg-purple-600 hover:bg-purple-500')}>
+                <Button 
+                    onClick={handleNext} 
+                    disabled={isNextDisabled()} 
+                    className={cn(
+                        isNextDisabled() && 'invisible', 
+                        'bg-white text-black hover:bg-gray-100'
+                    )}
+                >
                     Next <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 )}
@@ -261,15 +305,6 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
   const [selectedProvider, setSelectedProvider] = useState(defaultValues.providerId || '');
   const [selectedModel, setSelectedModel] = useState(defaultValues.modelId || '');
   
-  // Refs for AnimatedBeam
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cortexRef = useRef<HTMLDivElement>(null);
-  const nvidiaRef = useRef<HTMLDivElement>(null);
-  const groqRef = useRef<HTMLDivElement>(null);
-  const cerebrasRef = useRef<HTMLDivElement>(null);
-  const mistralRef = useRef<HTMLDivElement>(null);
-  const sambanovaRef = useRef<HTMLDivElement>(null);
-  const userRef = useRef<HTMLDivElement>(null);
   
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<ConfigFormData>({
     defaultValues: {
@@ -283,9 +318,10 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
     },
   });
 
-  const handleProviderChange = (providerId: string) => {
-    setSelectedProvider(providerId);
-    setValue('providerId', providerId);
+  const handleProviderChange = (providerName: string) => {
+    console.log('Provider changed to:', providerName);
+    setSelectedProvider(providerName);
+    setValue('providerId', providerName);
   };
 
   const handleModelChange = (modelId: string) => {
@@ -294,134 +330,11 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
     setValue('modelName', modelId);
   };
 
-  // Provider data from logos.txt
-  const providers = [
-    { id: 'nvidia_nim', name: 'NVIDIA NIM', logo: 'https://developer-blogs.nvidia.com/wp-content/uploads/2024/03/nim-inference-microservices-1024x576.png', ref: nvidiaRef },
-    { id: 'groq', name: 'Groq', logo: 'https://cdn.brandfetch.io/idxygbEPCQ/w/201/h/201/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1668515712972', ref: groqRef },
-    { id: 'cerebras', name: 'Cerebras', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/cerebras-color.png', ref: cerebrasRef },
-    { id: 'mistral', name: 'Mistral', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfBpAyt03guidOXPIaR3o28eNlVqemSOjQEg&s', ref: mistralRef },
-    { id: 'sambanova', name: 'SambaNova', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBdHN5aZkfTgTr3F1CeJjgLG5jVHElmPatfA&s', ref: sambanovaRef }
-  ];
 
   return (
     <div>
       <StepHeader title="Configure LangChain Agent" description="Select your LLM provider and model, then configure the settings." />
       
-      {/* Integration Visualization - Always visible */}
-      <div className="mb-8">
-        <div
-          className="relative flex h-[350px] w-full items-center justify-center overflow-hidden p-6"
-          ref={containerRef}
-        >
-          <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-10">
-            <div className="flex flex-col justify-center gap-1">
-              <Circle ref={nvidiaRef}>
-                <Image 
-                  src="https://developer-blogs.nvidia.com/wp-content/uploads/2024/03/nim-inference-microservices-1024x576.png" 
-                  alt="NVIDIA NIM" 
-                  width={40} 
-                  height={40} 
-                  className="object-contain"
-                />
-              </Circle>
-              <Circle ref={groqRef}>
-                <Image 
-                  src="https://cdn.brandfetch.io/idxygbEPCQ/w/201/h/201/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1668515712972" 
-                  alt="Groq" 
-                  width={40} 
-                  height={40} 
-                  className="object-contain"
-                />
-              </Circle>
-              <Circle ref={cerebrasRef}>
-                <Image 
-                  src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/cerebras-color.png" 
-                  alt="Cerebras" 
-                  width={40} 
-                  height={40} 
-                  className="object-contain"
-                />
-              </Circle>
-              <Circle ref={mistralRef}>
-                <Image 
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfBpAyt03guidOXPIaR3o28eNlVqemSOjQEg&s" 
-                  alt="Mistral" 
-                  width={40} 
-                  height={40} 
-                  className="object-contain"
-                />
-              </Circle>
-              <Circle ref={sambanovaRef}>
-                <Image 
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBdHN5aZkfTgTr3F1CeJjgLG5jVHElmPatfA&s" 
-                  alt="SambaNova" 
-                  width={40} 
-                  height={40} 
-                  className="object-contain"
-                />
-              </Circle>
-            </div>
-            <div className="flex flex-col justify-center">
-              <Circle ref={cortexRef} className="size-16">
-                <Image 
-                  src="/download.png" 
-                  alt="Cortex" 
-                  width={48} 
-                  height={48} 
-                  className="object-contain"
-                />
-              </Circle>
-            </div>
-            <div className="flex flex-col justify-center">
-              <Circle ref={userRef}>
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </Circle>
-            </div>
-          </div>
-
-          <AnimatedBeam
-            containerRef={containerRef}
-            fromRef={nvidiaRef}
-            toRef={cortexRef}
-          />
-          <AnimatedBeam
-            containerRef={containerRef}
-            fromRef={groqRef}
-            toRef={cortexRef}
-          />
-          <AnimatedBeam
-            containerRef={containerRef}
-            fromRef={cerebrasRef}
-            toRef={cortexRef}
-          />
-          <AnimatedBeam
-            containerRef={containerRef}
-            fromRef={mistralRef}
-            toRef={cortexRef}
-          />
-          <AnimatedBeam
-            containerRef={containerRef}
-            fromRef={sambanovaRef}
-            toRef={cortexRef}
-          />
-          <AnimatedBeam
-            containerRef={containerRef}
-            fromRef={cortexRef}
-            toRef={userRef}
-          />
-        </div>
-      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
         {/* Provider and Model Selection */}
@@ -462,15 +375,16 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
             {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message}</p>}
           </div>
           
-          <div>
-            <Label htmlFor="systemPrompt">System Prompt</Label>
-            <Input 
-              id="systemPrompt" 
-              type="text" 
-              placeholder="You are a helpful assistant." 
-              {...register('systemPrompt')} 
-            />
-          </div>
+            <div>
+              <Label htmlFor="systemPrompt">System Prompt</Label>
+              <textarea 
+                id="systemPrompt" 
+                placeholder="You are a helpful assistant." 
+                {...register('systemPrompt')}
+                className="flex min-h-[80px] w-full rounded-md border border-white/15 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={4}
+              />
+            </div>
         </div>
         
         <Button type="submit" className="w-full !mt-6 bg-purple-600 hover:bg-purple-500">
@@ -587,7 +501,8 @@ const StepReview = ({ agentState }: { agentState: AgentState }) => {
                 <div className="flex justify-between"><span className="text-white/70">Framework:</span> <span className="font-medium text-white">{frameworkName}</span></div>
                 {agentState.framework === 'langchain' && (
                     <>
-                        <div className="flex justify-between pt-2 border-t border-white/10"><span className="text-white/70">Model:</span> <span className="font-medium text-white">{agentState.settings.modelName}</span></div>
+                        <div className="flex justify-between pt-2 border-t border-white/10"><span className="text-white/70">Provider:</span> <span className="font-medium text-white">{agentState.settings.providerId}</span></div>
+                        <div className="flex justify-between"><span className="text-white/70">Model:</span> <span className="font-medium text-white">{agentState.settings.modelName}</span></div>
                         <div className="flex justify-between"><span className="text-white/70">Base URL:</span> <span className="font-medium text-white">{agentState.settings.baseUrl}</span></div>
                         <div className="flex justify-between"><span className="text-white/70">Temperature:</span> <span className="font-medium text-white">{agentState.settings.temperature}</span></div>
                         <div className="flex justify-between"><span className="text-white/70">API Key:</span> <span className="font-medium text-white font-mono">************</span></div>

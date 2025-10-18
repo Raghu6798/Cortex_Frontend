@@ -10,7 +10,7 @@ import {
   SendHorizonal, Bot, User, Trash2, Paperclip, X, Image as ImageIcon, Video, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Skeleton } from './skeleton';
+import { Skeleton } from '@/components/ui/shadcn/skeleton';
 import apiClient from '@/lib/apiClient';
 import { AgentState } from './AgentBuild';
 

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Check, Zap } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/shadcn/switch';
+import { Label } from '@/components/ui/shadcn/label';
 import { cn } from '@/lib/utils';
 // --- 1. IMPORT THE NEW ELECTRICBORDER COMPONENT ---
 import ElectricBorder from './ElectricBorder'; // Assuming it's in the same directory

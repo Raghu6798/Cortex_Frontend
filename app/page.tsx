@@ -3,21 +3,21 @@
 import React from 'react';
 
 
-import { SectionReveal } from '@/components/ui/SectionReveal';
+import { SectionReveal } from '@/components/ui/general/SectionReveal';
 import Header from '@/components/layout/Header'; 
 import Footer from '@/components/layout/Footer';
-import HeroSection from '@/components/ui/HeroSection';
-import LogosSection from '@/components/ui/LogosSection';
-import ProblemSection from '@/components/ui/ProblemSection';
-import SolutionSection from '@/components/ui/SolutionSection';
-import HowItWorksSection from '@/components/ui/HowItWorksSection';
-import TestimonialHighlightSection from '@/components/ui/TestimonialHighlightSection';
-import FeaturesSection from '@/components/ui/FeaturesSection';
-import { AnimatedTestimonials } from '@/components/ui/animated-testimonials';
-import PricingSection from '@/components/ui/PricingPlan'; 
-import FAQSection from '@/components/ui/FAQSection';
-import BlogSection from '@/components/ui/BlogSection';
-import CTASection from '@/components/ui/CTASection';
+import HeroSection from '@/components/ui/general/HeroSection';
+import LogosSection from '@/components/ui/general/LogosSection';
+import ProblemSection from '@/components/ui/general/ProblemSection';
+import SolutionSection from '@/components/ui/general/SolutionSection';
+import HowItWorksSection from '@/components/ui/general/HowItWorksSection';
+import TestimonialHighlightSection from '@/components/ui/general/TestimonialHighlightSection';
+import FeaturesSection from '@/components/ui/general/FeaturesSection';
+import { AnimatedTestimonials } from '@/components/ui/general/animated-testimonials';
+import PricingSection from '@/components/ui/general/PricingPlan'; 
+import FAQSection from '@/components/ui/general/FAQSection';
+import BlogSection from '@/components/ui/general/BlogSection';
+import CTASection from '@/components/ui/general/CTASection';
 
 // --- THIS IS THE MODIFIED DATA ARRAY ---
 const testimonials = [

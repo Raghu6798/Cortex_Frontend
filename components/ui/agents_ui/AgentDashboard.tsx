@@ -10,12 +10,10 @@ import { Badge } from '@/components/ui/shadcn/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/shadcn/dialog';
 import { Input } from '@/components/ui/shadcn/Input';
 import { Label } from '@/components/ui/shadcn/label';
-import { Textarea } from '@/components/ui/shadcn/textarea';
 import { 
   Bot, 
   MessageSquare, 
   Trash2, 
-  Edit, 
   Plus, 
   Calendar,
   Settings,
@@ -29,8 +27,8 @@ interface Agent {
   description?: string;
   architecture: string;
   framework: string;
-  settings: any;
-  tools?: any[];
+  settings: Record<string, unknown>;
+  tools?: Record<string, unknown>[];
   created_at: string;
   updated_at: string;
   session_count: number;
@@ -42,7 +40,7 @@ interface AgentDashboardProps {
 }
 
 export default function AgentDashboard({ onCreateAgent, onSelectAgent }: AgentDashboardProps) {
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn } = useUser();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -246,19 +244,19 @@ export default function AgentDashboard({ onCreateAgent, onSelectAgent }: AgentDa
             </DialogTitle>
             <DialogDescription className="text-white/70">
               This action cannot be undone. This will permanently delete the agent 
-              "{agentToDelete?.name}" and all its conversations.
+              &quot;{agentToDelete?.name}&quot; and all its conversations.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label htmlFor="delete-confirm" className="text-white">
-              Type "delete" to confirm:
+              Type &quot;delete&quot; to confirm:
             </Label>
             <Input
               id="delete-confirm"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               className="mt-2 bg-black/50 border-white/15 text-white"
-              placeholder="Type 'delete' here"
+              placeholder="Type &apos;delete&apos; here"
             />
           </div>
           <DialogFooter>

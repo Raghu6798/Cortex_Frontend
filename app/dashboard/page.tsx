@@ -7,7 +7,7 @@ import { Users, LayoutDashboard } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
 import MultiModalChatUI from '@/components/ui/agents_ui/MultiModalChatUI';
-import AgentBuilder, { AgentState } from '@/components/ui/agents_ui/AgentBuild';
+import AgentBuilder, { AgentState, ToolConfig } from '@/components/ui/agents_ui/AgentBuild';
 import AgentList from '@/components/ui/agents_ui/AgentList';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       architecture: agent.architecture as 'mono' | 'multi',
       framework: agent.framework,
       settings: agent.settings,
-      tools: (agent.tools || []) as Record<string, unknown>[] // Type assertion for now
+      tools: (agent.tools || []) as unknown as ToolConfig[] // Type assertion for now
     };
     
     setInitialAgentConfig(agentState);

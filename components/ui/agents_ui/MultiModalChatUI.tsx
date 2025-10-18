@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
-import apiClient from '@/lib/apiClient';
 import { AgentState } from './AgentBuild';
 
 // --- FRAMEWORK CONFIGURATION & TYPES ---
@@ -172,7 +171,7 @@ const MultiModalChatUI = ({
           const data = await response.json();
           if (data.sessions && data.sessions.length > 0) {
             // Convert backend sessions to frontend format
-            const frontendSessions: ChatSession[] = data.sessions.map((session: any) => {
+            const frontendSessions: ChatSession[] = data.sessions.map((session: Record<string, unknown>) => {
               console.log('Loading session:', session.id, 'with agent_config:', session.agent_config);
               return {
                 id: session.id,
@@ -214,7 +213,7 @@ const MultiModalChatUI = ({
     } else if (!initialAgentConfig && !isSessionsLoaded) {
       fetchSessions();
     }
-  }, [userId, isSessionsLoaded, initialAgentConfig]);
+  }, [userId, isSessionsLoaded, initialAgentConfig, getToken]);
 
   
   const addMessageToSession = async (message: Message) => {

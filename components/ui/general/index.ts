@@ -1,24 +1,18 @@
-// General UI Components
-export { default as AnimatedTestimonials } from './animated-testimonials';
-export { default as AnimatedBeamComponent } from './AnimatedBeamComponent';
-export { default as BlogSection } from './BlogSection';
-export { default as BoxReveal } from './BoxReveal';
+// General UI Components - Only export what's actually used
+export { AnimatedTestimonials } from './animated-testimonials';
+export { AnimatedBeam } from './AnimatedBeamComponent';
 export { NumberTicker } from './CountingNumbers';
+export { SectionReveal } from './SectionReveal';
+
+// Default exports
+export { default as BlogSection } from './BlogSection';
 export { default as CTASection } from './CTASection';
-export { default as DarkVeil } from './DarkVeil';
-export { default as ElectricBorder } from './ElectricBorder';
 export { default as FAQSection } from './FAQSection';
 export { default as FeaturesSection } from './FeaturesSection';
-export { default as GridDistortion } from './GridDistortion';
 export { default as HeroSection } from './HeroSection';
 export { default as HowItWorksSection } from './HowItWorksSection';
-export { default as LaserFlow } from './LaserFlow';
 export { default as LogosSection } from './LogosSection';
-export { default as MagicCard } from './MagicCard';
-export { default as NeonGradientCard } from './NeonGradientCard';
 export { default as PricingPlan } from './PricingPlan';
 export { default as ProblemSection } from './ProblemSection';
-export { default as RotatingText } from './RotatingText';
-export { SectionReveal } from './SectionReveal';
 export { default as SolutionSection } from './SolutionSection';
 export { default as TestimonialHighlightSection } from './TestimonialHighlightSection';

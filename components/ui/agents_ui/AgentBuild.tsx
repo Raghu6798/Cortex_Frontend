@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/shadcn/label';
 import { Progress } from "@/components/ui/shadcn/progress";
 import ProviderSelector from './ProviderSelector';
 import {
-  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, Globe, PlusCircle, Trash2
+  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2
 } from 'lucide-react';
 
 

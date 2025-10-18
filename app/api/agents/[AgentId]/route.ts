@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ AgentId: string }> }
 ) {
   try {
     const { userId, getToken } = await auth();
@@ -19,7 +19,8 @@ export async function GET(
       return NextResponse.json({ error: 'No authentication token' }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/agents/${params.id}`, {
+    const { AgentId } = await params;
+    const response = await fetch(`${API_BASE_URL}/api/v1/agents/${AgentId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -43,7 +44,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ AgentId: string }> }
 ) {
   try {
     const { userId, getToken } = await auth();
@@ -58,8 +59,9 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const { AgentId } = await params;
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/agents/${params.id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/agents/${AgentId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -86,7 +88,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ AgentId: string }> }
 ) {
   try {
     const { userId, getToken } = await auth();
@@ -100,7 +102,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'No authentication token' }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/agents/${params.id}`, {
+    const { AgentId } = await params;
+    const response = await fetch(`${API_BASE_URL}/api/v1/agents/${AgentId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

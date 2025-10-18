@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { ChevronDownIcon, CheckIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { apiClient, Provider, Model } from "@/lib/apiClient";
+import { apiClient, Provider } from "@/lib/apiClient";
 
 interface ProviderSelectorProps {
   selectedProvider?: string;
@@ -22,7 +22,7 @@ export default function ProviderSelector({
   onModelChange,
   className = "",
 }: ProviderSelectorProps) {
-  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { getToken } = useAuth();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -75,7 +75,7 @@ class ApiClient {
   }
 
   // Public POST method
-  async post<T>(endpoint: string, data: any, options: RequestInit = {}, token?: string): Promise<T> {
+  async post<T>(endpoint: string, data: Record<string, unknown>, options: RequestInit = {}, token?: string): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -89,7 +89,7 @@ class ApiClient {
     return this.get<Provider[]>('/api/v1/providers', {}, token);
   }
 
-  async testChatCompletion(providerId: string, requestBody: any, token?: string): Promise<any> {
+  async testChatCompletion(providerId: string, requestBody: Record<string, unknown>, token?: string): Promise<Record<string, unknown>> {
     return this.post(`/api/v1/providers/${providerId}/chat`, requestBody, {}, token);
   }
 }

@@ -228,9 +228,8 @@ const MultiModalChatUI = ({
       if (!token) {
         throw new Error('No authentication token available');
       }
-
-      // FIX #3: Use relative path. Base URL and headers are handled by apiClient.
-      const endpoint = '/api/v1/chat/invoke';
+  
+      const endpoint = '/api/v1/chat/invoke/langchain';
        const requestBody = { 
          ...activeSession.agentConfig, 
          message: message.text, 

@@ -10,7 +10,8 @@ import {
   Trash2, 
   ChevronLeft, 
   ChevronRight,
-  Play
+  Play,
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
@@ -32,6 +33,7 @@ interface Agent {
 
 interface AgentListProps {
   onAgentSelect: (agent: Agent) => void;
+  onAgentEdit?: (agent: Agent) => void;
   onCreateNew: () => void;
   showHeader?: boolean;
 }
@@ -58,13 +60,22 @@ const AgentCardSkeleton = () => (
 const AgentCard = ({ 
   agent, 
   onSelect, 
+  onEdit,
   onDelete 
 }: { 
   agent: Agent; 
   onSelect: (agent: Agent) => void;
+  onEdit?: (agent: Agent) => void;
   onDelete: (agentId: string) => void;
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(agent);
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,6 +129,16 @@ const AgentCard = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {onEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleEdit}
+              className="text-white/40 hover:text-purple-400 hover:bg-purple-900/20"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             size="sm"
             variant="ghost"
@@ -222,7 +243,7 @@ const Pagination = ({
 };
 
 // Main AgentList component
-export default function AgentList({ onAgentSelect, onCreateNew, showHeader = true }: AgentListProps) {
+export default function AgentList({ onAgentSelect, onAgentEdit, onCreateNew, showHeader = true }: AgentListProps) {
   const { getToken } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -336,6 +357,7 @@ export default function AgentList({ onAgentSelect, onCreateNew, showHeader = tru
                   key={agent.id}
                   agent={agent}
                   onSelect={onAgentSelect}
+                  onEdit={onAgentEdit}
                   onDelete={handleDeleteAgent}
                 />
               ))}

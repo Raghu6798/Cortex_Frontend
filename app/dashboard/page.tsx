@@ -9,6 +9,7 @@ import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
 import MultiModalChatUI from '@/components/ui/agents_ui/MultiModalChatUI';
 import AgentBuilder, { AgentState, ToolConfig } from '@/components/ui/agents_ui/AgentBuild';
 import AgentList from '@/components/ui/agents_ui/AgentList';
+import AgentEditor from '@/components/ui/agents_ui/AgentEditor';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton'; // Import the Skeleton component
@@ -65,9 +66,18 @@ export default function DashboardPage() {
   const { user } = useUser();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents' | 'editor'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
+  const [agentToEdit, setAgentToEdit] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    architecture: string;
+    framework: string;
+    settings: Record<string, unknown>;
+    tools: Record<string, unknown>[];
+  } | null>(null);
 
   // Simulate data fetching for the dashboard
   useEffect(() => {
@@ -105,11 +115,28 @@ export default function DashboardPage() {
     setActiveView('chat');
   };
 
+  const handleAgentEdit = (agent: { id: string; name: string; description: string; architecture: string; framework: string; settings: Record<string, unknown>; tools: Record<string, unknown>[] }) => {
+    setAgentToEdit(agent);
+    setActiveView('editor');
+  };
+
+  const handleAgentSaved = (updatedAgent: unknown) => {
+    console.log('Agent updated:', updatedAgent);
+    setAgentToEdit(null);
+    setActiveView('agents');
+  };
+
+  const handleCancelEdit = () => {
+    setAgentToEdit(null);
+    setActiveView('agents');
+  };
+
   const getHeaderText = () => {
     switch (activeView) {
       case 'builder': return 'Create a New Custom Agent';
       case 'chat': return 'Custom Agent Chat';
       case 'agents': return 'Your Agents';
+      case 'editor': return 'Edit Agent';
       case 'dashboard':
       default:
         return `Welcome Back, ${user?.firstName || 'Developer'}!`;
@@ -121,6 +148,7 @@ export default function DashboardPage() {
       case 'builder': return 'Follow the steps to configure your new agent.';
       case 'chat': return 'Interact with your configured and saved agents.';
       case 'agents': return 'Manage and interact with your configured AI agents.';
+      case 'editor': return 'Update your agent configuration.';
       case 'dashboard':
       default:
         return "Here's a live overview of your agent operations.";
@@ -130,7 +158,8 @@ export default function DashboardPage() {
   const renderContent = () => {
     if (activeView === 'builder') return <AgentBuilder onAgentCreated={handleAgentCreated} />;
     if (activeView === 'chat') return <MultiModalChatUI initialAgentConfig={initialAgentConfig} />;
-    if (activeView === 'agents') return <AgentList onAgentSelect={handleAgentSelect} onCreateNew={() => setActiveView('builder')} showHeader={false} />;
+    if (activeView === 'agents') return <AgentList onAgentSelect={handleAgentSelect} onAgentEdit={handleAgentEdit} onCreateNew={() => setActiveView('builder')} showHeader={false} />;
+    if (activeView === 'editor' && agentToEdit) return <AgentEditor agent={agentToEdit} onSave={handleAgentSaved} onCancel={handleCancelEdit} />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;

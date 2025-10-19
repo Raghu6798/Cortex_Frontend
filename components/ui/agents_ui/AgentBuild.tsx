@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/shadcn/Input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Progress } from "@/components/ui/shadcn/progress";
 import ProviderSelector from './ProviderSelector';
+import ClassicLoader from '@/components/ui/general/ClassicLoader';
 import {
   CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2
 } from 'lucide-react';
@@ -86,6 +87,7 @@ const STEPS = [
 export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (config: AgentState) => void; }) {
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
     const [agentState, setAgentState] = useState<AgentState>({
       architecture: null,
       framework: null,
@@ -97,8 +99,13 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
 
     const handleNext = () => {
         if (currentStep < STEPS.length - 1) {
-        setDirection(1);
-        setCurrentStep(currentStep + 1);
+        setIsLoading(true);
+        // Simulate a brief loading transition
+        setTimeout(() => {
+            setDirection(1);
+            setCurrentStep(currentStep + 1);
+            setIsLoading(false);
+        }, 500);
         }
     };
 
@@ -127,6 +134,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
 
     const handleFinalSubmit = async () => {
         console.log('Final Agent Configuration:', agentState);
+        setIsLoading(true);
         
         try {
             // Transform tools to backend format
@@ -214,6 +222,8 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 model_id: agentState.settings.modelId
             };
             onAgentCreated(enhancedAgentState);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -231,7 +241,19 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg bg-black/30 border border-white/15 flex flex-col min-h-[500px] max-h-[1200px]">
+        <div className="w-full max-w-4xl mx-auto p-6 rounded-lg shadow-lg bg-black/30 border border-white/15 flex flex-col min-h-[500px] max-h-[1200px] relative">
+            {/* Loading Overlay */}
+            {isLoading && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+                    <div className="flex flex-col items-center gap-4">
+                        <ClassicLoader />
+                        <p className="text-white/80 text-sm">
+                            {currentStep === STEPS.length - 1 ? 'Creating your agent...' : 'Loading...'}
+                        </p>
+                    </div>
+                </div>
+            )}
+            
             <div className="mb-8">
                 <Progress value={progress} className="h-2 bg-white/10" />
                 <div className="flex justify-between mt-2">
@@ -275,7 +297,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 <Button 
                     variant="outline" 
                     onClick={handlePrev} 
-                    disabled={currentStep === 0} 
+                    disabled={currentStep === 0 || isLoading} 
                     className={cn(
                         currentStep === 0 && 'invisible',
                         'bg-white text-black hover:bg-gray-100 border-white'
@@ -286,20 +308,39 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 {currentStep === STEPS.length - 1 ? (
                 <Button 
                     onClick={handleFinalSubmit} 
+                    disabled={isLoading}
                     className="bg-white text-black hover:bg-gray-100"
                 >
-                    Create Agent <CheckCircle2 className="ml-2 h-4 w-4" />
+                    {isLoading ? (
+                        <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
+                            <span className="ml-2">Creating...</span>
+                        </>
+                    ) : (
+                        <>
+                            Create Agent <CheckCircle2 className="ml-2 h-4 w-4" />
+                        </>
+                    )}
                 </Button>
                 ) : (
                 <Button 
                     onClick={handleNext} 
-                    disabled={isNextDisabled()} 
+                    disabled={isNextDisabled() || isLoading} 
                     className={cn(
                         isNextDisabled() && 'invisible', 
                         'bg-white text-black hover:bg-gray-100'
                     )}
                 >
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                    {isLoading ? (
+                        <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
+                            <span className="ml-2">Loading...</span>
+                        </>
+                    ) : (
+                        <>
+                            Next <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                    )}
                 </Button>
                 )}
             </div>

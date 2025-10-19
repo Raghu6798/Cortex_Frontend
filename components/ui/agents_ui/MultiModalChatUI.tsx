@@ -106,7 +106,7 @@ const MultiModalChatUI = ({
             throw new Error('No authentication token available');
           }
 
-          const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/sessions/`, {
+          const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-8app.onrender.com'}/api/v1/sessions/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ const MultiModalChatUI = ({
             throw new Error('No authentication token available');
           }
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/sessions/`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-8app.onrender.com'}/api/v1/sessions/`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -265,7 +265,7 @@ const MultiModalChatUI = ({
 
     
       // Make the request with the token
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-8app.onrender.com'}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

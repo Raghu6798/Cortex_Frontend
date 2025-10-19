@@ -173,7 +173,7 @@ export default function DashboardPage() {
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
         onNewAgentClick={() => setActiveView('builder')}
-        activeView={activeView}
+        activeView={activeView === 'editor' ? 'agents' : activeView}
         onViewChange={setActiveView}
       />
 

@@ -37,6 +37,10 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}, token?: string): Promise<T> {
     // Construct the full URL. Handles both relative and absolute endpoints.
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
+    
+    console.log('[ApiClient] Making request to:', url);
+    console.log('[ApiClient] Base URL:', this.baseUrl);
+    console.log('[ApiClient] Endpoint:', endpoint);
 
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
@@ -54,10 +58,13 @@ class ApiClient {
         ...options.headers, // Allow overriding default headers
       },
     });
+    
+    console.log('[ApiClient] Response status:', response.status);
+    console.log('[ApiClient] Response OK:', response.ok);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error("API Error Response:", errorBody);
+      console.error("[ApiClient] API Error Response:", errorBody);
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
     

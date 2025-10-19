@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { ChevronDownIcon, CheckIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { apiClient, Provider } from "@/lib/apiClient";
@@ -22,7 +21,6 @@ export default function ProviderSelector({
   onModelChange,
   className = "",
 }: ProviderSelectorProps) {
-  const { getToken } = useAuth();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,14 +32,19 @@ export default function ProviderSelector({
       try {
         setLoading(true);
         setError(null);
-        const token = await getToken();
-        const data = await apiClient.getProviders(token || undefined);
+        console.log('[ProviderSelector] Fetching providers without authentication');
+        const data = await apiClient.getProviders();
+        console.log('[ProviderSelector] Providers fetched:', data.length, 'providers');
+        console.log('[ProviderSelector] First provider:', data[0]);
         setProviders(data);
-      } catch (error) { console.error("Failed to fetch providers:", error); }
+      } catch (error) { 
+        console.error("[ProviderSelector] Failed to fetch providers:", error);
+        setError(error instanceof Error ? error.message : 'Failed to load providers');
+      }
       finally { setLoading(false); }
     };
     fetchProviders();
-  }, [getToken]);
+  }, []);
   const selectedProviderData = providers.find((p) => p.name === selectedProvider);
   const availableModels = selectedProviderData?.models || [];
 

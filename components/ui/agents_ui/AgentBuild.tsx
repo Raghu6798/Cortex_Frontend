@@ -129,6 +129,42 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
         console.log('Final Agent Configuration:', agentState);
         
         try {
+            // Transform tools to backend format
+            const transformedTools = (agentState.tools || []).map(tool => {
+                // Convert ToolParam arrays to simple key-value objects
+                const headers: Record<string, string> = {};
+                tool.api_headers?.forEach(param => {
+                    if (param.key && param.value) {
+                        headers[param.key] = param.value;
+                    }
+                });
+
+                const queryParams: Record<string, string> = {};
+                tool.api_query_params?.forEach(param => {
+                    if (param.key && param.value) {
+                        queryParams[param.key] = param.value;
+                    }
+                });
+
+                const pathParams: Record<string, string> = {};
+                tool.api_path_params?.forEach(param => {
+                    if (param.key && param.value) {
+                        pathParams[param.key] = param.value;
+                    }
+                });
+
+                return {
+                    name: tool.name,
+                    description: tool.description,
+                    api_url: tool.api_url,
+                    api_method: tool.api_method,
+                    api_headers: headers,
+                    api_query_params: queryParams,
+                    api_path_params: pathParams,
+                    request_payload: tool.request_payload || ''
+                };
+            });
+
             // Create agent in database
             const agentData = {
                 name: `${agentState.framework} Agent`,
@@ -136,7 +172,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 architecture: agentState.architecture,
                 framework: agentState.framework,
                 settings: agentState.settings,
-                tools: agentState.tools || []
+                tools: transformedTools
             };
 
             const response = await fetch('/api/agents', {
@@ -389,9 +425,7 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
             </div>
         </div>
         
-        <Button type="submit" className="w-full !mt-6 bg-purple-600 hover:bg-purple-500">
-          Save Configuration & Continue <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+      
       </form>
     </div>
   );

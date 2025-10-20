@@ -17,9 +17,9 @@ import { AgentState } from './AgentBuild';
 const FRAMEWORK_DETAILS = {
   langchain: { name: 'LangChain Agent', description: 'Use the powerful and flexible LangChain agent framework.', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langchain-color.png', enabled: true },
   llama_index: { name: 'LlamaIndex Workflow', description: 'Build with LlamaIndex\'s event-driven ReAct agent.', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/llamaindex-color.png', enabled: true },
+  adk: { name: 'Google ADK', description: 'Explore Google\'s Agent Development Kit with ReAct planning.', logo: 'https://google.github.io/adk-docs/assets/agent-development-kit.png', enabled: true },
   pydantic_ai: { name: 'Pydantic AI', description: 'Leverage Pydantic for structured AI outputs (coming soon).', logo: 'https://pbs.twimg.com/profile_images/1884966723746435073/x0p8ngPD_400x400.jpg', enabled: false },
-  langgraph: { name: 'LangGraph', description: 'Build stateful, multi-actor applications (coming soon).', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langgraph-color.png', enabled: false },
-  adk: { name: 'Google ADK', description: 'Explore Google\'s Agent Development Kit (coming soon).', logo: 'https://google.github.io/adk-docs/assets/agent-development-kit.png', enabled: false }
+  langgraph: { name: 'LangGraph', description: 'Build stateful, multi-actor applications (coming soon).', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langgraph-color.png', enabled: false }
 };
 type AgentFramework = keyof typeof FRAMEWORK_DETAILS;
 
@@ -229,7 +229,17 @@ const MultiModalChatUI = ({
         throw new Error('No authentication token available');
       }
   
-      const endpoint = '/api/v1/chat/invoke/langchain';
+      // Dynamic endpoint based on framework
+      const frameworkEndpoints: Record<AgentFramework, string> = {
+        langchain: '/api/v1/ReActAgent/langchain',
+        llama_index: '/api/v1/ReActAgent/llama_index',
+        adk: '/api/v1/ReActAgent/adk',
+        pydantic_ai: '/api/v1/ReActAgent/pydantic_ai', // Future support
+        langgraph: '/api/v1/ReActAgent/langgraph', // Future support
+      };
+      
+      const endpoint = frameworkEndpoints[activeSession.framework] || frameworkEndpoints.langchain;
+      
        const requestBody = { 
          ...activeSession.agentConfig, 
          message: message.text, 
@@ -238,12 +248,14 @@ const MultiModalChatUI = ({
          model_id: activeSession.agentConfig.model_name
        };
 
-      console.log('Sending request body:', {
+      console.log('🚀 Framework:', activeSession.framework);
+      console.log('🎯 Using endpoint:', endpoint);
+      console.log('📦 Sending request body:', {
         ...requestBody,
         api_key: requestBody.api_key ? `${requestBody.api_key.substring(0, 10)}...` : 'No API key'
       });
-      console.log('Provider ID being sent:', requestBody.provider_id);
-      console.log('Active session agent config:', activeSession.agentConfig);
+      console.log('🔑 Provider ID being sent:', requestBody.provider_id);
+      console.log('⚙️ Active session agent config:', activeSession.agentConfig);
 
        // Validate API key before sending
        if (!requestBody.api_key || requestBody.api_key.trim() === '') {

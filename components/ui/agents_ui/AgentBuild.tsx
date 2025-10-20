@@ -122,7 +122,10 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     };
 
     const handleConfigSubmit = (settings: ConfigFormData) => {
-        console.log('Form submitted with settings:', settings);
+        console.log('✅ Configuration form submitted with settings:', settings);
+        console.log('📋 Provider ID:', settings.providerId);
+        console.log('🤖 Model ID:', settings.modelId);
+        console.log('🔑 API Key:', settings.apiKey ? `${settings.apiKey.substring(0, 10)}...` : 'Not provided');
         setAgentState((prev) => ({ ...prev, settings }));
         handleNext();
     };
@@ -133,7 +136,8 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     }
 
     const handleFinalSubmit = async () => {
-        console.log('Final Agent Configuration:', agentState);
+        console.log('🚀 Final Agent Configuration:', agentState);
+        console.log('⚙️ Settings being sent:', agentState.settings);
         setIsLoading(true);
         
         try {
@@ -230,7 +234,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     const isNextDisabled = () => {
         if (currentStep === 0 && !agentState.architecture) return true;
         if (currentStep === 1 && !agentState.framework) return true;
-        // For step 2 (configure), allow Next button to be visible - form submission handles navigation
+        if (currentStep === 2) return true; // Hide Next button on configure step - form has its own submit
         return false;
     };
 
@@ -466,7 +470,15 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
             </div>
         </div>
         
-      
+        {/* Hidden submit button - triggered by form's submit event */}
+        <div className="flex justify-end pt-6 border-t border-white/15">
+          <Button 
+            type="submit" 
+            className="bg-white text-black hover:bg-gray-100"
+          >
+            Save Configuration <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </form>
     </div>
   );

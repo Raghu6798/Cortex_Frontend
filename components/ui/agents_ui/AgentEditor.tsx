@@ -1,9 +1,9 @@
 // components/ui/agents_ui/AgentEditor.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/Input';
 import { Label } from '@/components/ui/shadcn/label';
@@ -119,7 +119,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
     });
   });
 
-  const { register, setValue } = useForm<ConfigFormData>({
+  const { register, handleSubmit, setValue, watch } = useForm<ConfigFormData>({
     defaultValues: settings
   });
 

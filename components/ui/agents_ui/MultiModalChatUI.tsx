@@ -276,7 +276,7 @@ const MultiModalChatUI = ({
 
     
       // Make the request with the token
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com/'}${endpoint}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

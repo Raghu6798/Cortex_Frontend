@@ -1,7 +1,7 @@
 // lib/apiClient.ts
 
 // API client configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-8app.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com';
 
 export interface Provider {
   id: string;

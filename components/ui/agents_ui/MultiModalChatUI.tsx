@@ -36,7 +36,7 @@ interface AgentConfig {
 }
 
 type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: File[]; };
-type ChatSession = { id: string; userId: string; title: string; messages: Message[]; agentConfig: AgentConfig | null; memoryUsage: number; framework: AgentFramework; };
+type ChatSession = { id: string; userId: string; title: string; messages: Message[]; agentConfig: AgentConfig | null; memoryUsage: number; framework: AgentFramework; agentId: string; };
 
 // --- SKELETON LOADER COMPONENTS ---
 const ChatUISkeleton = () => ( <div className="flex h-screen w-full bg-[#0d1117] text-gray-200 font-sans"> <aside className="w-72 bg-[#161b22] p-4 flex flex-col border-r border-gray-700"> <Skeleton className="h-10 w-full mb-4" /> <div className="flex-1 overflow-y-auto space-y-2"> {[...Array(8)].map((_, i) => ( <div key={i} className="flex items-center gap-3 p-2 rounded-md"> <Skeleton className="h-5 w-5 rounded-full" /> <Skeleton className="h-4 w-40" /> </div> ))} </div> </aside> <div className="flex-1 flex flex-col"> <header className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0"> <Skeleton className="h-6 w-48" /> <div className="w-1/3 space-y-2"><Skeleton className="h-2 w-24" /><Skeleton className="h-2 w-full" /></div> </header> <main className="flex-1 p-6"> <div className="flex items-start gap-4 max-w-4xl mx-auto justify-start mb-6"> <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" /> <div className="p-4 rounded-xl max-w-[75%] bg-gray-700/50 w-2/3 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-5/6" /></div> </div> <div className="flex items-start gap-4 max-w-4xl mx-auto justify-end"> <div className="p-4 rounded-xl max-w-[75%] bg-purple-900/20 w-1/2 space-y-2"><Skeleton className="h-4 w-full" /></div> <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" /> </div> </main> <footer className="p-4 border-t border-gray-700 bg-[#0d1117] flex-shrink-0"> <div className="max-w-4xl mx-auto"><Skeleton className="h-12 w-full rounded-xl" /></div> </footer> </div> </div> );
@@ -134,6 +134,7 @@ const MultiModalChatUI = ({
             agentConfig: newAgentConfig,
             memoryUsage: createdSession.memory_usage || 0,
             framework: createdSession.framework,
+            agentId: createdSession.agent_id || '',
           };
           
           setSessions((prev) => [newSession, ...prev]);

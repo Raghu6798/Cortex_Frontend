@@ -246,8 +246,7 @@ const MultiModalChatUI = ({
          message: message.text, 
          tools: [],
          provider_id: activeSession.agentConfig.provider_id || 'groq', // Use dynamic provider from agentConfig
-         model_id: activeSession.agentConfig.model_name,
-         agent_id: activeSession.agentId
+         model_id: activeSession.agentConfig.model_name
        };
 
       console.log('🚀 Framework:', activeSession.framework);

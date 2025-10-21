@@ -176,7 +176,7 @@ export default function DashboardPage() {
         onMouseLeave={() => setIsSidebarExpanded(false)}
         onNewAgentClick={() => setActiveView('builder')}
         activeView={activeView === 'editor' ? 'agents' : activeView}
-        onViewChange={(view) => setActiveView(view as any)}
+        onViewChange={(view) => setActiveView(view as 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets' | 'editor')}
       />
 
       <main className={cn(

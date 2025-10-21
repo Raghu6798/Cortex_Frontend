@@ -10,6 +10,7 @@ import MultiModalChatUI from '@/components/ui/agents_ui/MultiModalChatUI';
 import AgentBuilder, { AgentState, ToolConfig } from '@/components/ui/agents_ui/AgentBuild';
 import AgentList from '@/components/ui/agents_ui/AgentList';
 import AgentEditor from '@/components/ui/agents_ui/AgentEditor';
+import SecretsManagement from '@/components/ui/agents_ui/SecretsManagement';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton'; // Import the Skeleton component
@@ -66,7 +67,7 @@ export default function DashboardPage() {
   const { user } = useUser();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents' | 'editor'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents' | 'editor' | 'secrets'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
   const [agentToEdit, setAgentToEdit] = useState<{
@@ -160,6 +161,7 @@ export default function DashboardPage() {
     if (activeView === 'chat') return <MultiModalChatUI initialAgentConfig={initialAgentConfig} />;
     if (activeView === 'agents') return <AgentList onAgentSelect={handleAgentSelect} onAgentEdit={handleAgentEdit} onCreateNew={() => setActiveView('builder')} showHeader={false} />;
     if (activeView === 'editor' && agentToEdit) return <AgentEditor agent={agentToEdit} onSave={handleAgentSaved} onCancel={handleCancelEdit} />;
+    if (activeView === 'secrets') return <SecretsManagement />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;
@@ -174,7 +176,7 @@ export default function DashboardPage() {
         onMouseLeave={() => setIsSidebarExpanded(false)}
         onNewAgentClick={() => setActiveView('builder')}
         activeView={activeView === 'editor' ? 'agents' : activeView}
-        onViewChange={setActiveView}
+        onViewChange={(view) => setActiveView(view as any)}
       />
 
       <main className={cn(

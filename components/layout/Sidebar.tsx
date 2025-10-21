@@ -10,6 +10,7 @@ import {
   Puzzle,
   LayoutDashboard,
   Bot,
+  Shield,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -20,14 +21,15 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat';
-  onViewChange?: (view: 'dashboard' | 'agents' | 'builder' | 'chat') => void;
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets';
+  onViewChange?: (view: 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets') => void;
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView, onViewChange }: SidebarProps) => {
   const navigationItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
     { name: 'Your Agents', icon: Bot, view: 'agents' as const },
+    { name: 'Secrets', icon: Shield, view: 'secrets' as const },
   ];
 
   const features = [

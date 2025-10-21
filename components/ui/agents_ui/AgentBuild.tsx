@@ -2,7 +2,7 @@
 "use client";
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import Image from 'next/image';
@@ -13,8 +13,10 @@ import { Label } from '@/components/ui/shadcn/label';
 import { Progress } from "@/components/ui/shadcn/progress";
 import ProviderSelector from './ProviderSelector';
 import ClassicLoader from '@/components/ui/general/ClassicLoader';
+import { apiClient, Secret } from '@/lib/apiClient';
+import { useAuth } from '@clerk/nextjs';
 import {
-  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2
+  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2, Key, Shield
 } from 'lucide-react';
 
 
@@ -485,9 +487,29 @@ const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<Co
 };
 
 const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: ToolConfig[]) => void; defaultTools: ToolConfig[] }) => {
+  const { getToken } = useAuth();
+  const [secrets, setSecrets] = useState<Secret[]>([]);
+  
   const [tools, setTools] = useState<ToolConfig[]>(defaultTools.length > 0 ? defaultTools : [
     { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], request_payload: '' }
   ]);
+
+  const loadSecrets = React.useCallback(async () => {
+    try {
+      const token = await getToken();
+      if (token) {
+        const secretsData = await apiClient.getSecrets(token);
+        setSecrets(secretsData);
+      }
+    } catch (error) {
+      console.error('Failed to load secrets:', error);
+    }
+  }, [getToken]);
+
+  // Load secrets on component mount
+  useEffect(() => {
+    loadSecrets();
+  }, [loadSecrets]);
 
   const addTool = () => {
     setTools([...tools, { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], request_payload: '' }]);
@@ -521,6 +543,18 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
       return { ...tool, [paramType]: tool[paramType].filter(p => p.id !== paramId) };
+    }));
+  };
+
+  const addSecretAsHeader = (toolId: string, secretName: string) => {
+    const newHeader: ToolParam = { 
+      id: `header-${Date.now()}`, 
+      key: 'Authorization', 
+      value: `Bearer {{${secretName}}}` 
+    };
+    setTools(tools.map(tool => {
+      if (tool.id !== toolId) return tool;
+      return { ...tool, api_headers: [...tool.api_headers, newHeader] };
     }));
   };
 
@@ -649,6 +683,33 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
               ))}
               <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_headers')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Header</Button>
             </div>
+
+            {/* Secret Selection for Authentication */}
+            {secrets.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-400" />
+                  <h4 className="text-sm font-medium text-white/80">Use Saved Secret for Authentication</h4>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {secrets.map(secret => (
+                    <Button
+                      key={secret.id}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => addSecretAsHeader(tool.id, secret.name)}
+                      className="bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30 hover:border-blue-400"
+                    >
+                      <Key className="h-3 w-3 mr-1" />
+                      {secret.name}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-white/60">
+                  This will add an Authorization header with your secret value
+                </p>
+              </div>
+            )}
 
             </motion.div>
           ))}

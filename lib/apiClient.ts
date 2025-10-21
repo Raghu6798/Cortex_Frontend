@@ -1,7 +1,7 @@
 // lib/apiClient.ts
 
 // API client configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8000';
 
 export interface Provider {
   id: string;
@@ -24,6 +24,19 @@ export interface Model {
   display_name: string;
   description?: string;
   context_length: number;
+}
+
+export interface Secret {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SecretCreate {
+  name: string;
+  value: string;
 }
 
 class ApiClient {
@@ -76,6 +89,8 @@ class ApiClient {
     return Promise.resolve() as Promise<T>;
   }
 
+  
+
   // Public GET method
   async get<T>(endpoint: string, options: RequestInit = {}, token?: string): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' }, token);
@@ -98,6 +113,19 @@ class ApiClient {
 
   async testChatCompletion(providerId: string, requestBody: Record<string, unknown>, token?: string): Promise<Record<string, unknown>> {
     return this.post(`/api/v1/providers/${providerId}/chat`, requestBody, {}, token);
+  }
+
+  // --- Secrets Management ---
+  async createSecret(secretData: SecretCreate, token?: string): Promise<Secret> {
+    return this.post<Secret>('/api/v1/secrets/', secretData as unknown as Record<string, unknown>, {}, token);
+  }
+
+  async getSecrets(token?: string): Promise<Secret[]> {
+    return this.get<Secret[]>('/api/v1/secrets/', {}, token);
+  }
+
+  async deleteSecret(secretId: string, token?: string): Promise<void> {
+    return this.request<void>(`/api/v1/secrets/${secretId}`, { method: 'DELETE' }, token);
   }
 }
 

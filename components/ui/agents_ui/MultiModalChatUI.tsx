@@ -41,6 +41,21 @@ interface AgentConfig {
 type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: File[]; };
 type ChatSession = { id: string; userId: string; title: string; messages: Message[]; agentConfig: AgentConfig | null; memoryUsage: number; framework: AgentFramework; agentId: string; };
 
+// =================== FIX START (for ESLint error) ===================
+// Define a specific type for the data coming from the backend API
+// to avoid using `any`.
+interface BackendSessionData {
+  id: string;
+  user_id: string;
+  title: string;
+  messages: Message[];
+  agent_config: AgentConfig;
+  memory_usage: number;
+  framework: AgentFramework;
+  agent_id?: string;
+}
+// =================== FIX END (for ESLint error) =====================
+
 // --- SKELETON LOADER COMPONENTS ---
 const ChatUISkeleton = () => ( <div className="flex h-screen w-full bg-[#0d1117] text-gray-200 font-sans"> <aside className="w-72 bg-[#161b22] p-4 flex flex-col border-r border-gray-700"> <Skeleton className="h-10 w-full mb-4" /> <div className="flex-1 overflow-y-auto space-y-2"> {[...Array(8)].map((_, i) => ( <div key={i} className="flex items-center gap-3 p-2 rounded-md"> <Skeleton className="h-5 w-5 rounded-full" /> <Skeleton className="h-4 w-40" /> </div> ))} </div> </aside> <div className="flex-1 flex flex-col"> <header className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0"> <Skeleton className="h-6 w-48" /> <div className="w-1/3 space-y-2"><Skeleton className="h-2 w-24" /><Skeleton className="h-2 w-full" /></div> </header> <main className="flex-1 p-6"> <div className="flex items-start gap-4 max-w-4xl mx-auto justify-start mb-6"> <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" /> <div className="p-4 rounded-xl max-w-[75%] bg-gray-700/50 w-2/3 space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-5/6" /></div> </div> <div className="flex items-start gap-4 max-w-4xl mx-auto justify-end"> <div className="p-4 rounded-xl max-w-[75%] bg-purple-900/20 w-1/2 space-y-2"><Skeleton className="h-4 w-full" /></div> <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" /> </div> </main> <footer className="p-4 border-t border-gray-700 bg-[#0d1117] flex-shrink-0"> <div className="max-w-4xl mx-auto"><Skeleton className="h-12 w-full rounded-xl" /></div> </footer> </div> </div> );
 const MessageItemSkeleton = () => ( <div className="flex items-start gap-4 max-w-4xl mx-auto justify-start"> <div className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-white bg-gray-600"><Bot size={18} /></div> <div className="p-4 rounded-xl max-w-[75%] bg-gray-700 w-1/2 space-y-3"> <Skeleton className="h-4 w-full" /> <Skeleton className="h-4 w-5/6" /> </div> </div> );
@@ -73,12 +88,9 @@ const MultiModalChatUI = ({
         }
 
         const getProviderName = (providerId: string) => {
-          console.log('Provider ID received:', providerId);
           if (['openai', 'groq', 'mistral', 'cerebras', 'sambanova', 'nvidia'].includes(providerId)) {
-            console.log('Provider name found:', providerId);
             return providerId;
           }
-          console.log('Provider UUID detected, defaulting to groq');
           return 'groq';
         };
 
@@ -92,13 +104,8 @@ const MultiModalChatUI = ({
             initialAgentConfig.settings.systemPrompt || 'You are a helpful AI assistant.',
           base_url: initialAgentConfig.settings.baseUrl || '',
           provider_id: getProviderName(initialAgentConfig.settings.providerId || 'groq'),
-
-          // =================== FIX START ===================
-          // The build error was because the object being created in the map was missing the `id` property,
-          // which is required by the `ToolConfig` type.
-          // By adding `id: tool.id`, we ensure the object matches the type.
           tools: (initialAgentConfig.tools || []).map(tool => ({
-            id: tool.id, // <-- THIS LINE FIXES THE BUILD ERROR
+            id: tool.id,
             name: tool.name,
             description: tool.description,
             api_url: tool.api_url,
@@ -108,17 +115,11 @@ const MultiModalChatUI = ({
             api_path_params: tool.api_path_params,
             request_payload: tool.request_payload
           })),
-          // =================== FIX END =====================
         };
-
-        console.log('Creating session with provider:', newAgentConfig.provider_id);
-        console.log('Full agent config being sent to create session:', newAgentConfig);
 
         try {
           const token = await getToken();
-          if (!token) {
-            throw new Error('No authentication token available');
-          }
+          if (!token) throw new Error('No authentication token available');
 
           const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/sessions/`, {
             method: 'POST',
@@ -133,9 +134,7 @@ const MultiModalChatUI = ({
             }),
           });
 
-          if (!sessionResponse.ok) {
-            throw new Error(`Failed to create session: ${sessionResponse.statusText}`);
-          }
+          if (!sessionResponse.ok) throw new Error(`Failed to create session: ${sessionResponse.statusText}`);
 
           const createdSession = await sessionResponse.json();
           
@@ -174,7 +173,10 @@ const MultiModalChatUI = ({
           
           const data = await response.json();
           if (data.sessions && data.sessions.length > 0) {
-            const frontendSessions: ChatSession[] = data.sessions.map((session: any) => ({
+            // =================== FIX START (for ESLint error) ===================
+            // Use the specific `BackendSessionData` type instead of `any`.
+            const frontendSessions: ChatSession[] = data.sessions.map((session: BackendSessionData) => ({
+            // =================== FIX END (for ESLint error) =====================
               id: session.id,
               userId: session.user_id,
               title: session.title,
@@ -231,25 +233,21 @@ const MultiModalChatUI = ({
        const requestBody = { 
          ...activeSession.agentConfig, 
          message: message.text, 
-         tools: activeSession.agentConfig.tools || [], // Use tools from the active session
+         tools: activeSession.agentConfig.tools || [],
          provider_id: activeSession.agentConfig.provider_id || 'groq',
          model_id: activeSession.agentConfig.model_name
        };
 
-      console.log('🚀 Framework:', activeSession.framework);
-      console.log('🎯 Using endpoint:', endpoint);
-      console.log('📦 Sending request body:', { ...requestBody, api_key: '...'});
-
        if (!requestBody.api_key || requestBody.api_key.trim() === '') {
-         throw new Error('API key is required. Please configure your API key in the agent settings.');
+         throw new Error('API key is required.');
        }
 
        const providerId = requestBody.provider_id || 'groq';
        if (providerId === 'openai' && !requestBody.api_key.startsWith('sk-')) {
-         throw new Error('Invalid OpenAI API key format. OpenAI API keys should start with "sk-".');
+         throw new Error('Invalid OpenAI API key format.');
        }
        if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) {
-         throw new Error('Invalid Groq API key format. Groq API keys should start with "gsk_".');
+         throw new Error('Invalid Groq API key format.');
        }
        if (providerId === 'sambanova' && !requestBody.api_key.startsWith('sk-')) {
          throw new Error('Invalid SambaNova API key format.');

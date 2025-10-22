@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
 import { AgentState, ToolConfig, ToolParam } from './AgentBuild';
 
-// --- FRAMEWORK CONFIGURATION ---
+// --- FRAMEWORK CONFIGURATION & TYPES ---
 const FRAMEWORK_DETAILS = {
   langchain: { name: 'LangChain Agent', description: 'Use the powerful and flexible LangChain agent framework.', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langchain-color.png', enabled: true },
   llama_index: { name: 'LlamaIndex Workflow', description: 'Build with LlamaIndex\'s event-driven ReAct agent.', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/llamaindex-color.png', enabled: true },
@@ -50,14 +50,22 @@ type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: Fil
 type ChatSession = { id: string; userId: string; title: string; messages: Message[]; agentConfig: AgentConfig | null; memoryUsage: number; framework: AgentFramework; agentId: string; };
 
 interface BackendSessionData {
-  id: string; user_id: string; title: string; messages: Message[];
-  agent_config: AgentConfig; memory_usage: number; framework: AgentFramework; agent_id?: string;
+  id: string;
+  user_id: string;
+  title: string;
+  messages: Message[];
+  agent_config: AgentConfig;
+  memory_usage: number;
+  framework: AgentFramework;
+  agent_id?: string;
 }
 
 // --- UTILITY FUNCTION TO TRANSFORM TOOLS ---
 const transformToolsForBackend = (tools: ToolConfig[]): BackendToolFormat[] => {
   const paramReducer = (acc: Record<string, string>, param: ToolParam) => {
-    if (param.key && param.value) acc[param.key] = param.value;
+    if (param.key && param.value) {
+      acc[param.key] = param.value;
+    }
     return acc;
   };
   return tools.map(tool => ({
@@ -72,62 +80,9 @@ const transformToolsForBackend = (tools: ToolConfig[]): BackendToolFormat[] => {
   }));
 };
 
-const ChatUISkeleton = () => (
-  <div className="flex h-screen w-full bg-[#0d1117] text-gray-200 font-sans">
-    <aside className="w-72 bg-[#161b22] p-4 flex flex-col border-r border-gray-700">
-      <Skeleton className="h-10 w-full mb-4" />
-      <div className="flex-1 overflow-y-auto space-y-2">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-2 rounded-md">
-            <Skeleton className="h-5 w-5 rounded-full" />
-            <Skeleton className="h-4 w-40" />
-          </div>
-        ))}
-      </div>
-    </aside>
-    <div className="flex-1 flex flex-col">
-      <header className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0">
-        <Skeleton className="h-6 w-48" />
-        <div className="w-1/3 space-y-2">
-          <Skeleton className="h-2 w-24" />
-          <Skeleton className="h-2 w-full" />
-        </div>
-      </header>
-      <main className="flex-1 p-6">
-        <div className="flex items-start gap-4 max-w-4xl mx-auto justify-start mb-6">
-          <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-          <div className="p-4 rounded-xl max-w-[75%] bg-gray-700/50 w-2/3 space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-        </div>
-        <div className="flex items-start gap-4 max-w-4xl mx-auto justify-end">
-          <div className="p-4 rounded-xl max-w-[75%] bg-purple-900/20 w-1/2 space-y-2">
-            <Skeleton className="h-4 w-full" />
-          </div>
-          <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-        </div>
-      </main>
-      <footer className="p-4 border-t border-gray-700 bg-[#0d1117] flex-shrink-0">
-        <div className="max-w-4xl mx-auto">
-          <Skeleton className="h-12 w-full rounded-xl" />
-        </div>
-      </footer>
-    </div>
-  </div>
-);
-
-const MessageItemSkeleton = () => (
-  <div className="flex items-start gap-4 max-w-4xl mx-auto justify-start">
-    <div className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-white bg-gray-600">
-      <Bot size={18} />
-    </div>
-    <div className="p-4 rounded-xl max-w-[75%] bg-gray-700 w-1/2 space-y-3">
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-    </div>
-  </div>
-);
+// --- SKELETON LOADER COMPONENTS ---
+const ChatUISkeleton = () => ( <div className="flex h-screen w-full bg-[#0d1117] text-gray-200 font-sans"> {/* ... */} </div> );
+const MessageItemSkeleton = () => ( <div className="flex items-start gap-4 max-w-4xl mx-auto justify-start"> {/* ... */} </div> );
 
 // --- MAIN CHAT UI COMPONENT ---
 const MultiModalChatUI = ({
@@ -148,7 +103,11 @@ const MultiModalChatUI = ({
       if (initialAgentConfig && userId && !initialSessionCreated.current) {
         initialSessionCreated.current = true;
         const framework = initialAgentConfig.framework as AgentFramework;
-        if (!framework) return;
+        if (!framework) {
+          console.error("Framework not found");
+          setIsSessionsLoaded(true);
+          return;
+        }
 
         const getProviderName = (providerId: string) => ['openai', 'groq', 'mistral', 'cerebras', 'sambanova', 'nvidia'].includes(providerId) ? providerId : 'groq';
 
@@ -174,7 +133,6 @@ const MultiModalChatUI = ({
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ framework, title: `New ${FRAMEWORK_DETAILS[framework]?.name || 'Agent'} Chat`, agent_config: agentConfigForBackend }),
           });
-
           if (!sessionResponse.ok) throw new Error(`Failed to create session: ${sessionResponse.statusText}`);
           
           const createdSession = await sessionResponse.json();
@@ -202,7 +160,6 @@ const MultiModalChatUI = ({
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/sessions/`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
-        
         if (!response.ok) throw new Error(`Failed to fetch sessions: ${response.statusText}`);
         
         const data = await response.json();
@@ -222,7 +179,6 @@ const MultiModalChatUI = ({
       }
     };
 
-    // <<< FIX: This logic prevents the infinite loop >>>
     if (initialAgentConfig && userId && !initialSessionCreated.current) {
       createInitialSession();
     } else if (!initialAgentConfig && userId && !isSessionsLoaded) {
@@ -297,7 +253,7 @@ const MultiModalChatUI = ({
           <UserButton afterSignOutUrl="/" />
         </div>
         <>
-          <ChatHistorySidebar sessions={sessions} activeSessionId={activeSessionId} onSelectSession={(id) => setActiveSessionId(id)} />
+          <ChatHistorySidebar sessions={sessions} activeSessionId={activeSessionId} onSelectSession={setActiveSessionId} />
           <div className="flex-1 flex flex-col">
             {activeSession ? (
               <ChatView key={activeSession.id} session={activeSession} onSendMessage={addMessageToSession} isLoading={isLoading} />
@@ -343,12 +299,7 @@ const ChatView = ({ session, onSendMessage, isLoading }: { session: ChatSession;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [session.messages, isLoading]);
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [inputValue]);
+  useEffect(() => { if (textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; } }, [inputValue]);
 
   const handleSend = () => {
     if (!inputValue.trim() || isLoading) return;
@@ -390,14 +341,11 @@ const ChatView = ({ session, onSendMessage, isLoading }: { session: ChatSession;
           )}
           <div className="relative flex items-end">
             <textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
+              ref={textareaRef} value={inputValue} onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder={isLoading ? "Agent is responding..." : "Ask anything..."}
               className="w-full bg-[#161b22] border border-gray-600 rounded-xl py-3 pl-4 pr-28 resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none max-h-48"
-              rows={1}
-              disabled={isLoading}
+              rows={1} disabled={isLoading}
             />
             <div className="absolute right-4 bottom-3 flex items-center gap-2">
               <input type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" />

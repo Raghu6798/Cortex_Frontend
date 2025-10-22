@@ -68,14 +68,24 @@ const transformToolsForBackend = (tools: ToolConfig[]): BackendToolFormat[] => {
     }
     return acc;
   };
+  
+  const transformParams = (params: ToolParam[] | Record<string, string> | undefined): Record<string, string> => {
+    if (!params) return {};
+    if (Array.isArray(params)) {
+      return params.reduce(paramReducer, {});
+    }
+    // If it's already an object, return it as is
+    return params as Record<string, string>;
+  };
+  
   return tools.map(tool => ({
     name: tool.name,
     description: tool.description,
     api_url: tool.api_url,
     api_method: tool.api_method,
-    api_headers: (tool.api_headers || []).reduce(paramReducer, {}),
-    api_query_params: (tool.api_query_params || []).reduce(paramReducer, {}),
-    api_path_params: (tool.api_path_params || []).reduce(paramReducer, {}),
+    api_headers: transformParams(tool.api_headers),
+    api_query_params: transformParams(tool.api_query_params),
+    api_path_params: transformParams(tool.api_path_params),
     request_payload: tool.request_payload || ""
   }));
 };

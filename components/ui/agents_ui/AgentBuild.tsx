@@ -46,9 +46,9 @@ export interface ToolConfig {
   description: string;
   api_url: string;
   api_method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  api_headers: ToolParam[];
-  api_query_params: ToolParam[];
-  api_path_params: ToolParam[];
+  api_headers: ToolParam[] | Record<string, string>;
+  api_query_params: ToolParam[] | Record<string, string>;
+  api_path_params: ToolParam[] | Record<string, string>;
   request_payload: string;
 }
 
@@ -147,25 +147,37 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
             const transformedTools = (agentState.tools || []).map(tool => {
                 // Convert ToolParam arrays to simple key-value objects
                 const headers: Record<string, string> = {};
-                tool.api_headers?.forEach(param => {
-                    if (param.key && param.value) {
-                        headers[param.key] = param.value;
-                    }
-                });
+                if (Array.isArray(tool.api_headers)) {
+                    tool.api_headers.forEach(param => {
+                        if (param.key && param.value) {
+                            headers[param.key] = param.value;
+                        }
+                    });
+                } else if (tool.api_headers && typeof tool.api_headers === 'object') {
+                    Object.assign(headers, tool.api_headers);
+                }
 
                 const queryParams: Record<string, string> = {};
-                tool.api_query_params?.forEach(param => {
-                    if (param.key && param.value) {
-                        queryParams[param.key] = param.value;
-                    }
-                });
+                if (Array.isArray(tool.api_query_params)) {
+                    tool.api_query_params.forEach(param => {
+                        if (param.key && param.value) {
+                            queryParams[param.key] = param.value;
+                        }
+                    });
+                } else if (tool.api_query_params && typeof tool.api_query_params === 'object') {
+                    Object.assign(queryParams, tool.api_query_params);
+                }
 
                 const pathParams: Record<string, string> = {};
-                tool.api_path_params?.forEach(param => {
-                    if (param.key && param.value) {
-                        pathParams[param.key] = param.value;
-                    }
-                });
+                if (Array.isArray(tool.api_path_params)) {
+                    tool.api_path_params.forEach(param => {
+                        if (param.key && param.value) {
+                            pathParams[param.key] = param.value;
+                        }
+                    });
+                } else if (tool.api_path_params && typeof tool.api_path_params === 'object') {
+                    Object.assign(pathParams, tool.api_path_params);
+                }
 
                 return {
                     name: tool.name,
@@ -526,23 +538,35 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
   const updateToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string, field: 'key' | 'value', value: string) => {
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
-      const updatedParams = tool[paramType].map(p => p.id === paramId ? { ...p, [field]: value } : p);
-      return { ...tool, [paramType]: updatedParams };
+      const currentParams = tool[paramType];
+      if (Array.isArray(currentParams)) {
+        const updatedParams = currentParams.map(p => p.id === paramId ? { ...p, [field]: value } : p);
+        return { ...tool, [paramType]: updatedParams };
+      }
+      return tool;
     }));
   };
 
   const addToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params') => {
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
-      const newParam: ToolParam = { id: `param-${Date.now()}`, key: '', value: '' };
-      return { ...tool, [paramType]: [...tool[paramType], newParam] };
+      const currentParams = tool[paramType];
+      if (Array.isArray(currentParams)) {
+        const newParam: ToolParam = { id: `param-${Date.now()}`, key: '', value: '' };
+        return { ...tool, [paramType]: [...currentParams, newParam] };
+      }
+      return tool;
     }));
   };
 
   const removeToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string) => {
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
-      return { ...tool, [paramType]: tool[paramType].filter(p => p.id !== paramId) };
+      const currentParams = tool[paramType];
+      if (Array.isArray(currentParams)) {
+        return { ...tool, [paramType]: currentParams.filter(p => p.id !== paramId) };
+      }
+      return tool;
     }));
   };
 
@@ -554,7 +578,11 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
     };
     setTools(tools.map(tool => {
       if (tool.id !== toolId) return tool;
-      return { ...tool, api_headers: [...tool.api_headers, newHeader] };
+      const currentHeaders = tool.api_headers;
+      if (Array.isArray(currentHeaders)) {
+        return { ...tool, api_headers: [...currentHeaders, newHeader] };
+      }
+      return tool;
     }));
   };
 
@@ -618,7 +646,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
             {/* Path Parameters */}
             <div className="space-y-2 pt-2">
               <h4 className="text-sm font-medium text-white/80">Path Parameters</h4>
-              {tool.api_path_params.map(p => (
+              {Array.isArray(tool.api_path_params) && tool.api_path_params.map(p => (
                 <div key={p.id} className="flex gap-2 items-center">
                   <Input 
                     placeholder="key (e.g., 'userId')" 
@@ -641,7 +669,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
             {/* Query Parameters */}
             <div className="space-y-2 pt-2">
               <h4 className="text-sm font-medium text-white/80">Query Parameters</h4>
-              {tool.api_query_params.map(p => (
+              {Array.isArray(tool.api_query_params) && tool.api_query_params.map(p => (
                 <div key={p.id} className="flex gap-2 items-center">
                   <Input 
                     placeholder="key (e.g., 'city')" 
@@ -664,7 +692,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
             {/* Headers */}
             <div className="space-y-2 pt-2">
               <h4 className="text-sm font-medium text-white/80">Headers</h4>
-              {tool.api_headers.map(h => (
+              {Array.isArray(tool.api_headers) && tool.api_headers.map(h => (
                 <div key={h.id} className="flex gap-2 items-center">
                   <Input 
                     placeholder="Header Name (e.g., 'Authorization')" 

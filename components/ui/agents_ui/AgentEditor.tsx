@@ -23,9 +23,9 @@ interface ToolConfig {
   description: string;
   api_url: string;
   api_method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  api_headers: ToolParam[];
-  api_query_params: ToolParam[];
-  api_path_params: ToolParam[];
+  api_headers: ToolParam[] | Record<string, string>;
+  api_query_params: ToolParam[] | Record<string, string>;
+  api_path_params: ToolParam[] | Record<string, string>;
   request_payload: string;
 }
 
@@ -161,10 +161,13 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
   const addParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params') => {
     setTools(tools.map(tool => {
       if (tool.id === toolId) {
-        return {
-          ...tool,
-          [paramType]: [...tool[paramType], { id: `${paramType}-${Date.now()}`, key: '', value: '' }]
-        };
+        const currentParams = tool[paramType];
+        if (Array.isArray(currentParams)) {
+          return {
+            ...tool,
+            [paramType]: [...currentParams, { id: `${paramType}-${Date.now()}`, key: '', value: '' }]
+          };
+        }
       }
       return tool;
     }));
@@ -173,10 +176,13 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
   const removeParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string) => {
     setTools(tools.map(tool => {
       if (tool.id === toolId) {
-        return {
-          ...tool,
-          [paramType]: tool[paramType].filter(p => p.id !== paramId)
-        };
+        const currentParams = tool[paramType];
+        if (Array.isArray(currentParams)) {
+          return {
+            ...tool,
+            [paramType]: currentParams.filter(p => p.id !== paramId)
+          };
+        }
       }
       return tool;
     }));
@@ -185,12 +191,15 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
   const updateParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string, field: 'key' | 'value', value: string) => {
     setTools(tools.map(tool => {
       if (tool.id === toolId) {
-        return {
-          ...tool,
-          [paramType]: tool[paramType].map(p => 
-            p.id === paramId ? { ...p, [field]: value } : p
-          )
-        };
+        const currentParams = tool[paramType];
+        if (Array.isArray(currentParams)) {
+          return {
+            ...tool,
+            [paramType]: currentParams.map(p => 
+              p.id === paramId ? { ...p, [field]: value } : p
+            )
+          };
+        }
       }
       return tool;
     }));
@@ -200,25 +209,37 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
     // Transform tools to backend format
     const transformedTools = tools.map(tool => {
       const headers: Record<string, string> = {};
-      tool.api_headers?.forEach(param => {
-        if (param.key && param.value) {
-          headers[param.key] = param.value;
-        }
-      });
+      if (Array.isArray(tool.api_headers)) {
+        tool.api_headers.forEach(param => {
+          if (param.key && param.value) {
+            headers[param.key] = param.value;
+          }
+        });
+      } else if (tool.api_headers && typeof tool.api_headers === 'object') {
+        Object.assign(headers, tool.api_headers);
+      }
 
       const queryParams: Record<string, string> = {};
-      tool.api_query_params?.forEach(param => {
-        if (param.key && param.value) {
-          queryParams[param.key] = param.value;
-        }
-      });
+      if (Array.isArray(tool.api_query_params)) {
+        tool.api_query_params.forEach(param => {
+          if (param.key && param.value) {
+            queryParams[param.key] = param.value;
+          }
+        });
+      } else if (tool.api_query_params && typeof tool.api_query_params === 'object') {
+        Object.assign(queryParams, tool.api_query_params);
+      }
 
       const pathParams: Record<string, string> = {};
-      tool.api_path_params?.forEach(param => {
-        if (param.key && param.value) {
-          pathParams[param.key] = param.value;
-        }
-      });
+      if (Array.isArray(tool.api_path_params)) {
+        tool.api_path_params.forEach(param => {
+          if (param.key && param.value) {
+            pathParams[param.key] = param.value;
+          }
+        });
+      } else if (tool.api_path_params && typeof tool.api_path_params === 'object') {
+        Object.assign(pathParams, tool.api_path_params);
+      }
 
       return {
         name: tool.name,
@@ -434,7 +455,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
                       Add Header
                     </Button>
                   </div>
-                  {tool.api_headers.map(header => (
+                  {Array.isArray(tool.api_headers) && tool.api_headers.map(header => (
                     <div key={header.id} className="flex gap-2">
                       <Input
                         placeholder="Key"
@@ -474,7 +495,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
                       Add Query Param
                     </Button>
                   </div>
-                  {tool.api_query_params.map(param => (
+                  {Array.isArray(tool.api_query_params) && tool.api_query_params.map(param => (
                     <div key={param.id} className="flex gap-2">
                       <Input
                         placeholder="Key"

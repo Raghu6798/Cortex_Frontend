@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
-import { AgentState } from './AgentBuild';
+import { AgentState,ToolConfig } from './AgentBuild';
 
 // --- FRAMEWORK CONFIGURATION & TYPES ---
 const FRAMEWORK_DETAILS = {
@@ -33,16 +33,7 @@ interface AgentConfig {
   system_prompt?: string;
   base_url?: string;
   provider_id?: string; // Add provider_id to AgentConfig
-  tools?: Array<{
-    name: string;
-    description: string;
-    api_url: string;
-    api_method: string;
-    api_headers: Record<string, string>;
-    api_query_params: Record<string, string>;
-    api_path_params: Record<string, string>;
-    request_payload: string;
-  }>; // Add tools field to AgentConfig
+  tools?: ToolConfig[]; // Add tools field to AgentConfig
 }
 
 type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: File[]; };

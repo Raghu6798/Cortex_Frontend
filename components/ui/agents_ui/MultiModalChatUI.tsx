@@ -288,7 +288,6 @@ const MultiModalChatUI = ({
        const providerId = requestBody.provider_id || 'groq';
        if (providerId === 'openai' && !requestBody.api_key.startsWith('sk-')) throw new Error('Invalid OpenAI API key format.');
        if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) throw new Error('Invalid Groq API key format.');
-       if (providerId === 'sambanova' && !requestBody.api_key.startsWith('sk-')) throw new Error('Invalid SambaNova API key format.');
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}${endpoint}`, {
         method: 'POST',

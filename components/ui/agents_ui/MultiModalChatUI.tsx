@@ -33,6 +33,16 @@ interface AgentConfig {
   system_prompt?: string;
   base_url?: string;
   provider_id?: string; // Add provider_id to AgentConfig
+  tools?: Array<{
+    name: string;
+    description: string;
+    api_url: string;
+    api_method: string;
+    api_headers: Record<string, string>;
+    api_query_params: Record<string, string>;
+    api_path_params: Record<string, string>;
+    request_payload: string;
+  }>; // Add tools field to AgentConfig
 }
 
 type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: File[]; };
@@ -62,6 +72,10 @@ const MultiModalChatUI = ({
     const createInitialSession = async () => {
       if (initialAgentConfig && userId && !initialSessionCreated.current) {
         initialSessionCreated.current = true; // Set flag to true to prevent re-running
+
+        console.log('🔍 DEBUG: initialAgentConfig received:', initialAgentConfig);
+        console.log('🔍 DEBUG: initialAgentConfig.tools:', initialAgentConfig.tools);
+        console.log('🔍 DEBUG: tools length:', initialAgentConfig.tools?.length);
 
         const framework = initialAgentConfig.framework as AgentFramework;
         if (!framework) {
@@ -94,10 +108,37 @@ const MultiModalChatUI = ({
             initialAgentConfig.settings.systemPrompt || 'You are a helpful AI assistant.',
           base_url: initialAgentConfig.settings.baseUrl || '',
           provider_id: getProviderName(initialAgentConfig.settings.providerId || 'groq'), // Use provider from agent config
+          tools: (initialAgentConfig.tools || []).map(tool => ({
+            name: tool.name,
+            description: tool.description,
+            api_url: tool.api_url,
+            api_method: tool.api_method,
+            api_headers: tool.api_headers.reduce((acc, param) => {
+              if (param.key && param.value) {
+                acc[param.key] = param.value;
+              }
+              return acc;
+            }, {} as Record<string, string>),
+            api_query_params: tool.api_query_params.reduce((acc, param) => {
+              if (param.key && param.value) {
+                acc[param.key] = param.value;
+              }
+              return acc;
+            }, {} as Record<string, string>),
+            api_path_params: tool.api_path_params.reduce((acc, param) => {
+              if (param.key && param.value) {
+                acc[param.key] = param.value;
+              }
+              return acc;
+            }, {} as Record<string, string>),
+            request_payload: tool.request_payload
+          })), // Transform tools from ToolConfig to AgentConfig format
         };
 
         console.log('Creating session with provider:', newAgentConfig.provider_id);
         console.log('Initial agent config settings:', initialAgentConfig.settings);
+        console.log('Tools being sent to session:', newAgentConfig.tools);
+        console.log('Full agent config being sent:', newAgentConfig);
 
         // Create session in the backend first
         try {
@@ -174,6 +215,7 @@ const MultiModalChatUI = ({
             // Convert backend sessions to frontend format
             const frontendSessions: ChatSession[] = data.sessions.map((session: Record<string, unknown>) => {
               console.log('Loading session:', session.id, 'with agent_config:', session.agent_config);
+              console.log('Tools in loaded session:', session.agent_config?.tools);
               return {
                 id: session.id,
                 userId: session.user_id,
@@ -188,6 +230,7 @@ const MultiModalChatUI = ({
                    system_prompt: 'You are a helpful AI assistant.',
                    base_url: '',
                    provider_id: 'groq', // Default provider for existing sessions
+                   tools: [], // Default empty tools array
                  },
                 memoryUsage: session.memory_usage || 0,
                 framework: session.framework,
@@ -244,17 +287,14 @@ const MultiModalChatUI = ({
        const requestBody = { 
          ...activeSession.agentConfig, 
          message: message.text, 
-         tools: [],
+         tools: activeSession.agentConfig.tools || [],
          provider_id: activeSession.agentConfig.provider_id || 'groq', // Use dynamic provider from agentConfig
          model_id: activeSession.agentConfig.model_name
        };
 
       console.log('🚀 Framework:', activeSession.framework);
       console.log('🎯 Using endpoint:', endpoint);
-      console.log('📦 Sending request body:', {
-        ...requestBody,
-        api_key: requestBody.api_key ? `${requestBody.api_key.substring(0, 10)}...` : 'No API key'
-      });
+      console.log('tools:', requestBody.tools);
       console.log('🔑 Provider ID being sent:', requestBody.provider_id);
       console.log('⚙️ Active session agent config:', activeSession.agentConfig);
 

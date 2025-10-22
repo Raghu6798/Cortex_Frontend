@@ -1,3 +1,5 @@
+// components/ui/agents_ui/MultiModalChatUI.tsx
+
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
@@ -11,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
-import { AgentState,ToolConfig } from './AgentBuild';
+import { AgentState, ToolConfig } from './AgentBuild';
 
 // --- FRAMEWORK CONFIGURATION & TYPES ---
 const FRAMEWORK_DETAILS = {
@@ -32,8 +34,8 @@ interface AgentConfig {
   top_k?: number | null;
   system_prompt?: string;
   base_url?: string;
-  provider_id?: string; // Add provider_id to AgentConfig
-  tools?: ToolConfig[]; // Add tools field to AgentConfig
+  provider_id?: string;
+  tools?: ToolConfig[];
 }
 
 type Message = { id: string; sender: 'user' | 'agent'; text: string; files?: File[]; };
@@ -56,17 +58,12 @@ const MultiModalChatUI = ({
   const [isSessionsLoaded, setIsSessionsLoaded] = useState(false);
   const activeSession = useMemo(() => sessions.find(s => s.id === activeSessionId), [sessions, activeSessionId]);
   
-  // FIX #1: Use a ref to prevent duplicate session creation on component mount
   const initialSessionCreated = useRef(false);
 
   useEffect(() => {
     const createInitialSession = async () => {
       if (initialAgentConfig && userId && !initialSessionCreated.current) {
-        initialSessionCreated.current = true; // Set flag to true to prevent re-running
-
-        console.log('🔍 DEBUG: initialAgentConfig received:', initialAgentConfig);
-        console.log('🔍 DEBUG: initialAgentConfig.tools:', initialAgentConfig.tools);
-        console.log('🔍 DEBUG: tools length:', initialAgentConfig.tools?.length);
+        initialSessionCreated.current = true;
 
         const framework = initialAgentConfig.framework as AgentFramework;
         if (!framework) {
@@ -75,63 +72,48 @@ const MultiModalChatUI = ({
           return;
         }
 
-        // Map provider ID to provider name if it's a UUID
         const getProviderName = (providerId: string) => {
           console.log('Provider ID received:', providerId);
-          // If it's already a provider name (like 'openai', 'groq'), return as is
           if (['openai', 'groq', 'mistral', 'cerebras', 'sambanova', 'nvidia'].includes(providerId)) {
             console.log('Provider name found:', providerId);
             return providerId;
           }
-          // If it's a UUID, we need to map it to the provider name
-          // For now, default to 'groq' for UUIDs (this should be improved with a proper mapping)
           console.log('Provider UUID detected, defaulting to groq');
           return 'groq';
         };
 
         const newAgentConfig: AgentConfig = {
           api_key: initialAgentConfig.settings.apiKey || '',
-          model_name: initialAgentConfig.settings.modelName || 'llama-3.1-70b-versatile', // Groq model
+          model_name: initialAgentConfig.settings.modelName || 'llama-3.1-70b-versatile',
           temperature: initialAgentConfig.settings.temperature ?? 0.7,
           top_p: 0.9,
           top_k: null,
           system_prompt:
             initialAgentConfig.settings.systemPrompt || 'You are a helpful AI assistant.',
           base_url: initialAgentConfig.settings.baseUrl || '',
-          provider_id: getProviderName(initialAgentConfig.settings.providerId || 'groq'), // Use provider from agent config
+          provider_id: getProviderName(initialAgentConfig.settings.providerId || 'groq'),
+
+          // =================== FIX START ===================
+          // The build error was because the object being created in the map was missing the `id` property,
+          // which is required by the `ToolConfig` type.
+          // By adding `id: tool.id`, we ensure the object matches the type.
           tools: (initialAgentConfig.tools || []).map(tool => ({
+            id: tool.id, // <-- THIS LINE FIXES THE BUILD ERROR
             name: tool.name,
             description: tool.description,
             api_url: tool.api_url,
             api_method: tool.api_method,
-            api_headers: tool.api_headers.reduce((acc, param) => {
-              if (param.key && param.value) {
-                acc[param.key] = param.value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
-            api_query_params: tool.api_query_params.reduce((acc, param) => {
-              if (param.key && param.value) {
-                acc[param.key] = param.value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
-            api_path_params: tool.api_path_params.reduce((acc, param) => {
-              if (param.key && param.value) {
-                acc[param.key] = param.value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
+            api_headers: tool.api_headers,
+            api_query_params: tool.api_query_params,
+            api_path_params: tool.api_path_params,
             request_payload: tool.request_payload
-          })), // Transform tools from ToolConfig to AgentConfig format
+          })),
+          // =================== FIX END =====================
         };
 
         console.log('Creating session with provider:', newAgentConfig.provider_id);
-        console.log('Initial agent config settings:', initialAgentConfig.settings);
-        console.log('Tools being sent to session:', newAgentConfig.tools);
-        console.log('Full agent config being sent:', newAgentConfig);
+        console.log('Full agent config being sent to create session:', newAgentConfig);
 
-        // Create session in the backend first
         try {
           const token = await getToken();
           if (!token) {
@@ -147,7 +129,7 @@ const MultiModalChatUI = ({
             body: JSON.stringify({
               framework: framework,
               title: `New ${FRAMEWORK_DETAILS[framework]?.name || 'Agent'} Chat`,
-              agent_config: newAgentConfig, // Include the agent configuration
+              agent_config: newAgentConfig,
             }),
           });
 
@@ -157,7 +139,6 @@ const MultiModalChatUI = ({
 
           const createdSession = await sessionResponse.json();
           
-          // Convert backend session to frontend format
           const newSession: ChatSession = {
             id: createdSession.id,
             userId: createdSession.user_id,
@@ -172,11 +153,9 @@ const MultiModalChatUI = ({
           setSessions((prev) => [newSession, ...prev]);
           setActiveSessionId(newSession.id);
           setIsSessionsLoaded(true);
-          return;
         } catch (error) {
           console.error('Failed to create session:', error);
           setIsSessionsLoaded(true);
-          return;
         }
       }
     };
@@ -185,56 +164,35 @@ const MultiModalChatUI = ({
       if (userId) {
         try {
           const token = await getToken();
-          if (!token) {
-            throw new Error('No authentication token available');
-          }
+          if (!token) throw new Error('No authentication token available');
 
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/sessions/`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
+            headers: { 'Authorization': `Bearer ${token}` },
           });
 
-          if (!response.ok) {
-            throw new Error(`Failed to fetch sessions: ${response.statusText}`);
-          }
-
+          if (!response.ok) throw new Error(`Failed to fetch sessions: ${response.statusText}`);
+          
           const data = await response.json();
           if (data.sessions && data.sessions.length > 0) {
-            // Convert backend sessions to frontend format
-            const frontendSessions: ChatSession[] = data.sessions.map((session: Record<string, unknown>) => {
-              console.log('Loading session:', session.id, 'with agent_config:', session.agent_config);
-              console.log('Tools in loaded session:', session.agent_config?.tools);
-              return {
-                id: session.id,
-                userId: session.user_id,
-                title: session.title,
-                messages: session.messages || [],
-                 agentConfig: session.agent_config || {
-                   api_key: '',
-                   model_name: 'gpt-4o-mini',
-                   temperature: 0.7,
-                   top_p: 0.9,
-                   top_k: null,
-                   system_prompt: 'You are a helpful AI assistant.',
-                   base_url: '',
-                   provider_id: 'groq', // Default provider for existing sessions
-                   tools: [], // Default empty tools array
-                 },
-                memoryUsage: session.memory_usage || 0,
-                framework: session.framework,
-              };
-            });
-            
+            const frontendSessions: ChatSession[] = data.sessions.map((session: any) => ({
+              id: session.id,
+              userId: session.user_id,
+              title: session.title,
+              messages: session.messages || [],
+              agentConfig: session.agent_config || {
+                 api_key: '', model_name: 'gpt-4o-mini', temperature: 0.7, top_p: 0.9, top_k: null,
+                 system_prompt: 'You are a helpful AI assistant.', base_url: '', provider_id: 'groq', tools: [],
+              },
+              memoryUsage: session.memory_usage || 0,
+              framework: session.framework,
+              agentId: session.agent_id || '',
+            }));
             setSessions(frontendSessions);
             setActiveSessionId(frontendSessions[0].id);
           }
         } catch (error) { 
           console.error("Failed to fetch sessions:", error); 
-        }
-        finally { 
+        } finally { 
           setIsSessionsLoaded(true); 
         }
       } else {
@@ -242,7 +200,6 @@ const MultiModalChatUI = ({
       }
     };
 
-    // Execute the appropriate function based on conditions
     if (initialAgentConfig && userId && !initialSessionCreated.current) {
       createInitialSession();
     } else if (!initialAgentConfig && !isSessionsLoaded) {
@@ -258,19 +215,15 @@ const MultiModalChatUI = ({
     setIsLoading(true);
 
     try {
-      // Get the Clerk token
       const token = await getToken();
-      if (!token) {
-        throw new Error('No authentication token available');
-      }
+      if (!token) throw new Error('No authentication token available');
   
-      // Dynamic endpoint based on framework
       const frameworkEndpoints: Record<AgentFramework, string> = {
         langchain: '/api/v1/ReActAgent/langchain',
         llama_index: '/api/v1/ReActAgent/llama_index',
         adk: '/api/v1/ReActAgent/adk',
-        pydantic_ai: '/api/v1/ReActAgent/pydantic_ai', // Future support
-        langgraph: '/api/v1/ReActAgent/langgraph', // Future support
+        pydantic_ai: '/api/v1/ReActAgent/pydantic_ai',
+        langgraph: '/api/v1/ReActAgent/langgraph',
       };
       
       const endpoint = frameworkEndpoints[activeSession.framework] || frameworkEndpoints.langchain;
@@ -278,36 +231,30 @@ const MultiModalChatUI = ({
        const requestBody = { 
          ...activeSession.agentConfig, 
          message: message.text, 
-         tools: activeSession.agentConfig.tools || [],
-         provider_id: activeSession.agentConfig.provider_id || 'groq', // Use dynamic provider from agentConfig
+         tools: activeSession.agentConfig.tools || [], // Use tools from the active session
+         provider_id: activeSession.agentConfig.provider_id || 'groq',
          model_id: activeSession.agentConfig.model_name
        };
 
       console.log('🚀 Framework:', activeSession.framework);
       console.log('🎯 Using endpoint:', endpoint);
-      console.log('tools:', requestBody.tools);
-      console.log('🔑 Provider ID being sent:', requestBody.provider_id);
-      console.log('⚙️ Active session agent config:', activeSession.agentConfig);
+      console.log('📦 Sending request body:', { ...requestBody, api_key: '...'});
 
-       // Validate API key before sending
        if (!requestBody.api_key || requestBody.api_key.trim() === '') {
          throw new Error('API key is required. Please configure your API key in the agent settings.');
        }
 
-       // Dynamic API key format validation based on selected provider
        const providerId = requestBody.provider_id || 'groq';
        if (providerId === 'openai' && !requestBody.api_key.startsWith('sk-')) {
-         throw new Error('Invalid OpenAI API key format. OpenAI API keys should start with "sk-". Please check your API key.');
+         throw new Error('Invalid OpenAI API key format. OpenAI API keys should start with "sk-".');
        }
        if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) {
-         throw new Error('Invalid Groq API key format. Groq API keys should start with "gsk_". Please check your API key.');
+         throw new Error('Invalid Groq API key format. Groq API keys should start with "gsk_".');
        }
        if (providerId === 'sambanova' && !requestBody.api_key.startsWith('sk-')) {
-         throw new Error('Invalid SambaNova API key format. Please check your API key.');
+         throw new Error('Invalid SambaNova API key format.');
        }
 
-    
-      // Make the request with the token
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -348,7 +295,7 @@ const MultiModalChatUI = ({
   return ( <div className="flex h-screen w-full bg-[#0d1117] text-gray-200 font-sans"> <SignedIn> <div className="absolute top-4 right-4 z-10"><UserButton afterSignOutUrl="/"/></div> <> <ChatHistorySidebar sessions={sessions} activeSessionId={activeSessionId} onSelectSession={(id) => setActiveSessionId(id)} /> <div className="flex-1 flex flex-col"> {activeSession ? ( <ChatView key={activeSession.id} session={activeSession} onSendMessage={addMessageToSession} isLoading={isLoading} /> ) : ( <WelcomeScreen /> )} </div> </> </SignedIn> <SignedOut> <div className="w-full flex flex-col items-center justify-center"><h1 className="text-3xl font-bold mb-4">Welcome to the Agent Builder</h1><p className="text-gray-400 mb-8">Please sign in to continue</p><div className="bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-500 transition-colors"><SignInButton mode="modal" /></div></div> </SignedOut> </div> );
 };
 
-// --- SUB-COMPONENTS (NO CHANGES NEEDED BELOW THIS LINE) ---
+// --- SUB-COMPONENTS ---
 const ChatHistorySidebar = ({ sessions, activeSessionId, onSelectSession }: { sessions: ChatSession[], activeSessionId: string | null, onSelectSession: (id: string) => void }) => ( <aside className="w-72 bg-[#161b22] p-4 flex flex-col border-r border-gray-700"> <div className="flex-1 overflow-y-auto space-y-2"> {sessions.map(session => ( <div key={session.id} onClick={() => onSelectSession(session.id)} className={cn("flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors", activeSessionId === session.id ? "bg-gray-600" : "hover:bg-gray-700")}> <NextImage src={FRAMEWORK_DETAILS[session.framework].logo} alt={`${FRAMEWORK_DETAILS[session.framework].name} Logo`} width={20} height={20} className="rounded-full"/> <span className="text-sm truncate flex-1">{session.title}</span> <button className="text-gray-500 hover:text-gray-300 p-1"><Trash2 size={14} /></button> </div> ))} </div> </aside> );
 const ChatView = ({ session, onSendMessage, isLoading }: { session: ChatSession; onSendMessage: (msg: Message) => void; isLoading: boolean; }) => { const [inputValue, setInputValue] = useState(''); const [attachedFiles, setAttachedFiles] = useState<File[]>([]); const fileInputRef = useRef<HTMLInputElement>(null); const messagesEndRef = useRef<HTMLDivElement>(null); const textareaRef = useRef<HTMLTextAreaElement>(null); useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [session.messages, isLoading]); useEffect(() => { if (textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; } }, [inputValue]); const handleSend = () => { if (!inputValue.trim() || isLoading) return; onSendMessage({ id: `msg-user-${Date.now()}`, sender: 'user', text: inputValue, files: attachedFiles }); setInputValue(''); setAttachedFiles([]); }; const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => { if (event.target.files) { setAttachedFiles(prev => [...prev, ...Array.from(event.target.files!)]); } }; return ( <div className="flex-1 flex flex-col max-h-full"> <header className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0"> <h2 className="font-semibold text-lg">{session.title}</h2> <div className="w-1/3"><label className="text-xs text-gray-400">Memory Usage</label><div className="w-full bg-gray-700 rounded-full h-2.5 mt-1"><div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${session.memoryUsage}%` }}></div></div></div> </header> <main className="flex-1 p-6 overflow-y-auto"> <div className="space-y-6"> {session.messages.map(msg => (<MessageItem key={msg.id} message={msg} />))} {isLoading && <MessageItemSkeleton />} <div ref={messagesEndRef} /> </div> </main> <footer className="p-4 border-t border-gray-700 bg-[#0d1117] flex-shrink-0"> <div className="max-w-4xl mx-auto"> {attachedFiles.length > 0 && (<div className="mb-2 p-2 bg-[#161b22] rounded-md flex flex-wrap gap-2">{attachedFiles.map((file, i) => <FilePreview key={i} file={file} onRemove={() => setAttachedFiles(files => files.filter(f => f !== file))} />)}</div>)} <div className="relative flex items-end"> <textarea ref={textareaRef} value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder={isLoading ? "Agent is responding..." : "Ask anything..."} className="w-full bg-[#161b22] border border-gray-600 rounded-xl py-3 pl-4 pr-28 resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none max-h-48" rows={1} disabled={isLoading} /> <div className="absolute right-4 bottom-3 flex items-center gap-2"><input type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-white" disabled={isLoading}><Paperclip size={20} /></button><button onClick={handleSend} className="p-2 bg-purple-600 rounded-full text-white disabled:bg-gray-500" disabled={!inputValue.trim() || isLoading}><SendHorizonal size={20} /></button></div> </div> </div> </footer> </div> ); };
 const MessageItem = ({ message }: { message: Message }) => { const isUser = message.sender === 'user'; return ( <div className={cn("flex items-start gap-4 max-w-4xl mx-auto", isUser ? "justify-end" : "justify-start")}> {!isUser && (<div className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-white bg-gray-600"><Bot size={18} /></div>)} <div className={cn("p-4 rounded-xl max-w-[75%]", isUser ? 'bg-purple-900/50' : 'bg-gray-700')}> {isUser ? (<p className="text-white/90 whitespace-pre-wrap">{message.text}</p>) : (<div className="prose prose-invert prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{ code(props) { const { children, className, ...rest } = props; const match = /language-(\w+)/.exec(className || ''); return match ? (<div className="bg-gray-800 rounded-md my-2"><div className="flex items-center justify-between px-4 py-1 bg-gray-900 text-xs text-gray-400 rounded-t-md"><span>{match[1]}</span><button onClick={() => navigator.clipboard.writeText(String(children))} className="hover:text-white">Copy</button></div><pre className="p-4 overflow-x-auto text-sm"><code {...rest} className={className}>{children}</code></pre></div>) : ( <code {...rest} className="bg-gray-800 rounded-sm px-1 py-0.5 text-purple-300 font-mono text-sm">{children}</code> ); } }}>{message.text}</ReactMarkdown></div>)} {message.files && message.files.length > 0 && (<div className="mt-3 flex flex-wrap gap-2">{message.files.map((file, i) => <FilePreview key={i} file={file} isReadOnly />)}</div>)} </div> {isUser && (<div className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-white bg-purple-600"><User size={18} /></div>)} </div> ); };

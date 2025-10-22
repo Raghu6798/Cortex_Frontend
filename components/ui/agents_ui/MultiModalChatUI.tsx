@@ -104,17 +104,7 @@ const MultiModalChatUI = ({
             initialAgentConfig.settings.systemPrompt || 'You are a helpful AI assistant.',
           base_url: initialAgentConfig.settings.baseUrl || '',
           provider_id: getProviderName(initialAgentConfig.settings.providerId || 'groq'),
-          tools: (initialAgentConfig.tools || []).map(tool => ({
-            id: tool.id,
-            name: tool.name,
-            description: tool.description,
-            api_url: tool.api_url,
-            api_method: tool.api_method,
-            api_headers: tool.api_headers,
-            api_query_params: tool.api_query_params,
-            api_path_params: tool.api_path_params,
-            request_payload: tool.request_payload
-          })),
+          tools: initialAgentConfig.tools || [],
         };
 
         try {

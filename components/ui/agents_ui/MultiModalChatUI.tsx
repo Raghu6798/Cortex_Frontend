@@ -172,9 +172,8 @@ const MultiModalChatUI = ({
           if (!response.ok) throw new Error(`Failed to fetch sessions: ${response.statusText}`);
           
           const data = await response.json();
+          console.log('DEBUG FRONTEND: Received sessions data:', data);
           if (data.sessions && data.sessions.length > 0) {
-            // =================== FIX START (for ESLint error) ===================
-            // Use the specific `BackendSessionData` type instead of `any`.
             const frontendSessions: ChatSession[] = data.sessions.map((session: BackendSessionData) => ({
             // =================== FIX END (for ESLint error) =====================
               id: session.id,
@@ -229,7 +228,9 @@ const MultiModalChatUI = ({
       };
       
       const endpoint = frameworkEndpoints[activeSession.framework] || frameworkEndpoints.langchain;
-      
+       console.log('DEBUG FRONTEND: State before sending message - activeSession.agentConfig:', activeSession.agentConfig);
+      console.log('DEBUG FRONTEND: State before sending message - tools array:', activeSession.agentConfig.tools);
+      console.log('DEBUG FRONTEND: State before sending message - tools array length:', activeSession.agentConfig.tools?.length);
        const requestBody = { 
          ...activeSession.agentConfig, 
          message: message.text, 

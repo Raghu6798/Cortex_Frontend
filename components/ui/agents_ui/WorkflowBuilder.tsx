@@ -100,8 +100,8 @@ export default function WorkflowBuilder() {
       },
       data: {
         id: newId,
-        name: `New Agent ${nodes.length + 1}`,
-        framework: 'langchain', // default
+        name: `Agent ${nodes.length + 1}`,
+        framework: 'agno', // default to agno framework
       },
     };
     setNodes((nds) => nds.concat(newNode));

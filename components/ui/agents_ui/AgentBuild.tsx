@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/Input';
@@ -70,10 +71,7 @@ const frameworks = {
     { id: 'pydantic_ai', name: 'Pydantic AI', logo: 'https://pbs.twimg.com/profile_images/1884966723746435073/x0p8ngPD_400x400.jpg' },
   ],
   multi: [
-    { id: 'crewai', name: 'CrewAI', logo: 'https://pbs.twimg.com/profile_images/1735749323755069440/eJ33h_cW_400x400.jpg' },
-    { id: 'autogen', name: 'Autogen', logo: 'https://microsoft.github.io/autogen/img/flaml.svg' },
-    { id: 'agno', name: 'Agno', logo: null },
-    { id: 'ag2', name: 'AG2', logo: null },
+    { id: 'agno', name: 'Agno', logo: 'https://pbs.twimg.com/profile_images/1884966723746435073/x0p8ngPD_400x400.jpg' },
   ],
 };
 
@@ -87,6 +85,7 @@ const STEPS = [
 
 //--- MAIN COMPONENT ---
 export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (config: AgentState) => void; }) {
+    const router = useRouter();
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -120,6 +119,13 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
 
     const handleSelection = (key: 'architecture' | 'framework', value: string) => {
         setAgentState((prev) => ({ ...prev, [key]: value }));
+        
+        // If multi-agent architecture is selected, redirect immediately to workflow builder
+        if (key === 'architecture' && value === 'multi') {
+            router.push('/dashboard/builder');
+            return;
+        }
+        
         handleNext();
     };
 
@@ -221,6 +227,9 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                     model_id: agentState.settings.modelId
                 };
                 onAgentCreated(enhancedAgentState);
+                
+                // Redirect to dashboard/builder page
+                router.push('/dashboard/builder');
             } else {
                 console.error('Failed to create agent:', await response.text());
                 // Still call onAgentCreated for now, but show error
@@ -230,6 +239,9 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                     model_id: agentState.settings.modelId
                 };
                 onAgentCreated(enhancedAgentState);
+                
+                // Redirect to dashboard/builder page even on error
+                router.push('/dashboard/builder');
             }
         } catch (error) {
             console.error('Error creating agent:', error);
@@ -240,6 +252,9 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 model_id: agentState.settings.modelId
             };
             onAgentCreated(enhancedAgentState);
+            
+            // Redirect to dashboard/builder page even on error
+            router.push('/dashboard/builder');
         } finally {
             setIsLoading(false);
         }

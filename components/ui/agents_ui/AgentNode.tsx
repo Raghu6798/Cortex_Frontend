@@ -20,6 +20,7 @@ function AgentNode({ data }: NodeProps) {
   const frameworkDetails = {
     langchain: { icon: BrainCircuit, color: 'text-orange-400' },
     crewai: { icon: Bot, color: 'text-blue-400' },
+    agno: { icon: Bot, color: 'text-purple-400' },
     // Add other frameworks here
   };
   

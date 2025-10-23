@@ -32,7 +32,6 @@ export default function BuilderPage() {
         onMouseLeave={() => setIsSidebarExpanded(false)}
         onNewAgentClick={() => {}}
         activeView={'builder'}
-        onViewChange={() => {}}
       />
 
       <main className={cn(

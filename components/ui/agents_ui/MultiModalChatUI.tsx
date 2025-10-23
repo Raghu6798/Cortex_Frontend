@@ -347,7 +347,7 @@ const MultiModalChatUI = ({
 // --- SUB-COMPONENTS ---
 const ChatHistorySidebar = ({ sessions, activeSessionId, onSelectSession }: { sessions: ChatSession[], activeSessionId: string | null, onSelectSession: (id: string) => void }) => (
   <aside className="w-72 bg-[#161b22] p-4 flex flex-col border-r border-gray-700">
-    <div className="flex-1 overflow-y-auto space-y-2">
+    <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2">
       {sessions.map(session => (
         <div key={session.id} onClick={() => onSelectSession(session.id)} className={cn("flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors", activeSessionId === session.id ? "bg-gray-600" : "hover:bg-gray-700")}>
           <NextImage src={FRAMEWORK_DETAILS[session.framework].logo} alt={`${FRAMEWORK_DETAILS[session.framework].name} Logo`} width={20} height={20} className="rounded-full" />
@@ -393,7 +393,7 @@ const ChatView = ({ session, onSendMessage, isLoading }: { session: ChatSession;
           </div>
         </div>
       </header>
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex-1 p-6 overflow-y-auto scrollbar-hide">
         <div className="space-y-6">
           {session.messages.map(msg => (<MessageItem key={msg.id} message={msg} />))}
           {isLoading && <MessageItemSkeleton />}

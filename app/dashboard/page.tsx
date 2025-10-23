@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'; // Import useEffect
+import React, { useState, useEffect, Suspense } from 'react'; // Import useEffect and Suspense
 import { useUser } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -63,8 +63,8 @@ const DashboardMetricsViewSkeleton = () => (
 );
 
 
-// --- MAIN PAGE COMPONENT ---
-export default function DashboardPage() {
+// --- DASHBOARD CONTENT COMPONENT ---
+function DashboardContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -219,5 +219,21 @@ export default function DashboardPage() {
         onMouseLeave={() => setIsUserSidebarExpanded(false)}
       />
     </div>
+  );
+}
+
+// --- MAIN PAGE COMPONENT ---
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen bg-black text-white items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/60">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

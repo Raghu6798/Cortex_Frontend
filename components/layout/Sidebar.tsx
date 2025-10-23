@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Bot,
   Shield,
+  Workflow,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -97,7 +98,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
         {/* Custom Agent Builder is now a special button */}
         <button
           onClick={onNewAgentClick}
-          className="flex items-center gap-4 rounded-lg p-3 text-white bg-purple-600 hover:bg-purple-500 transition-colors mb-4"
+          className="flex items-center gap-4 rounded-lg p-3 text-white bg-purple-600 hover:bg-purple-500 transition-colors mb-2"
         >
           <PlusCircle className="h-6 w-6 flex-shrink-0" />
           <span
@@ -110,6 +111,22 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
             New Custom Agent
           </span>
         </button>
+
+        {/* Multi Agent Workflow Builder button */}
+        <Link href="/dashboard/builder">
+          <button className="flex items-center gap-4 rounded-lg p-3 text-white bg-blue-600 hover:bg-blue-500 transition-colors mb-4 w-full">
+            <Workflow className="h-6 w-6 flex-shrink-0" />
+            <span
+              className={cn(
+                'text-sm font-medium overflow-hidden whitespace-nowrap',
+                'transition-all duration-200',
+                isExpanded ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'
+              )}
+            >
+              Multi Agent
+            </span>
+          </button>
+        </Link>
 
         {/* Other features */}
         {features.map((feature, index) => (

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'; // Import useEffect
 import { useUser } from '@clerk/nextjs';
+import { useSearchParams } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Users, LayoutDashboard } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
@@ -65,6 +66,7 @@ const DashboardMetricsViewSkeleton = () => (
 // --- MAIN PAGE COMPONENT ---
 export default function DashboardPage() {
   const { user } = useUser();
+  const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
   const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents' | 'editor' | 'secrets'>('dashboard');
@@ -79,6 +81,14 @@ export default function DashboardPage() {
     settings: Record<string, unknown>;
     tools: Record<string, unknown>[];
   } | null>(null);
+
+  // Handle URL parameters for navigation
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view && ['dashboard', 'agents', 'secrets'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets');
+    }
+  }, [searchParams]);
 
   // Simulate data fetching for the dashboard
   useEffect(() => {
@@ -176,7 +186,6 @@ export default function DashboardPage() {
         onMouseLeave={() => setIsSidebarExpanded(false)}
         onNewAgentClick={() => setActiveView('builder')}
         activeView={activeView === 'editor' ? 'agents' : activeView}
-        onViewChange={(view) => setActiveView(view as 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets' | 'editor')}
       />
 
       <main className={cn(

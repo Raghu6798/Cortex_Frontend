@@ -23,10 +23,9 @@ interface SidebarProps {
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
   activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets';
-  onViewChange?: (view: 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets') => void;
 }
 
-const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView, onViewChange }: SidebarProps) => {
+const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
   const navigationItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
     { name: 'Your Agents', icon: Bot, view: 'agents' as const },
@@ -73,27 +72,38 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
 
       <nav className="flex flex-col gap-2 p-4 flex-grow">
         {/* Navigation Items */}
-        {navigationItems.map((item) => (
-          <button
-            key={item.name}
-            onClick={() => onViewChange?.(item.view)}
-            className={cn(
-              'flex items-center gap-4 rounded-lg p-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors',
-              activeView === item.view && 'bg-white/10 text-white'
-            )}
-          >
-            <item.icon className="h-6 w-6 flex-shrink-0" />
-            <span
-              className={cn(
-                'text-sm font-medium overflow-hidden whitespace-nowrap',
-                'transition-all duration-200',
-                isExpanded ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'
-              )}
-            >
-              {item.name}
-            </span>
-          </button>
-        ))}
+        {navigationItems.map((item) => {
+          const getHref = (view: string) => {
+            switch (view) {
+              case 'dashboard': return '/dashboard';
+              case 'agents': return '/dashboard?view=agents';
+              case 'secrets': return '/dashboard?view=secrets';
+              default: return '/dashboard';
+            }
+          };
+
+          return (
+            <Link key={item.name} href={getHref(item.view)}>
+              <button
+                className={cn(
+                  'flex items-center gap-4 rounded-lg p-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors w-full',
+                  activeView === item.view && 'bg-white/10 text-white'
+                )}
+              >
+                <item.icon className="h-6 w-6 flex-shrink-0" />
+                <span
+                  className={cn(
+                    'text-sm font-medium overflow-hidden whitespace-nowrap',
+                    'transition-all duration-200',
+                    isExpanded ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0'
+                  )}
+                >
+                  {item.name}
+                </span>
+              </button>
+            </Link>
+          );
+        })}
 
         {/* Custom Agent Builder is now a special button */}
         <button

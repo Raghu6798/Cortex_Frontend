@@ -78,9 +78,6 @@ function AgentNode({ data, id }: NodeProps) {
           </div>
         )}
       </div>
-      <div className="text-xs text-white/70 bg-neutral-800 px-2 py-1 rounded-full inline-block">
-        Framework: <span className="font-semibold">{agentData.framework}</span>
-      </div>
 
       {/* Connection points (Handles) for the workflow edges */}
       <Handle type="target" position={Position.Top} className="!bg-gray-500 w-3 h-3" />

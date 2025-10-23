@@ -28,6 +28,8 @@ interface ToolConfig {
   api_query_params: ToolParam[] | Record<string, string>;
   api_path_params: ToolParam[] | Record<string, string>;
   request_payload: string;
+  api_key?: string;
+  selected_secret?: string;
 }
 
 interface ConfigFormData {
@@ -58,7 +60,6 @@ interface AgentEditorProps {
 export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProps) {
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDescription, setAgentDescription] = useState(agent.description);
-  const [selectedSecretName, setSelectedSecretName] = useState<string>('');
   const [settings, setSettings] = useState<Partial<ConfigFormData>>({
     apiKey: (agent.settings.apiKey as string) || '',
     modelName: (agent.settings.modelName as string) || '',
@@ -80,7 +81,9 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
         api_headers: [],
         api_query_params: [],
         api_path_params: [],
-        request_payload: ''
+        request_payload: '',
+        api_key: '',
+        selected_secret: ''
       }];
     }
 
@@ -116,7 +119,9 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
         api_headers: headers,
         api_query_params: queryParams,
         api_path_params: pathParams,
-        request_payload: (tool.request_payload as string) || ''
+        request_payload: (tool.request_payload as string) || '',
+        api_key: (tool.api_key as string) || '',
+        selected_secret: (tool.selected_secret as string) || ''
       };
     });
   });
@@ -135,10 +140,6 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
     setSettings(prev => ({ ...prev, modelId, modelName: modelId }));
   };
 
-  const handleSecretSelect = (secretName: string) => {
-    setSelectedSecretName(secretName);
-    setSettings(prev => ({ ...prev, apiKey: secretName }));
-  };
 
   // Tool management functions
   const addTool = () => {
@@ -151,7 +152,9 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
       api_headers: [],
       api_query_params: [],
       api_path_params: [],
-      request_payload: ''
+      request_payload: '',
+      api_key: '',
+      selected_secret: ''
     }]);
   };
 
@@ -256,7 +259,9 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
         api_headers: headers,
         api_query_params: queryParams,
         api_path_params: pathParams,
-        request_payload: tool.request_payload || ''
+        request_payload: tool.request_payload || '',
+        api_key: tool.api_key || '',
+        selected_secret: tool.selected_secret || ''
       };
     });
 
@@ -351,23 +356,13 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
           
           <div>
             <Label className="text-white">API Key</Label>
-            <div className="space-y-3">
-              <Input
-                {...register('apiKey')}
-                type="password"
-                className="bg-black/50 border-white/15 text-white"
-                placeholder="Enter your API key or select from secrets"
-                onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
-              />
-              <div className="text-sm text-white/70">
-                Or select from your saved secrets:
-              </div>
-              <SecretsManagement
-                onSecretSelect={handleSecretSelect}
-                selectedSecretName={selectedSecretName}
-                showSelector={true}
-              />
-            </div>
+            <Input
+              {...register('apiKey')}
+              type="password"
+              className="bg-black/50 border-white/15 text-white"
+              placeholder="Enter your API key"
+              onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
+            />
           </div>
 
           <div>
@@ -446,6 +441,30 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
                   onChange={e => updateToolField(tool.id, 'api_url', e.target.value)}
                   className="bg-black/50 border-white/15 text-white"
                 />
+
+                {/* Tool API Key / Secrets */}
+                <div className="space-y-2">
+                  <Label className="text-white/80">API Key for this Tool</Label>
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Enter API key for this tool"
+                      value={tool.api_key || ''}
+                      onChange={e => updateToolField(tool.id, 'api_key', e.target.value)}
+                      className="bg-black/50 border-white/15 text-white"
+                    />
+                    <div className="text-sm text-white/70">
+                      Or select from your saved secrets:
+                    </div>
+                    <SecretsManagement
+                      onSecretSelect={(secretName) => {
+                        updateToolField(tool.id, 'selected_secret', secretName);
+                        updateToolField(tool.id, 'api_key', secretName);
+                      }}
+                      selectedSecretName={tool.selected_secret || ''}
+                      showSelector={true}
+                    />
+                  </div>
+                </div>
 
                 <select
                   value={tool.api_method}

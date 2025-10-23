@@ -24,7 +24,7 @@ const navItems = [
     label: 'Resources',
     children: [
       { label: 'Customer Stories', description: 'See who is building with us.', href: '/resources/stories' },
-      { label: 'GitHub', description: 'View our open-source code.', href: 'https://github.com/agentadevs/agenta', external: true },
+      { label: 'GitHub', description: 'View our open-source code.', href: 'https://github.com/Raghu6798/Cortex/tree/main', external: true },
       { label: 'Community', description: 'Join our developer community.', href: '/resources/community' },
     ],
   },
@@ -143,6 +143,19 @@ export default function Header({ isCompact }: HeaderProps) {
 
         {/* --- 3. AUTHENTICATION SECTION --- */}
         <div className="flex items-center gap-3">
+          {/* GitHub Star Button */}
+          <a 
+            className="github-button"
+            href="https://github.com/Raghu6798/Cortex"
+            data-color-scheme="no-preference: dark; light: dark; dark: dark;"
+            data-icon="octicon-star"
+            data-size="large"
+            data-show-count="true"
+            aria-label="Star Raghu6798/Cortex on GitHub"
+          >
+            Star
+          </a>
+
           <SignedOut>
             <Link
               href="/sign-in"

@@ -29,6 +29,9 @@ export default function RootLayout({
   return (
       <ClerkProvider>
     <html lang="en">
+      <head>
+        <script async defer src="https://buttons.github.io/buttons.js"></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

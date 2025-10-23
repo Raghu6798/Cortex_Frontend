@@ -12,7 +12,7 @@ const pricingPlans = {
   monthly: [
     {
       name: 'Developer',
-      price: '$29',
+      price: '₹999',
       period: '/month',
       description: 'For individual developers and small teams getting started.',
       features: ['10 Active Agents', '50,000 Tokens/mo', 'Community Support', 'Basic Analytics'],
@@ -20,7 +20,7 @@ const pricingPlans = {
     },
     {
       name: 'Pro',
-      price: '$99',
+      price: '₹2,500',
       period: '/month',
       description: 'For growing teams building production-grade applications.',
       features: [
@@ -34,8 +34,8 @@ const pricingPlans = {
     },
     {
       name: 'Enterprise',
-      price: 'Custom',
-      period: '',
+      price: '₹5,000',
+      period: '/month',
       description: 'For large organizations with specific security and support needs.',
       features: [
         'Unlimited Agents',
@@ -50,7 +50,7 @@ const pricingPlans = {
   annually: [
     {
       name: 'Developer',
-      price: '$290',
+      price: '₹9,990',
       period: '/year',
       description: 'For individual developers and small teams getting started.',
       features: ['10 Active Agents', '50,000 Tokens/mo', 'Community Support', 'Basic Analytics'],
@@ -58,7 +58,7 @@ const pricingPlans = {
     },
     {
       name: 'Pro',
-      price: '$990',
+      price: '₹24,990',
       period: '/year',
       description: 'For growing teams building production-grade applications.',
       features: [
@@ -72,8 +72,8 @@ const pricingPlans = {
     },
     {
       name: 'Enterprise',
-      price: 'Contact Us',
-      period: '',
+      price: '₹49,990',
+      period: '/year',
       description: 'For large organizations with specific security and support needs.',
       features: [
         'Unlimited Agents',

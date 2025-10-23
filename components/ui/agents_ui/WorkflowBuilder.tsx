@@ -25,6 +25,13 @@ import '@xyflow/react/dist/style.css';
 import { Button } from '@/components/ui/shadcn';
 import { PlusCircle } from 'lucide-react';
 
+// Define the agent interface for API responses
+interface Agent {
+  id: string;
+  name: string;
+  framework: string;
+}
+
 // Define the nodeTypes outside the component
 const nodeTypes = {
   agent: AgentNode,
@@ -48,7 +55,7 @@ export default function WorkflowBuilder() {
         
         const agentsFromApi = await response.json();
 
-        const agentNodes: Node<AgentNodeData>[] = agentsFromApi.map((agent: any, index: number) => ({
+        const agentNodes: Node<AgentNodeData>[] = agentsFromApi.map((agent: Agent, index: number) => ({
           id: agent.id,
           type: 'agent',
           position: { x: index * 350, y: 100 },

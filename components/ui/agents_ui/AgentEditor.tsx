@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/Input';
 import { Label } from '@/components/ui/shadcn/label';
 import ProviderSelector from './ProviderSelector';
+import SecretsManagement from './SecretsManagement';
 import { ArrowLeft, Save, PlusCircle, Trash2 } from 'lucide-react';
 
 // Types
@@ -57,6 +58,7 @@ interface AgentEditorProps {
 export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProps) {
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDescription, setAgentDescription] = useState(agent.description);
+  const [selectedSecretName, setSelectedSecretName] = useState<string>('');
   const [settings, setSettings] = useState<Partial<ConfigFormData>>({
     apiKey: (agent.settings.apiKey as string) || '',
     modelName: (agent.settings.modelName as string) || '',
@@ -131,6 +133,11 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
   const handleModelChange = (modelId: string) => {
     setValue('modelId', modelId);
     setSettings(prev => ({ ...prev, modelId, modelName: modelId }));
+  };
+
+  const handleSecretSelect = (secretName: string) => {
+    setSelectedSecretName(secretName);
+    setSettings(prev => ({ ...prev, apiKey: secretName }));
   };
 
   // Tool management functions
@@ -344,13 +351,23 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
           
           <div>
             <Label className="text-white">API Key</Label>
-            <Input
-              {...register('apiKey')}
-              type="password"
-              className="bg-black/50 border-white/15 text-white"
-              placeholder="Enter your API key"
-              onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
-            />
+            <div className="space-y-3">
+              <Input
+                {...register('apiKey')}
+                type="password"
+                className="bg-black/50 border-white/15 text-white"
+                placeholder="Enter your API key or select from secrets"
+                onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
+              />
+              <div className="text-sm text-white/70">
+                Or select from your saved secrets:
+              </div>
+              <SecretsManagement
+                onSecretSelect={handleSecretSelect}
+                selectedSecretName={selectedSecretName}
+                showSelector={true}
+              />
+            </div>
           </div>
 
           <div>
@@ -511,6 +528,46 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
                       />
                       <Button
                         onClick={() => removeParam(tool.id, 'api_query_params', param.id)}
+                        size="sm"
+                        variant="outline"
+                        className="bg-red-500/20 border-red-500/50 text-red-400"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Path Params */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-white/80">Path Parameters</Label>
+                    <Button
+                      onClick={() => addParam(tool.id, 'api_path_params')}
+                      size="sm"
+                      variant="outline"
+                      className="bg-black/50 border-white/15 text-white hover:bg-black/70"
+                    >
+                      <PlusCircle className="h-3 w-3 mr-1" />
+                      Add Path Param
+                    </Button>
+                  </div>
+                  {Array.isArray(tool.api_path_params) && tool.api_path_params.map(param => (
+                    <div key={param.id} className="flex gap-2">
+                      <Input
+                        placeholder="Key"
+                        value={param.key}
+                        onChange={e => updateParam(tool.id, 'api_path_params', param.id, 'key', e.target.value)}
+                        className="bg-black/50 border-white/15 text-white"
+                      />
+                      <Input
+                        placeholder="Value"
+                        value={param.value}
+                        onChange={e => updateParam(tool.id, 'api_path_params', param.id, 'value', e.target.value)}
+                        className="bg-black/50 border-white/15 text-white"
+                      />
+                      <Button
+                        onClick={() => removeParam(tool.id, 'api_path_params', param.id)}
                         size="sm"
                         variant="outline"
                         className="bg-red-500/20 border-red-500/50 text-red-400"

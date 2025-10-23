@@ -5,15 +5,15 @@ import { Check, Zap } from 'lucide-react';
 import { Switch } from '@/components/ui/shadcn/switch';
 import { Label } from '@/components/ui/shadcn/label';
 import { cn } from '@/lib/utils';
-// --- 1. IMPORT THE NEW ELECTRICBORDER COMPONENT ---
-import ElectricBorder from './ElectricBorder'; // Assuming it's in the same directory
+
+import ElectricBorder from './ElectricBorder';
 
 // --- Data for the pricing plans ---
 const pricingPlans = {
   monthly: [
     {
       name: 'Developer',
-      price: '$29',
+      price: '₹999',
       period: '/month',
       description: 'For individual developers and small teams getting started.',
       features: ['10 Active Agents', '50,000 Tokens/mo', 'Community Support', 'Basic Analytics'],
@@ -21,7 +21,7 @@ const pricingPlans = {
     },
     {
       name: 'Pro',
-      price: '$99',
+      price: '₹2,500',
       period: '/month',
       description: 'For growing teams building production-grade applications.',
       features: [
@@ -35,7 +35,7 @@ const pricingPlans = {
     },
     {
       name: 'Enterprise',
-      price: 'Custom',
+      price: '₹5,000',
       period: '',
       description: 'For large organizations with specific security and support needs.',
       features: [
@@ -51,7 +51,7 @@ const pricingPlans = {
   annually: [
     {
       name: 'Developer',
-      price: '$290',
+      price: '₹9,990',
       period: '/year',
       description: 'For individual developers and small teams getting started.',
       features: ['10 Active Agents', '50,000 Tokens/mo', 'Community Support', 'Basic Analytics'],
@@ -59,7 +59,7 @@ const pricingPlans = {
     },
     {
       name: 'Pro',
-      price: '$990',
+      price: '₹24,990',
       period: '/year',
       description: 'For growing teams building production-grade applications.',
       features: [

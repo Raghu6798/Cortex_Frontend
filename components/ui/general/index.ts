@@ -16,3 +16,5 @@ export { default as PricingPlan } from './PricingPlan';
 export { default as ProblemSection } from './ProblemSection';
 export { default as SolutionSection } from './SolutionSection';
 export { default as TestimonialHighlightSection } from './TestimonialHighlightSection';
+export { default as TextType } from './TextType';
+export { default as Hyperspeed } from './HyperSpeed';

@@ -151,7 +151,6 @@ export default function Header({ isCompact }: HeaderProps) {
             data-icon="octicon-star"
             data-size="large"
             data-show-count="true"
-            aria-label="Star Raghu6798/Cortex on GitHub"
           >
             Star
           </a>

@@ -243,8 +243,13 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 };
                 onAgentCreated(enhancedAgentState);
                 
-                // Redirect to dashboard/builder page
-                router.push('/dashboard/builder');
+                // Redirect based on architecture
+                if (agentState.architecture === 'multi') {
+                    router.push('/dashboard/builder');
+                } else {
+                    // For mono agents, redirect to chat interface
+                    router.push('/dashboard?view=chat');
+                }
             } else {
                 console.error('Failed to create agent:', await response.text());
                 // Still call onAgentCreated for now, but show error

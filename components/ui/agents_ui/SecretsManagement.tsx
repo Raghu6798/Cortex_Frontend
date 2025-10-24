@@ -29,6 +29,7 @@ export default function SecretsManagement({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newSecret, setNewSecret] = useState<SecretCreate>({ name: '', value: '' });
   const [showValue, setShowValue] = useState<{ [key: string]: boolean }>({});
+  const [deletingSecret, setDeletingSecret] = useState<string | null>(null);
 
   const loadSecrets = React.useCallback(async () => {
     try {
@@ -72,7 +73,15 @@ export default function SecretsManagement({
   };
 
   const handleDeleteSecret = async (secretId: string) => {
+    const secret = secrets.find(s => s.id === secretId);
+    const secretName = secret?.name || 'this secret';
+    
+    if (!confirm(`Are you sure you want to delete "${secretName}"? This action cannot be undone.`)) {
+      return;
+    }
+
     try {
+      setDeletingSecret(secretId);
       const token = await getToken();
       if (token) {
         await apiClient.deleteSecret(secretId, token);
@@ -80,6 +89,9 @@ export default function SecretsManagement({
       }
     } catch (error) {
       console.error('Failed to delete secret:', error);
+      alert('Failed to delete secret. Please try again.');
+    } finally {
+      setDeletingSecret(null);
     }
   };
 
@@ -248,9 +260,15 @@ export default function SecretsManagement({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDeleteSecret(secret.id)}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 p-2"
+                    disabled={deletingSecret === secret.id}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 p-2 disabled:opacity-50"
+                    title="Delete secret"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {deletingSecret === secret.id ? (
+                      <div className="h-4 w-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>

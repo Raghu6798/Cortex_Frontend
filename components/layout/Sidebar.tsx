@@ -24,7 +24,7 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
@@ -32,11 +32,12 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
     { name: 'Your Agents', icon: Bot, view: 'agents' as const },
     { name: 'Voice Chat', icon: Mic, view: 'voice-chat' as const },
+    { name: 'Connectors', icon: Plug, view: 'connectors' as const },
     { name: 'Secrets', icon: Shield, view: 'secrets' as const },
   ];
 
   const features = [
-    { name: 'Connectors', icon: Plug },
+
     { name: 'RAG', icon: Search },
     { name: 'Pre-built Tools', icon: Wrench },
     { name: 'Code Sandbox', icon: Terminal },
@@ -82,6 +83,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
               case 'dashboard': return '/dashboard';
               case 'agents': return '/dashboard?view=agents';
               case 'voice-chat': return '/dashboard?view=voice-chat';
+              case 'connectors': return '/dashboard?view=connectors';
               case 'secrets': return '/dashboard?view=secrets';
               default: return '/dashboard';
             }

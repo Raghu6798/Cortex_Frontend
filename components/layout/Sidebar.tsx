@@ -3,15 +3,17 @@
 
 import React from 'react';
 import {
-  Database,
-  FileJson,
-  MessageSquare,
   PlusCircle,
-  Puzzle,
   LayoutDashboard,
   Bot,
   Shield,
   Workflow,
+  Mic,
+  Plug,
+  Search,
+  Wrench,
+  Terminal,
+  FolderOpen,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -22,21 +24,23 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'secrets';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
   const navigationItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
     { name: 'Your Agents', icon: Bot, view: 'agents' as const },
+    { name: 'Voice Chat', icon: Mic, view: 'voice-chat' as const },
     { name: 'Secrets', icon: Shield, view: 'secrets' as const },
   ];
 
   const features = [
-    { name: 'LLM Provider Switching', icon: Puzzle },
-    { name: 'Agent Runtime & Files', icon: FileJson },
-    { name: 'Multi-Tenant UI', icon: MessageSquare },
-    { name: 'Persistence (Postgres)', icon: Database }
+    { name: 'Connectors', icon: Plug },
+    { name: 'RAG', icon: Search },
+    { name: 'Pre-built Tools', icon: Wrench },
+    { name: 'Code Sandbox', icon: Terminal },
+    { name: '.Cortex', icon: FolderOpen }
   ];
 
   return (
@@ -77,6 +81,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
             switch (view) {
               case 'dashboard': return '/dashboard';
               case 'agents': return '/dashboard?view=agents';
+              case 'voice-chat': return '/dashboard?view=voice-chat';
               case 'secrets': return '/dashboard?view=secrets';
               default: return '/dashboard';
             }

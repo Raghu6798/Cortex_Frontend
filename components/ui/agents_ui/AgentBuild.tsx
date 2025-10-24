@@ -17,7 +17,7 @@ import ClassicLoader from '@/components/ui/general/ClassicLoader';
 import { apiClient, Secret } from '@/lib/apiClient';
 import { useAuth } from '@clerk/nextjs';
 import {
-  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2, Key, Shield
+  CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2, Key, Shield, Mic, Terminal
 } from 'lucide-react';
 
 
@@ -55,6 +55,7 @@ export interface ToolConfig {
 
 // Main Agent State
 export interface AgentState {
+  agentType: 'textual' | 'voice' | 'coding' | null;
   architecture: 'mono' | 'multi' | null;
   framework: string | null;
   settings: Partial<ConfigFormData>;
@@ -76,6 +77,7 @@ const frameworks = {
 };
 
 const STEPS = [
+  { id: 'agentType', title: 'Agent Type' },
   { id: 'architecture', title: 'Architecture' },
   { id: 'framework', title: 'Framework' },
   { id: 'configure', title: 'Configure' },
@@ -90,6 +92,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     const [direction, setDirection] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [agentState, setAgentState] = useState<AgentState>({
+      agentType: null,
       architecture: null,
       framework: null,
       settings: {},
@@ -117,8 +120,20 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
         }
     };
 
-    const handleSelection = (key: 'architecture' | 'framework', value: string) => {
+    const handleSelection = (key: 'agentType' | 'architecture' | 'framework', value: string) => {
         setAgentState((prev) => ({ ...prev, [key]: value }));
+        
+        // If voice agent is selected, redirect to voice chat interface
+        if (key === 'agentType' && value === 'voice') {
+            router.push('/dashboard?view=voice-chat');
+            return;
+        }
+        
+        // If coding agent is selected, continue with configuration
+        if (key === 'agentType' && value === 'coding') {
+            handleNext();
+            return;
+        }
         
         // If multi-agent architecture is selected, redirect immediately to workflow builder
         if (key === 'architecture' && value === 'multi') {
@@ -316,12 +331,14 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                         transition={{ duration: 0.3 }}
                         className="w-full max-w-4xl mx-auto"
                     >
-                        {currentStep === 0 && <StepArchitecture onSelect={(arch) => handleSelection('architecture', arch)} />}
-                        {currentStep === 1 && agentState.architecture && <StepFramework architecture={agentState.architecture} onSelect={(fw) => handleSelection('framework', fw)} />}
-                        {currentStep === 2 && agentState.framework === 'langchain' && <StepConfigure onSubmit={handleConfigSubmit} defaultValues={agentState.settings} />}
-                        {currentStep === 2 && agentState.framework !== 'langchain' && <ComingSoonStep />}
-                        {currentStep === 3 && <StepConfigureTools onSubmit={handleToolsSubmit} defaultTools={agentState.tools}/>}
-                        {currentStep === 4 && <StepReview agentState={agentState} />}
+        {currentStep === 0 && <StepAgentType onSelect={(type) => handleSelection('agentType', type)} />}
+        {currentStep === 1 && agentState.agentType === 'textual' && <StepArchitecture onSelect={(arch) => handleSelection('architecture', arch)} />}
+        {currentStep === 1 && agentState.agentType === 'coding' && <StepFramework architecture="mono" onSelect={(fw) => handleSelection('framework', fw)} />}
+        {currentStep === 2 && agentState.architecture && <StepFramework architecture={agentState.architecture} onSelect={(fw) => handleSelection('framework', fw)} />}
+        {currentStep === 3 && agentState.framework === 'langchain' && <StepConfigure onSubmit={handleConfigSubmit} defaultValues={agentState.settings} />}
+        {currentStep === 3 && agentState.framework !== 'langchain' && <ComingSoonStep />}
+        {currentStep === 4 && <StepConfigureTools onSubmit={handleToolsSubmit} defaultTools={agentState.tools}/>}
+        {currentStep === 5 && <StepReview agentState={agentState} />}
                     </motion.div>
                     </AnimatePresence>
                 </div>
@@ -389,6 +406,32 @@ const StepHeader = ({ title, description }: { title: string; description: string
       <p className="text-sm text-white/70">{description}</p>
     </div>
 );
+
+    const StepAgentType = ({ onSelect }: { onSelect: (type: 'textual' | 'voice' | 'coding') => void; }) => (
+        <div className="w-full">
+          <StepHeader title="Choose Agent Type" description="Select the type of AI agent you want to build." />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <ChoiceCard 
+              icon={<Bot />} 
+              title="Textual Agent" 
+              description="Traditional text-based AI agent for chat interfaces and API interactions." 
+              onClick={() => onSelect('textual')} 
+            />
+            <ChoiceCard 
+              icon={<Mic />} 
+              title="Voice Agent" 
+              description="Real-time voice AI agent with LiveKit integration for audio conversations." 
+              onClick={() => onSelect('voice')} 
+            />
+            <ChoiceCard 
+              icon={<Terminal />} 
+              title="Coding Agent" 
+              description="Secure Python coding assistant with E2B sandbox execution for safe code running." 
+              onClick={() => onSelect('coding')} 
+            />
+          </div>
+        </div>
+    );
 
 const StepArchitecture = ({ onSelect }: { onSelect: (arch: 'mono' | 'multi') => void; }) => (
     <div className="w-full">

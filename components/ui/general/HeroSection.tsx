@@ -64,9 +64,10 @@ export default function HeroSection() {
                         text={[
                             "Struggling to build AI agents?",
                             "Tired of managing multiple LLM providers?",
+                            "Having a hard time configuring tools for the Agents and managing secrets?",
+                            "Want to build voice agents but don't know where to start?",
                             "Need production-ready agent infrastructure?",
-                            "Want to deploy agents at scale?",
-                            "Ready to build the future of AI?"
+                            "Want to deploy agents at scale?"
                         ]}
                         typingSpeed={80}
                         deletingSpeed={40}

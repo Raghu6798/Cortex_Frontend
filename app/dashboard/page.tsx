@@ -8,6 +8,7 @@ import { Users, LayoutDashboard } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
 import MultiModalChatUI from '@/components/ui/agents_ui/MultiModalChatUI';
+import VoiceChatUI from '@/components/ui/agents_ui/VoiceChatUI';
 import AgentBuilder, { AgentState, ToolConfig } from '@/components/ui/agents_ui/AgentBuild';
 import AgentList from '@/components/ui/agents_ui/AgentList';
 import AgentEditor from '@/components/ui/agents_ui/AgentEditor';
@@ -69,7 +70,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'agents' | 'editor' | 'secrets'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
   const [agentToEdit, setAgentToEdit] = useState<{
@@ -85,8 +86,8 @@ function DashboardContent() {
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view && ['dashboard', 'agents', 'secrets'].includes(view)) {
-      setActiveView(view as 'dashboard' | 'agents' | 'secrets');
+    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat');
     }
   }, [searchParams]);
 
@@ -116,6 +117,7 @@ function DashboardContent() {
   const handleAgentSelect = (agent: { id: string; architecture: string; framework: string; settings: Record<string, unknown>; tools: Record<string, unknown>[] }) => {
     // Convert the agent from the API to AgentState format
     const agentState: AgentState = {
+      agentType: 'textual', // Default to textual for existing agents
       architecture: agent.architecture as 'mono' | 'multi',
       framework: agent.framework,
       settings: agent.settings,
@@ -146,6 +148,7 @@ function DashboardContent() {
     switch (activeView) {
       case 'builder': return 'Create a New Custom Agent';
       case 'chat': return 'Custom Agent Chat';
+      case 'voice-chat': return 'Voice Agent Chat';
       case 'agents': return 'Your Agents';
       case 'editor': return 'Edit Agent';
       case 'dashboard':
@@ -169,6 +172,7 @@ function DashboardContent() {
   const renderContent = () => {
     if (activeView === 'builder') return <AgentBuilder onAgentCreated={handleAgentCreated} />;
     if (activeView === 'chat') return <MultiModalChatUI initialAgentConfig={initialAgentConfig} />;
+    if (activeView === 'voice-chat') return <VoiceChatUI />;
     if (activeView === 'agents') return <AgentList onAgentSelect={handleAgentSelect} onAgentEdit={handleAgentEdit} onCreateNew={() => setActiveView('builder')} showHeader={false} />;
     if (activeView === 'editor' && agentToEdit) return <AgentEditor agent={agentToEdit} onSave={handleAgentSaved} onCancel={handleCancelEdit} />;
     if (activeView === 'secrets') return <SecretsManagement />;

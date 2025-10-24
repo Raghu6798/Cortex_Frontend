@@ -1,9 +1,9 @@
-import { useEffect, useRef, FC } from 'react';
+import { useEffect, useRef, FC, useMemo } from 'react';
 import * as THREE from 'three';
 import { BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset } from 'postprocessing';
 
 interface Distortion {
-  uniforms: Record<string, { value: any }>;
+  uniforms: Record<string, { value: THREE.Vector2 | THREE.Vector3 | THREE.Vector4 | THREE.Color | number | boolean }>;
   getDistortion: string;
   getJS?: (progress: number, time: number) => THREE.Vector3;
 }
@@ -456,7 +456,12 @@ class CarLights {
     const curve = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1));
     const geometry = new THREE.TubeGeometry(curve, 40, 1, 8, false);
 
-    const instanced = new THREE.InstancedBufferGeometry().copy(geometry as any) as THREE.InstancedBufferGeometry;
+    const instanced = new THREE.InstancedBufferGeometry();
+    // Copy geometry attributes manually
+    if (geometry.attributes.position) instanced.setAttribute('position', geometry.attributes.position);
+    if (geometry.attributes.normal) instanced.setAttribute('normal', geometry.attributes.normal);
+    if (geometry.attributes.uv) instanced.setAttribute('uv', geometry.attributes.uv);
+    if (geometry.index) instanced.setIndex(geometry.index);
     instanced.instanceCount = options.lightPairsPerRoadWay * 2;
 
     const laneWidth = options.roadWidth / options.lanesPerRoad;
@@ -614,7 +619,12 @@ class LightsSticks {
   init() {
     const options = this.options;
     const geometry = new THREE.PlaneGeometry(1, 1);
-    const instanced = new THREE.InstancedBufferGeometry().copy(geometry as any) as THREE.InstancedBufferGeometry;
+    const instanced = new THREE.InstancedBufferGeometry();
+    // Copy geometry attributes manually
+    if (geometry.attributes.position) instanced.setAttribute('position', geometry.attributes.position);
+    if (geometry.attributes.normal) instanced.setAttribute('normal', geometry.attributes.normal);
+    if (geometry.attributes.uv) instanced.setAttribute('uv', geometry.attributes.uv);
+    if (geometry.index) instanced.setIndex(geometry.index);
     const totalSticks = options.totalSideLightSticks;
     instanced.instanceCount = totalSticks;
 
@@ -758,7 +768,7 @@ class Road {
       segments
     );
 
-    let uniforms: Record<string, { value: any }> = {
+    let uniforms: Record<string, { value: THREE.Vector2 | THREE.Vector3 | THREE.Vector4 | THREE.Color | number | boolean }> = {
       uTravelLength: { value: options.length },
       uColor: {
         value: new THREE.Color(isRoad ? options.colors.roadColor : options.colors.islandColor)
@@ -923,13 +933,18 @@ class App {
   renderPass!: RenderPass;
   bloomPass!: EffectPass;
   clock: THREE.Clock;
-  assets: Record<string, any>;
+  assets: Record<string, unknown> & {
+    smaa?: {
+      search?: HTMLImageElement;
+      area?: HTMLImageElement;
+    };
+  };
   disposed: boolean;
   road: Road;
   leftCarLights: CarLights;
   rightCarLights: CarLights;
   leftSticks: LightsSticks;
-  fogUniforms: Record<string, { value: any }>;
+  fogUniforms: Record<string, { value: THREE.Vector2 | THREE.Vector3 | THREE.Vector4 | THREE.Color | number | boolean }>;
   fovTarget: number;
   speedUpTarget: number;
   speedUp: number;
@@ -1057,12 +1072,12 @@ class App {
       assets.smaa = {};
 
       searchImage.addEventListener('load', function () {
-        assets.smaa.search = this;
+        if (assets.smaa) assets.smaa.search = this as HTMLImageElement;
         manager.itemEnd('smaa-search');
       });
 
       areaImage.addEventListener('load', function () {
-        assets.smaa.area = this;
+        if (assets.smaa) assets.smaa.area = this as HTMLImageElement;
         manager.itemEnd('smaa-area');
       });
 
@@ -1217,10 +1232,10 @@ class App {
 }
 
 const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = {} }) => {
-  const mergedOptions: HyperspeedOptions = {
+  const mergedOptions: HyperspeedOptions = useMemo(() => ({
     ...defaultOptions,
     ...effectOptions
-  };
+  }), [effectOptions]);
   const hyperspeed = useRef<HTMLDivElement>(null);
   const appRef = useRef<App | null>(null);
 

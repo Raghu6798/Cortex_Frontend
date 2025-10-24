@@ -21,7 +21,7 @@ const pricingPlans = {
     },
     {
       name: 'Pro',
-      price: '₹2,500',
+      price: '₹2,000',
       period: '/month',
       description: 'For growing teams building production-grade applications.',
       features: [
@@ -35,7 +35,7 @@ const pricingPlans = {
     },
     {
       name: 'Enterprise',
-      price: '₹5,000',
+      price: '₹4,000',
       period: '',
       description: 'For large organizations with specific security and support needs.',
       features: [

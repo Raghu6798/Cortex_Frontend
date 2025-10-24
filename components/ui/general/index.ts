@@ -18,3 +18,6 @@ export { default as SolutionSection } from './SolutionSection';
 export { default as TestimonialHighlightSection } from './TestimonialHighlightSection';
 export { default as TextType } from './TextType';
 export { default as Hyperspeed } from './HyperSpeed';
+export { default as BentoGrid } from './BentoGrid';
+export { default as ChallengeBentoGrid } from './ChallengeBentoGrid';
+export { NeonGradientCardDemo } from './NeonGradientCardDemo';

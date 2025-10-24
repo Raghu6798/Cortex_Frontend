@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 
 
 import { SectionReveal } from '@/components/ui/general/SectionReveal';
@@ -8,7 +9,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/ui/general/HeroSection';
 import LogosSection from '@/components/ui/general/LogosSection';
-import ProblemSection from '@/components/ui/general/ProblemSection';
 import SolutionSection from '@/components/ui/general/SolutionSection';
 import HowItWorksSection from '@/components/ui/general/HowItWorksSection';
 import TestimonialHighlightSection from '@/components/ui/general/TestimonialHighlightSection';
@@ -18,6 +18,7 @@ import PricingSection from '@/components/ui/general/PricingPlan';
 import FAQSection from '@/components/ui/general/FAQSection';
 import BlogSection from '@/components/ui/general/BlogSection';
 import CTASection from '@/components/ui/general/CTASection';
+import ChallengeBentoGrid from '@/components/ui/general/ChallengeBentoGrid';
 
 // --- THIS IS THE MODIFIED DATA ARRAY ---
 const testimonials = [
@@ -45,9 +46,17 @@ const testimonials = [
 
 
 export default function Page() {
-
+  const [isLoaded, setIsLoaded] = React.useState(false);
   const [isCompact, setIsCompact] = React.useState(false);
   const lastY = React.useRef(0);
+
+  React.useEffect(() => {
+    // Trigger page load animation
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -68,13 +77,27 @@ export default function Page() {
   }, [isCompact]);
 
   return (
-    <main className="relative min-h-screen w-full bg-black text-white dark">
-
-      <div className="relative z-10">
-        
+    <motion.main 
+      className="relative min-h-screen w-full bg-black text-white dark"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isLoaded ? 1 : 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+    >
+      <motion.div 
+        className="relative z-10"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: isLoaded ? 0 : 20, opacity: isLoaded ? 1 : 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+      >
         <Header isCompact={isCompact} />
         
-        <HeroSection />
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: isLoaded ? 0 : 30, opacity: isLoaded ? 1 : 0 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+        >
+          <HeroSection />
+        </motion.div>
         <SectionReveal>
         <div className="bg-black/50">
           <LogosSection />
@@ -83,11 +106,16 @@ export default function Page() {
 
         <SectionReveal>
         <div className="relative mx-auto my-8 max-w-7xl rounded-3xl bg-black/50 px-6 py-16">
-          <ProblemSection />
           <SolutionSection />
           <HowItWorksSection />
           <TestimonialHighlightSection />
           <FeaturesSection />
+        </div>
+        </SectionReveal>
+
+        <SectionReveal>
+        <div className="bg-black/30">
+          <ChallengeBentoGrid />
         </div>
         </SectionReveal>
         
@@ -107,7 +135,7 @@ export default function Page() {
         </SectionReveal>
 
         <Footer />
-      </div>
-    </main>
+      </motion.div>
+    </motion.main>
   );
 }

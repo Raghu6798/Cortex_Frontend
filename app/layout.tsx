@@ -16,8 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cortex – The Neural Nexus",
+  title: "Cortex – Backend as a service for AI agents",
   description: "A neural-inspired runtime where intelligent agents connect, evolve, and collaborate.",
+  icons: {
+    icon: '/download.png',
+    shortcut: '/download.png',
+    apple: '/download.png',
+  },
 };
 
 

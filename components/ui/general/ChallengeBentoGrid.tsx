@@ -12,7 +12,10 @@ import {
   GitBranch,
   Layers,
   Target,
-  Sparkles
+  Sparkles,
+  Mic,
+  Phone,
+  Volume2
 } from 'lucide-react';
 
 interface ChallengeCardProps {
@@ -145,6 +148,30 @@ const ChallengeBentoGrid: React.FC = () => {
       gradient: "bg-gradient-to-br from-amber-500/20 to-yellow-500/20",
       size: "small" as const,
       delay: 0.9
+    },
+    {
+      title: "Real-time Voice Processing",
+      description: "Handling live audio streams with low latency, noise cancellation, and natural conversation flow.",
+      icon: <Mic className="w-6 h-6" />,
+      gradient: "bg-gradient-to-br from-cyan-500/20 to-blue-500/20",
+      size: "medium" as const,
+      delay: 1.0
+    },
+    {
+      title: "Voice Agent Deployment",
+      description: "Managing voice agents across different environments with proper audio routing and scaling.",
+      icon: <Phone className="w-6 h-6" />,
+      gradient: "bg-gradient-to-br from-emerald-500/20 to-teal-500/20",
+      size: "small" as const,
+      delay: 1.1
+    },
+    {
+      title: "Audio Quality & Latency",
+      description: "Optimizing voice interactions for crystal-clear audio with minimal delay across network conditions.",
+      icon: <Volume2 className="w-6 h-6" />,
+      gradient: "bg-gradient-to-br from-rose-500/20 to-pink-500/20",
+      size: "small" as const,
+      delay: 1.2
     }
   ];
 

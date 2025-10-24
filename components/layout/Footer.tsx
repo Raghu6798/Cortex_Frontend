@@ -52,13 +52,13 @@ const Footer = () => {
             Your comprehensive Agent Development Environment (ADE) for building, testing, and deploying production-grade AI agents.
           </p>
           <div className="mt-6 flex justify-center md:justify-start gap-5">
-            <a href="https://github.com/agentadevs/agenta" target="_blank" rel="noreferrer" aria-label="GitHub" className="text-white/70 hover:text-white transition-colors">
+            <a href="https://github.com/Raghu6798" target="_blank" rel="noreferrer" aria-label="GitHub" className="text-white/70 hover:text-white transition-colors">
               <FaGithub size={22} />
             </a>
             <a href="https://twitter.com/your-agenta-handle" target="_blank" rel="noreferrer" aria-label="Twitter" className="text-white/70 hover:text-white transition-colors">
               <FaTwitter size={22} />
             </a>
-            <a href="https://linkedin.com/company/your-agenta-company" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-white/70 hover:text-white transition-colors">
+            <a href="https://www.linkedin.com/in/raghu-nandan-82a23b283/" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-white/70 hover:text-white transition-colors">
               <FaLinkedin size={22} />
             </a>
           </div>

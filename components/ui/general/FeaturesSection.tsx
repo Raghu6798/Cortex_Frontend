@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle, Zap, Users, Shield, BarChart, BookOpen } from 'lucide-react';
+import { CheckCircle, Zap, Users, Shield, BarChart, BookOpen, Mic, Phone } from 'lucide-react';
 
 const FeatureCard = ({ icon, title, desc }: { icon: React.ReactNode, title: string; desc: string }) => (
     <div className="rounded-xl border border-white/15 bg-black/30 p-6 backdrop-blur supports-[backdrop-filter]:bg-black/20">
@@ -26,6 +26,8 @@ export default function FeaturesSection() {
                 <FeatureCard icon={<BarChart className="text-purple-400"/>} title="Configurable Context Length" desc="Tune RAM (context window) per agent and track token usage in real time." />
                 <FeatureCard icon={<Shield className="text-purple-400"/>} title="Postgres Persistence" desc="Durable memory and state storage with tenant isolation and migration-ready schema." />
                 <FeatureCard icon={<BookOpen className="text-purple-400"/>} title="Multimodal Chat" desc="Image, video, docs, PDFs — drag & drop or paste. Unified interface for all." />
+                <FeatureCard icon={<Mic className="text-purple-400"/>} title="Voice Agents with LiveKit" desc="Build production-grade voice AI agents with real-time audio, video, and data streams using LiveKit integration." />
+                <FeatureCard icon={<Phone className="text-purple-400"/>} title="Telephony Integration" desc="Deploy voice agents for call centers, telehealth, and customer service with SIP integration support." />
                 <FeatureCard icon={<CheckCircle className="text-purple-400"/>} title="Web + MCP Tools" desc="Built-in web search and MCP servers for tool-augmented reasoning and retrieval." />
                 <FeatureCard icon={<Users className="text-purple-400"/>} title="Multi-tenant Workspaces" desc="Sidebar chats, org-level controls, per-tenant limits, and memory availability display." />
             </div>

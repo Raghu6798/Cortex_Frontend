@@ -81,7 +81,7 @@ export default function HeroSection() {
                     />
                 </h1>
                 <p className="relative mt-4 mx-auto max-w-3xl text-lg text-white/90 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-                    Build, test, and deploy multi-tenant, multimodal AI agents. Switch LLMs on the fly, tune context length, and persist memory and state with Postgres — all in one place.
+                    Build, test, and deploy multi-tenant, multimodal AI agents with voice capabilities. Switch LLMs on the fly, tune context length, persist memory and state with Postgres, and integrate real-time voice interactions with LiveKit — all in one place.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
                     <Link href="/dashboard" className="rounded-lg bg-white px-6 py-3 font-medium text-black shadow-lg hover:bg-white/90 transition-transform hover:scale-105">

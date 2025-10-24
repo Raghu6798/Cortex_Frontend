@@ -5,7 +5,7 @@ export default function HowItWorksSection() {
       <div className="text-center">
         <h2 className="text-sm font-semibold text-purple-400">How It Works</h2>
         <p className="mt-2 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-          Develop Agents in 3 Simple Steps
+          Develop Text & Voice Agents in 3 Simple Steps
         </p>
       </div>
 
@@ -19,7 +19,7 @@ export default function HowItWorksSection() {
           <h3 className="mt-6 text-xl font-semibold">Define Your Agent</h3>
           <p className="mt-2 text-white/70">
             Use our intuitive dashboard to configure your agent&apos;s LLM,
-            tools, and memory persistence.
+            tools, memory persistence, and voice capabilities with LiveKit integration.
           </p>
         </div>
 
@@ -30,8 +30,8 @@ export default function HowItWorksSection() {
           </div>
           <h3 className="mt-6 text-xl font-semibold">Test and Iterate</h3>
           <p className="mt-2 text-white/70">
-            Leverage built-in chat interfaces and token tracking to test and
-            refine your agent&apos;s behavior.
+            Leverage built-in chat interfaces, voice testing, and token tracking to test and
+            refine your agent&apos;s behavior across text and voice interactions.
           </p>
         </div>
 
@@ -42,8 +42,8 @@ export default function HowItWorksSection() {
           </div>
           <h3 className="mt-6 text-xl font-semibold">Deploy and Scale</h3>
           <p className="mt-2 text-white/70">
-            Expose your agent via API and let Cortex handle multi-tenancy, state,
-            and scalability.
+            Expose your agent via API and WebRTC for voice interactions. Let Cortex handle multi-tenancy, state,
+            scalability, and real-time audio processing.
           </p>
         </div>
       </div>

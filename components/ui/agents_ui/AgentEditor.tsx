@@ -356,13 +356,32 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
           
           <div>
             <Label className="text-white">API Key</Label>
-            <Input
-              {...register('apiKey')}
-              type="password"
-              className="bg-black/50 border-white/15 text-white"
-              placeholder="Enter your API key"
-              onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
-            />
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  {...register('apiKey')}
+                  type="password"
+                  className="bg-black/50 border-white/15 text-white flex-1"
+                  placeholder="Enter your API key"
+                  onChange={(e) => setSettings(prev => ({ ...prev, apiKey: e.target.value }))}
+                />
+                <div className="text-sm text-white/70 flex items-center px-3">
+                  OR
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="text-sm text-white/70">
+                  Select from your saved secrets:
+                </div>
+                <SecretsManagement
+                  onSecretSelect={(secretName) => {
+                    setSettings(prev => ({ ...prev, apiKey: secretName }));
+                  }}
+                  selectedSecretName={settings.apiKey || ''}
+                  showSelector={true}
+                />
+              </div>
+            </div>
           </div>
 
           <div>
@@ -446,23 +465,30 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
                 <div className="space-y-2">
                   <Label className="text-white/80">API Key for this Tool</Label>
                   <div className="space-y-3">
-                    <Input
-                      placeholder="Enter API key for this tool"
-                      value={tool.api_key || ''}
-                      onChange={e => updateToolField(tool.id, 'api_key', e.target.value)}
-                      className="bg-black/50 border-white/15 text-white"
-                    />
-                    <div className="text-sm text-white/70">
-                      Or select from your saved secrets:
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter API key for this tool"
+                        value={tool.api_key || ''}
+                        onChange={e => updateToolField(tool.id, 'api_key', e.target.value)}
+                        className="bg-black/50 border-white/15 text-white flex-1"
+                      />
+                      <div className="text-sm text-white/70 flex items-center px-3">
+                        OR
+                      </div>
                     </div>
-                    <SecretsManagement
-                      onSecretSelect={(secretName) => {
-                        updateToolField(tool.id, 'selected_secret', secretName);
-                        updateToolField(tool.id, 'api_key', secretName);
-                      }}
-                      selectedSecretName={tool.selected_secret || ''}
-                      showSelector={true}
-                    />
+                    <div className="space-y-2">
+                      <div className="text-sm text-white/70">
+                        Select from your saved secrets:
+                      </div>
+                      <SecretsManagement
+                        onSecretSelect={(secretName) => {
+                          updateToolField(tool.id, 'selected_secret', secretName);
+                          updateToolField(tool.id, 'api_key', secretName);
+                        }}
+                        selectedSecretName={tool.selected_secret || ''}
+                        showSelector={true}
+                      />
+                    </div>
                   </div>
                 </div>
 

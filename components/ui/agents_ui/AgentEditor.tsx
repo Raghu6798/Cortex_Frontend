@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/Input';
 import { Label } from '@/components/ui/shadcn/label';
+import { Switch } from '@/components/ui/shadcn/switch';
 import ProviderSelector from './ProviderSelector';
 import SecretsManagement from './SecretsManagement';
 import { ArrowLeft, Save, PlusCircle, Trash2 } from 'lucide-react';
@@ -28,6 +29,7 @@ interface ToolConfig {
   api_query_params: ToolParam[] | Record<string, string>;
   api_path_params: ToolParam[] | Record<string, string>;
   request_payload: string;
+  dynamic_boolean: boolean;
   api_key?: string;
   selected_secret?: string;
 }
@@ -82,6 +84,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
         api_query_params: [],
         api_path_params: [],
         request_payload: '',
+        dynamic_boolean: false,
         api_key: '',
         selected_secret: ''
       }];
@@ -120,6 +123,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
         api_query_params: queryParams,
         api_path_params: pathParams,
         request_payload: (tool.request_payload as string) || '',
+        dynamic_boolean: (tool.dynamic_boolean as boolean) ?? false,
         api_key: (tool.api_key as string) || '',
         selected_secret: (tool.selected_secret as string) || ''
       };
@@ -153,6 +157,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
       api_query_params: [],
       api_path_params: [],
       request_payload: '',
+      dynamic_boolean: false,
       api_key: '',
       selected_secret: ''
     }]);
@@ -260,6 +265,7 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
         api_query_params: queryParams,
         api_path_params: pathParams,
         request_payload: tool.request_payload || '',
+        dynamic_boolean: tool.dynamic_boolean ?? false,
         api_key: tool.api_key || '',
         selected_secret: tool.selected_secret || ''
       };
@@ -502,6 +508,21 @@ export default function AgentEditor({ agent, onSave, onCancel }: AgentEditorProp
                   <option value="PUT">PUT</option>
                   <option value="DELETE">DELETE</option>
                 </select>
+
+                {/* Dynamic Tool Injection Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-md border border-white/15 bg-black/30">
+                  <div className="space-y-0.5">
+                    <Label className="text-white/90 cursor-pointer">Enable Dynamic Tool Injection</Label>
+                    <p className="text-sm text-white/60">
+                      Allow placeholders like {`{{variable}}`} in URLs, headers, params, and body to be replaced at runtime
+                    </p>
+                  </div>
+                  <Switch
+                    checked={tool.dynamic_boolean}
+                    onCheckedChange={(checked) => updateToolField(tool.id, 'dynamic_boolean', checked)}
+                    className="data-[state=checked]:bg-purple-600"
+                  />
+                </div>
 
                 {/* Headers */}
                 <div className="space-y-2">

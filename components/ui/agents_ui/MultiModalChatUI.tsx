@@ -31,6 +31,8 @@ interface BackendToolFormat {
   api_headers: Record<string, string>;
   api_query_params: Record<string, string>;
   api_path_params: Record<string, string>;
+  dynamic_boolean: boolean;
+  dynamic_variables: Record<string, string>;
   request_payload: string;
 }
 
@@ -86,6 +88,8 @@ const transformToolsForBackend = (tools: ToolConfig[]): BackendToolFormat[] => {
     api_headers: transformParams(tool.api_headers),
     api_query_params: transformParams(tool.api_query_params),
     api_path_params: transformParams(tool.api_path_params),
+    dynamic_boolean: tool.dynamic_boolean || false,
+    dynamic_variables: tool.dynamic_variables || {},
     request_payload: tool.request_payload || ""
   }));
 };

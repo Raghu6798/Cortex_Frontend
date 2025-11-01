@@ -19,6 +19,7 @@ import { useAuth } from '@clerk/nextjs';
 import {
   CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2, Key, Shield, Mic, Terminal
 } from 'lucide-react';
+import { Switch } from '@/components/ui/shadcn/switch';
 
 
 //--- TYPES AND SCHEMAS ---
@@ -50,6 +51,8 @@ export interface ToolConfig {
   api_headers: ToolParam[] | Record<string, string>;
   api_query_params: ToolParam[] | Record<string, string>;
   api_path_params: ToolParam[] | Record<string, string>;
+  dynamic_boolean: boolean;
+  dynamic_variables:Record<string, string>;
   request_payload: string;
 }
 
@@ -208,6 +211,8 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                     api_headers: headers,
                     api_query_params: queryParams,
                     api_path_params: pathParams,
+                    dynamic_boolean: tool.dynamic_boolean || false,
+                    dynamic_variables: tool.dynamic_variables || {},
                     request_payload: tool.request_payload || ''
                 };
             });
@@ -566,7 +571,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
   const [secrets, setSecrets] = useState<Secret[]>([]);
   
   const [tools, setTools] = useState<ToolConfig[]>(defaultTools.length > 0 ? defaultTools : [
-    { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], request_payload: '' }
+    { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], dynamic_boolean: false, dynamic_variables: {}, request_payload: '' }
   ]);
 
   const loadSecrets = React.useCallback(async () => {
@@ -587,14 +592,14 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
   }, [loadSecrets]);
 
   const addTool = () => {
-    setTools([...tools, { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], request_payload: '' }]);
+    setTools([...tools, { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], dynamic_boolean: false, dynamic_variables: {}, request_payload: '' }]);
   };
 
   const removeTool = (id: string) => {
     setTools(tools.filter(t => t.id !== id));
   };
   
-  const updateToolField = (id: string, field: keyof ToolConfig, value: string | ToolParam[]) => {
+  const updateToolField = (id: string, field: keyof ToolConfig, value: string | ToolParam[] | boolean | Record<string, string>) => {
     setTools(tools.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
@@ -685,7 +690,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
                   <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
                 </select>
                 <Input 
-                  placeholder="API URL (e.g., https://api.weather.com/find)" 
+                  placeholder={tool.dynamic_boolean ? "API URL (e.g., https://api.weather.com/{{city}})" : "API URL (e.g., https://api.weather.com/find)"}
                   value={tool.api_url} 
                   onChange={e => updateToolField(tool.id, 'api_url', e.target.value)}
                   className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
@@ -693,17 +698,31 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
               </div>
             </div>
 
+            {/* Dynamic Variables Toggle */}
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-white/80">Enable Dynamic Variable Injection</h4>
+                <Switch
+                  checked={tool.dynamic_boolean || false}
+                  onCheckedChange={(checked) => updateToolField(tool.id, 'dynamic_boolean', checked)}
+                  className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-500 border-purple-500/30"
+                />
+              </div>
+              {tool.dynamic_boolean && (
+                <p className="text-xs text-purple-300/80">When enabled, {`{{ }}`} placeholders in any field will be replaced by the agent&apos;s tool call arguments.</p>
+              )}
+            </div>
+
             {/* Request Payload */}
             <div className="space-y-2 pt-2">
               <h4 className="text-sm font-medium text-white/80">Request Payload (Optional)</h4>
               <textarea
-                placeholder="Enter JSON payload (e.g., {&quot;name&quot;: &quot;{{userName}}&quot;, &quot;email&quot;: &quot;{{userEmail}}&quot;})"
+                placeholder={tool.dynamic_boolean ? "Enter JSON payload (e.g., {\"name\": \"{{userName}}\", \"email\": \"{{userEmail}}\"}) - {{ }} values replaced by agent's tool call arguments" : "Enter JSON payload (e.g., {\"name\": \"John\", \"email\": \"john@example.com\"})"}
                 value={tool.request_payload}
                 onChange={e => updateToolField(tool.id, 'request_payload', e.target.value)}
                 className="flex min-h-[100px] w-full rounded-md border border-white/15 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 rows={4}
               />
-              <p className="text-xs text-white/60">Use placeholders like {"{{variableName}}"} for dynamic values</p>
             </div>
 
             {/* Path Parameters */}
@@ -718,7 +737,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
                   />
                   <Input 
-                    placeholder="value (e.g., '{{userId}}')" 
+                    placeholder={tool.dynamic_boolean ? "value (e.g., '{{userId}}') - replaced by agent's tool call arguments" : "value (e.g., '123')"}
                     value={p.value} 
                     onChange={e => updateToolParam(tool.id, 'api_path_params', p.id, 'value', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
@@ -741,7 +760,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
                   />
                   <Input 
-                    placeholder="value (e.g., '{{city}}')" 
+                    placeholder={tool.dynamic_boolean ? "value (e.g., '{{city}}') - replaced by agent's tool call arguments" : "value (e.g., 'New York')"}
                     value={p.value} 
                     onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'value', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
@@ -764,7 +783,7 @@ const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: Tool
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
                   />
                   <Input 
-                    placeholder="Header Value (e.g., 'Bearer ...')" 
+                    placeholder={tool.dynamic_boolean ? "Header Value (e.g., 'Bearer {{token}}') - {{ }} replaced by agent's tool call arguments" : "Header Value (e.g., 'Bearer abc123')"}
                     value={h.value} 
                     onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'value', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"

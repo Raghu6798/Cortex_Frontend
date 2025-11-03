@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Phone, PhoneOff, Volume2, Settings, Bot } from 'lucide-react';
+import { Mic, MicOff, Phone, PhoneOff, Volume2 } from 'lucide-react';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import VoiceBorb from './VoiceBorb';
 
@@ -26,8 +26,8 @@ const VoiceChatUI = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [currentSession, setCurrentSession] = useState<VoiceSession | null>(null);
-  const [sessions, setSessions] = useState<VoiceSession[]>([]);
+  // const [currentSession, setCurrentSession] = useState<VoiceSession | null>(null);
+  // const [sessions, setSessions] = useState<VoiceSession[]>([]);
   const [audioLevel, setAudioLevel] = useState(0);
   const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
   
@@ -35,29 +35,43 @@ const VoiceChatUI = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
 
   // Initialize audio monitoring
   useEffect(() => {
     if (isConnected) {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
+          // Store stream for reuse in recording
+          audioStreamRef.current = stream;
+          
           const audioContext = new AudioContext();
           const analyser = audioContext.createAnalyser();
           const source = audioContext.createMediaStreamSource(stream);
           
           source.connect(analyser);
           analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.8;
           
           audioContextRef.current = audioContext;
           analyserRef.current = analyser;
           
-          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          // Use time domain data for better voice detection
+          const dataArray = new Uint8Array(analyser.fftSize);
           
           const updateAudioLevel = () => {
             if (analyserRef.current) {
-              analyserRef.current.getByteFrequencyData(dataArray);
-              const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-              setAudioLevel(average);
+              analyserRef.current.getByteTimeDomainData(dataArray);
+              // Calculate RMS (Root Mean Square) for better amplitude detection
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) {
+                const normalized = (dataArray[i] - 128) / 128;
+                sum += normalized * normalized;
+              }
+              const rms = Math.sqrt(sum / dataArray.length);
+              // Scale RMS (0-1) to 0-255 range and apply some amplification for voice
+              const level = Math.min(rms * 255 * 3, 255);
+              setAudioLevel(level);
             }
             animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
           };
@@ -65,6 +79,13 @@ const VoiceChatUI = () => {
           updateAudioLevel();
         })
         .catch(console.error);
+    } else {
+      // Stop audio stream when disconnected
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
+      setAudioLevel(0);
     }
 
     return () => {
@@ -74,37 +95,59 @@ const VoiceChatUI = () => {
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
     };
   }, [isConnected]);
 
   const startRecording = () => {
-    if (!isConnected) return;
+    if (!isConnected || !audioStreamRef.current) return;
     
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        
-        const chunks: Blob[] = [];
-        mediaRecorder.ondataavailable = (event) => {
+    // Reuse the existing stream
+    const stream = audioStreamRef.current;
+    
+    // Check if MediaRecorder is supported
+    if (!MediaRecorder.isTypeSupported) {
+      console.error('MediaRecorder is not supported');
+      return;
+    }
+    
+    try {
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
           chunks.push(event.data);
-        };
-        
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(chunks, { type: 'audio/wav' });
-          // Here you would send the audio to your LiveKit voice agent
-          console.log('Audio recorded:', audioBlob);
-          // Simulate agent response
-          setTimeout(() => {
-            setIsAgentSpeaking(true);
-            setTimeout(() => setIsAgentSpeaking(false), 2000);
-          }, 1000);
-        };
-        
-        mediaRecorder.start();
-        setIsRecording(true);
-      })
-      .catch(console.error);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: mediaRecorder.mimeType });
+        // Here you would send the audio to your LiveKit voice agent
+        console.log('Audio recorded:', audioBlob);
+        // Simulate agent response
+        setTimeout(() => {
+          setIsAgentSpeaking(true);
+          setTimeout(() => setIsAgentSpeaking(false), 2000);
+        }, 1000);
+      };
+      
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        setIsRecording(false);
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+    }
   };
 
   const stopRecording = () => {
@@ -118,8 +161,9 @@ const VoiceChatUI = () => {
     if (isConnected) {
       setIsConnected(false);
       setIsRecording(false);
-      if (mediaRecorderRef.current) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
       }
     } else {
       setIsConnected(true);

@@ -72,7 +72,7 @@ const frameworks = {
     { id: 'llama_index', name: 'LlamaIndex', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/llamaindex-color.png' },
     { id: 'langgraph', name: 'LangGraph', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langgraph-color.png' },
     { id: 'adk', name: 'Google ADK', logo: 'https://google.github.io/adk-docs/assets/agent-development-kit.png' },
-    { id: 'pydantic_ai', name: 'Pydantic AI', logo: 'https://pbs.twimg.com/profile_images/1884966723746435073/x0p8ngPD_400x400.jpg' },
+    { id: 'pydantic_ai', name: 'Pydantic AI', logo: 'https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=2,background=white,quality=75,width=400,height=400/event-covers/7b/af750bca-5957-41ca-9c6f-c47553f4ff2d.png' },
   ],
   multi: [
     { id: 'agno', name: 'Agno', logo: 'https://pbs.twimg.com/profile_images/1884966723746435073/x0p8ngPD_400x400.jpg' },

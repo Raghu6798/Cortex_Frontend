@@ -145,11 +145,14 @@ export default function VoiceBorb({
       float len = length(uv);
       float invLen = len > 0.0 ? 1.0 / len : 0.0;
       
-      // Apply audio level distortion
-      float audioDistortion = audioLevel * 0.1;
+      // Apply audio level distortion and expansion
+      // Normalize audioLevel (0-255 range) to 0-1 range
+      float normalizedAudio = clamp(audioLevel / 255.0, 0.0, 1.0);
+      float audioDistortion = normalizedAudio * 0.15;
       float n0 = snoise3(vec3(uv * noiseScale * (1.0 + audioDistortion), iTime * 0.5)) * 0.5 + 0.5;
       float r0 = mix(mix(innerRadius, 1.0, 0.4), mix(innerRadius, 1.0, 0.6), n0);
-      r0 += audioLevel * 0.1; // Scale based on audio
+      // Expand radius based on audio - more responsive to voice
+      r0 += normalizedAudio * 0.15; // Scale based on audio
       
       float d0 = distance(uv, (r0 * invLen) * uv);
       float v0 = light1(1.0, 10.0, d0);
@@ -159,8 +162,14 @@ export default function VoiceBorb({
       float a = iTime * -1.0;
       vec2 pos = vec2(cos(a), sin(a)) * r0;
       float d = distance(uv, pos);
-      float v1 = light2(1.5, 5.0, d);
+      // Reduce light intensity to prevent flashing, especially when recording
+      float lightIntensity = isRecording > 0.5 ? 0.8 : 1.2;
+      float v1 = light2(lightIntensity, 5.0, d);
       v1 *= light1(1.0, 50.0, d0);
+      // Smooth out the light effect when audio is active
+      if (normalizedAudio > 0.1) {
+        v1 *= smoothstep(0.0, 1.0, normalizedAudio * 2.0);
+      }
       
       float v2 = smoothstep(1.0, mix(innerRadius, 1.0, n0 * 0.5), len);
       float v3 = smoothstep(innerRadius, mix(innerRadius, 1.0, 0.5), len);
@@ -183,8 +192,12 @@ export default function VoiceBorb({
       float c = cos(angle);
       uv = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
       
-      uv.x += hover * hoverIntensity * 0.1 * sin(uv.y * 10.0 + iTime);
-      uv.y += hover * hoverIntensity * 0.1 * sin(uv.x * 10.0 + iTime);
+      // Apply audio-based distortion instead of hover-based distortion
+      // Normalize audioLevel (0-255 range) to 0-1 range
+      float normalizedAudio = clamp(audioLevel / 255.0, 0.0, 1.0);
+      float audioDistortionAmount = normalizedAudio * 0.05;
+      uv.x += audioDistortionAmount * sin(uv.y * 10.0 + iTime);
+      uv.y += audioDistortionAmount * sin(uv.x * 10.0 + iTime);
       
       return draw(uv);
     }
@@ -238,36 +251,9 @@ export default function VoiceBorb({
     window.addEventListener('resize', resize);
     resize();
 
-    let targetHover = 0;
     let lastTime = 0;
     let currentRot = 0;
     const rotationSpeed = 0.3;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const width = rect.width;
-      const height = rect.height;
-      const size = Math.min(width, height);
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const uvX = ((x - centerX) / size) * 2.0;
-      const uvY = ((y - centerY) / size) * 2.0;
-
-      if (Math.sqrt(uvX * uvX + uvY * uvY) < 0.8) {
-        targetHover = 1;
-      } else {
-        targetHover = 0;
-      }
-    };
-
-    const handleMouseLeave = () => {
-      targetHover = 0;
-    };
-
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('mouseleave', handleMouseLeave);
 
     let rafId: number;
     const update = (t: number) => {
@@ -280,13 +266,14 @@ export default function VoiceBorb({
       program.uniforms.audioLevel.value = audioLevel;
       program.uniforms.isRecording.value = isRecording ? 1.0 : 0.0;
 
-      const effectiveHover = forceHoverState ? 1 : targetHover;
-      program.uniforms.hover.value += (effectiveHover - program.uniforms.hover.value) * 0.1;
-
-      if (rotateOnHover && effectiveHover > 0.5) {
-        currentRot += dt * rotationSpeed;
+      // Only rotate when audio is being detected (user is speaking)
+      const normalizedAudio = Math.min(audioLevel / 255, 1.0);
+      if (rotateOnHover && normalizedAudio > 0.1) {
+        currentRot += dt * rotationSpeed * normalizedAudio;
       }
       program.uniforms.rot.value = currentRot;
+      // Keep hover at 0 since we're not using hover-based distortion anymore
+      program.uniforms.hover.value = 0;
 
       renderer.render({ scene: mesh });
     };
@@ -295,11 +282,10 @@ export default function VoiceBorb({
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseleave', handleMouseLeave);
       container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hue, hoverIntensity, rotateOnHover, forceHoverState, audioLevel, isActive, isRecording]);
 
   return <div ref={ctnDom} className={`w-full h-full ${className}`} />;

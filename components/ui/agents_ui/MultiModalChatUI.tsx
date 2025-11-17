@@ -18,7 +18,8 @@ const FRAMEWORK_DETAILS = {
   llama_index: { name: 'LlamaIndex Workflow', description: 'Build with LlamaIndex\'s event-driven ReAct agent.', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/llamaindex-color.png', enabled: true },
   adk: { name: 'Google ADK', description: 'Explore Google\'s Agent Development Kit with ReAct planning.', logo: 'https://google.github.io/adk-docs/assets/agent-development-kit.png', enabled: true },
   pydantic_ai: { name: 'Pydantic AI', description: 'Leverage Pydantic for structured AI outputs (coming soon).', logo: 'https://pbs.twimg.com/profile_images/1884966723746435073/x0p8ngPD_400x400.jpg', enabled: false },
-  langgraph: { name: 'LangGraph', description: 'Build stateful, multi-actor applications (coming soon).', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langgraph-color.png', enabled: false }
+  langgraph: { name: 'LangGraph', description: 'Build stateful, multi-actor applications (coming soon).', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langgraph-color.png', enabled: false },
+  agno: { name: 'Agno', description: 'Agno framework for agent development.', logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/langchain-color.png', enabled: true }
 };
 type AgentFramework = keyof typeof FRAMEWORK_DETAILS;
 

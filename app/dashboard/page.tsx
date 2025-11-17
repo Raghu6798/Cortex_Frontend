@@ -171,7 +171,7 @@ function DashboardContent() {
       case 'ocr': return '';
       case 'dashboard':
       default:
-        return "Here's a live overview of your agent operations.";
+        return "Here&apos;s a live overview of your agent operations.";
     }
   };
 

@@ -16,7 +16,7 @@ export default function CancellationRefundPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
             <p className="text-white/80 leading-relaxed">
-              This Cancellation and Refund Policy ("Policy") outlines the terms and conditions for canceling subscriptions and requesting refunds for services provided by Cortex. Please read this Policy carefully before making any purchase or subscription decision.
+              This Cancellation and Refund Policy (&quot;Policy&quot;) outlines the terms and conditions for canceling subscriptions and requesting refunds for services provided by Cortex. Please read this Policy carefully before making any purchase or subscription decision.
             </p>
           </section>
 

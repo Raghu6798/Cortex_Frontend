@@ -16,7 +16,7 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">1. Agreement to Terms</h2>
             <p className="text-white/80 leading-relaxed">
-              By accessing and using Cortex ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+              By accessing and using Cortex (&quot;the Service&quot;), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
             </p>
           </section>
 
@@ -121,14 +121,14 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">9. Indemnification</h2>
             <p className="text-white/80 leading-relaxed">
-              You agree to defend, indemnify, and hold harmless Cortex and its officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses, including reasonable attorney's fees, arising out of or in any way connected with your access to or use of the Service or violation of these Terms.
+              You agree to defend, indemnify, and hold harmless Cortex and its officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses, including reasonable attorney&apos;s fees, arising out of or in any way connected with your access to or use of the Service or violation of these Terms.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">10. Disclaimer of Warranties</h2>
             <p className="text-white/80 leading-relaxed">
-              The Service is provided on an "AS IS" and "AS AVAILABLE" basis without any warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, secure, or error-free.
+              The Service is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis without any warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, secure, or error-free.
             </p>
           </section>
 
@@ -142,7 +142,7 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">12. Changes to Terms</h2>
             <p className="text-white/80 leading-relaxed">
-              We reserve the right to modify these Terms at any time. We will notify users of any material changes by posting the updated Terms on this page and updating the "Last Updated" date. Your continued use of the Service after such changes constitutes acceptance of the modified Terms.
+              We reserve the right to modify these Terms at any time. We will notify users of any material changes by posting the updated Terms on this page and updating the &quot;Last Updated&quot; date. Your continued use of the Service after such changes constitutes acceptance of the modified Terms.
             </p>
           </section>
 

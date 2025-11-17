@@ -14,14 +14,6 @@ interface VoiceMessage {
   audioUrl?: string;
 }
 
-interface VoiceSession {
-  id: string;
-  title: string;
-  messages: VoiceMessage[];
-  isActive: boolean;
-  createdAt: Date;
-}
-
 const VoiceChatUI = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isConnected, setIsConnected] = useState(false);

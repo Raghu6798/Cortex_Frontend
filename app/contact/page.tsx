@@ -35,7 +35,7 @@ export default function ContactUsPage() {
       // await fetch('/api/contact', { method: 'POST', body: JSON.stringify(formData) });
       setSubmitStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (error) {
+    } catch {
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -51,7 +51,7 @@ export default function ContactUsPage() {
           <div>
             <h1 className="text-4xl font-bold mb-4">Get in Touch</h1>
             <p className="text-white/70 mb-8 text-lg">
-              We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+              We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
             </p>
 
             <div className="space-y-6">
@@ -181,7 +181,7 @@ export default function ContactUsPage() {
 
                 {submitStatus === 'success' && (
                   <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400">
-                    Thank you! Your message has been sent successfully. We'll get back to you soon.
+                    Thank you! Your message has been sent successfully. We&apos;ll get back to you soon.
                   </div>
                 )}
 

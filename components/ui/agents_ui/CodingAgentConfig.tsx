@@ -7,7 +7,7 @@ import { Input } from '../shadcn';
 import { Label } from '@/components/ui/shadcn/label';
 import { Textarea } from '../shadcn/textarea';
 import { Badge } from '@/components/ui/shadcn/badge';
-import { Terminal, Code, Package, Clock, Shield } from 'lucide-react';
+import { Terminal, Code, Package, Shield } from 'lucide-react';
 
 interface CodingAgentConfigProps {
   onSave: (config: CodingAgentConfig) => void;

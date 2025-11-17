@@ -32,7 +32,7 @@ import {
 import { Input } from "@/components/ui/shadcn/Input"
 import { Label } from "@/components/ui/shadcn/label"
 import { Switch } from "@/components/ui/shadcn/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/shadcn/tabs" 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/shadcn" 
 
 // --- MOCK DATA BASED ON DOCUMENTATION ---
 type SandboxState = 'running' | 'paused';

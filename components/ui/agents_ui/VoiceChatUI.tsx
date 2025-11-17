@@ -6,14 +6,6 @@ import { Mic, MicOff, Phone, PhoneOff, Volume2 } from 'lucide-react';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import VoiceBorb from './VoiceBorb';
 
-interface VoiceMessage {
-  id: string;
-  sender: 'user' | 'agent';
-  text: string;
-  timestamp: Date;
-  audioUrl?: string;
-}
-
 const VoiceChatUI = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isConnected, setIsConnected] = useState(false);

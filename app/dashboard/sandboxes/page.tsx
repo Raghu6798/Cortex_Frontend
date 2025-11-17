@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
+import SandboxSidebar from '@/components/layout/SandboxSidebar';
 import { cn } from '@/lib/utils';
 import { GrCodeSandbox } from "react-icons/gr";
 import { 
@@ -16,7 +16,8 @@ import {
   Info,
   X,
   Copy,
-  ChevronDown
+  RefreshCw,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
@@ -37,16 +38,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/shadcn
 // --- MOCK DATA BASED ON DOCUMENTATION ---
 type SandboxState = 'running' | 'paused';
 
-type SupportedLanguage = 'overview' | 'python' | 'javascript' | 'r' | 'java' | 'bash';
-
-const supportedLanguages: Array<{ id: SupportedLanguage; name: string }> = [
-  { id: 'overview', name: 'Overview' },
-  { id: 'python', name: 'Python' },
-  { id: 'javascript', name: 'JavaScript and TypeScript' },
-  { id: 'r', name: 'R' },
-  { id: 'java', name: 'Java' },
-  { id: 'bash', name: 'Bash' },
-];
 type Sandbox = {
   sandboxId: string;
   templateId: string;
@@ -323,63 +314,190 @@ const SwitchField = ({ label, id, ...props }: { label: string, id: string, [key:
 
 // --- MAIN PAGE COMPONENT ---
 
-// Language Selection Sidebar Component
-const LanguageSidebar = ({ selectedLanguage, onLanguageSelect }: { selectedLanguage: SupportedLanguage; onLanguageSelect: (lang: SupportedLanguage) => void }) => {
-    const [isExpanded, setIsExpanded] = useState(true);
+// Monitoring View Components
+const MonitoringView = () => {
+    const [concurrentSandboxes] = useState(0);
+    const [startRate] = useState(0.000);
+    const [peakConcurrent] = useState(5);
+    const [timeRange, setTimeRange] = useState('5m');
 
     return (
-        <aside className={cn(
-            "w-64 border-r border-white/10 bg-black/30 flex flex-col transition-all duration-300",
-            isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
-        )}>
-            <div className="p-4 border-b border-white/10">
-                <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex items-center justify-between w-full text-white/80 hover:text-white transition-colors"
-                >
-                    <span className="text-sm font-semibold">Supported languages</span>
-                    <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded ? "rotate-180" : "")} />
-                </button>
+        <div className="space-y-6">
+            {/* Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Concurrent Sandboxes */}
+                <Card className="bg-black/30 border-white/10">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-green-400" />
+                                <span className="text-xs text-white tracking-wider">Live</span>
+                            </div>
+                        </div>
+                        <div className="text-4xl font-bold text-white mb-2">{concurrentSandboxes}</div>
+                        <div className="text-sm text-white mb-4">Concurrent Sandboxes (5-sec avg)</div>
+                        <div className="flex justify-end">
+                            <span className="text-xs text-white">Limit: 20</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Start Rate Per Second */}
+                <Card className="bg-black/30 border-white/10">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-green-400" />
+                                <span className="text-xs text-white tracking-wider">Live</span>
+                            </div>
+                        </div>
+                        <div className="text-4xl font-bold text-white mb-2">{startRate.toFixed(3)}</div>
+                        <div className="text-sm text-white">Start Rate Per Second (5-sec avg)</div>
+                    </CardContent>
+                </Card>
+
+                {/* Peak Concurrent Sandboxes */}
+                <Card className="bg-black/30 border-white/10">
+                    <CardContent className="p-6">
+                        <div className="text-4xl font-bold text-white mb-2">{peakConcurrent}</div>
+                        <div className="text-sm text-white mb-4">Peak Concurrent Sandboxes (30-day max)</div>
+                        <div className="flex justify-end">
+                            <span className="text-xs text-white">Limit: 20</span>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-            <nav className="flex-1 p-2">
-                {supportedLanguages.map((lang) => {
-                    const isSelected = selectedLanguage === lang.id;
-                    return (
-                        <button
-                            key={lang.id}
-                            onClick={() => onLanguageSelect(lang.id)}
-                            className={cn(
-                                "w-full text-left px-3 py-2 rounded-md mb-1 transition-colors relative",
-                                isSelected
-                                    ? "text-orange-400 bg-orange-500/10"
-                                    : "text-white/70 hover:text-white hover:bg-white/5"
-                            )}
-                        >
-                            {isSelected && (
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-400 rounded-r" />
-                            )}
-                            <span className="text-sm">{lang.name}</span>
-                        </button>
-                    );
-                })}
-            </nav>
-        </aside>
+
+            {/* Graphs */}
+            <div className="grid grid-cols-1 gap-6">
+                {/* Concurrent Sandboxes Graph */}
+                <Card className="bg-black/30 border-white/10">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-lg tracking-wider text-white">Concurrent Sandboxes</CardTitle>
+                                <div className="text-sm text-white mt-1">{concurrentSandboxes} Average</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-green-400" />
+                                <span className="text-xs text-white tracking-wider">Live</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-4">
+                            {['5m', 'CUSTOM', '1H', '6H', '24H', '30D'].map((range) => (
+                                <Button
+                                    key={range}
+                                    variant={timeRange === range ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setTimeRange(range)}
+                                    className={cn(
+                                        'text-xs',
+                                        timeRange === range
+                                            ? 'bg-orange-500/20 border-orange-500/50 text-white'
+                                            : 'bg-black/30 border-white/15 hover:bg-white/5 text-white'
+                                    )}
+                                >
+                                    {range}
+                                </Button>
+                            ))}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-64 bg-black/40 rounded-md flex items-center justify-center border border-white/10">
+                            <div className="text-center text-white">
+                                <LineChart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">Graph visualization coming soon</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Start Rate Per Second Graph */}
+                <Card className="bg-black/30 border-white/10">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="text-lg tracking-wider text-white">Start Rate Per Second</CardTitle>
+                                <div className="text-sm text-white mt-1">{startRate.toFixed(3)} Average</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-green-400" />
+                                <span className="text-xs text-white tracking-wider">Live</span>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-64 bg-black/40 rounded-md flex items-center justify-center border border-white/10">
+                            <div className="text-center text-white">
+                                <LineChart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">Graph visualization coming soon</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+const ListView = ({ sandboxes, filter, setFilter, onSelectSandbox }: {
+    sandboxes: Sandbox[];
+    filter: SandboxState | 'all';
+    setFilter: (f: SandboxState | 'all') => void;
+    onSelectSandbox: (sandbox: Sandbox) => void;
+}) => {
+    const filteredSandboxes = useMemo(() => {
+        if (filter === 'all') return sandboxes;
+        return sandboxes.filter(s => s.state === filter);
+    }, [sandboxes, filter]);
+
+    return (
+        <div className="space-y-6">
+            {/* Filters */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    {(['all', 'running', 'paused'] as const).map(f => (
+                        <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)}
+                            className={cn(filter === f ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/15 hover:bg-white/5')}>
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                        </Button>
+                    ))}
+                </div>
+                <Button variant="outline" className="bg-black/30 border-white/15 hover:bg-white/5">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filter by Metadata
+                </Button>
+            </div>
+            
+            {/* Sandbox Grid */}
+            <AnimatePresence>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredSandboxes.map(sandbox => (
+                        <SandboxCard key={sandbox.sandboxId} sandbox={sandbox} onSelect={() => onSelectSandbox(sandbox)} />
+                    ))}
+                </div>
+            </AnimatePresence>
+        </div>
     );
 };
 
 export default function SandboxesPage() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-    const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
     const [sandboxes] = useState<Sandbox[]>(mockSandboxes);
     const [filter, setFilter] = useState<SandboxState | 'all'>('all');
     const [selectedSandbox, setSelectedSandbox] = useState<Sandbox | null>(null);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('bash');
+    const [activeTab, setActiveTab] = useState<'monitoring' | 'list'>('monitoring');
+    const [concurrentSandboxes] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const filteredSandboxes = useMemo(() => {
-        if (filter === 'all') return sandboxes;
-        return sandboxes.filter(s => s.state === filter);
-    }, [sandboxes, filter]);
+    const handleRefresh = () => {
+        setIsRefreshing(true);
+        // Simulate refresh
+        setTimeout(() => {
+            setIsRefreshing(false);
+        }, 1000);
+    };
 
     return (
         <div className="flex min-h-screen bg-black text-white">
@@ -393,56 +511,83 @@ export default function SandboxesPage() {
 
             <main className={cn(
                 'flex-1 flex flex-col transition-all duration-300 ease-in-out',
-                isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
-                isUserSidebarExpanded ? 'xl:mr-72' : 'xl:mr-24'
+                isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'
             )}>
+                {/* Top Bar */}
+                <div className="flex items-center justify-end gap-4 p-4 border-b border-white/10 bg-black/50">
+                    <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-green-400" />
+                        <span className="text-xs text-white/60 tracking-wider">Live</span>
+                    </div>
+                    <div className="text-sm text-white/80">
+                        {concurrentSandboxes} Concurrent Sandboxes
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className="text-white/60 hover:text-white hover:bg-white/5"
+                    >
+                        <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+                    </Button>
+                </div>
+
                 <div className="flex flex-1 overflow-hidden">
-                    {/* Language Selection Sidebar */}
-                    <LanguageSidebar 
-                        selectedLanguage={selectedLanguage} 
-                        onLanguageSelect={setSelectedLanguage} 
-                    />
+                    {/* Sandbox Sidebar */}
+                    <div className="relative">
+                        <SandboxSidebar
+                            isExpanded={true}
+                            onMouseEnter={() => {}}
+                            onMouseLeave={() => {}}
+                        />
+                    </div>
                     
                     {/* Main Content Area */}
                     <div className="flex-1 flex flex-col p-6 md:p-8 overflow-y-auto">
                         {/* Header */}
                         <header className="mb-8 flex-shrink-0">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <h2 className="text-3xl font-bold tracking-tight">Code Sandboxes</h2>
-                                    <p className="text-white/60 mt-1">Manage isolated environments for your AI coding agents.</p>
-                                </div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-3xl font-bold tracking-tight">Sandboxes</h2>
                                 <Button className="bg-purple-600 hover:bg-purple-500" onClick={() => setCreateDialogOpen(true)}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Create Sandbox
                                 </Button>
                             </div>
+                            
+                            {/* Tabs */}
+                            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'monitoring' | 'list')}>
+                                <TabsList className="bg-black/30 border border-white/10">
+                                    <TabsTrigger 
+                                        value="monitoring"
+                                        className={cn(
+                                            'data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 data-[state=active]:border-b-2 data-[state=active]:border-orange-400'
+                                        )}
+                                    >
+                                        Monitoring
+                                    </TabsTrigger>
+                                    <TabsTrigger 
+                                        value="list"
+                                        className={cn(
+                                            'data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 data-[state=active]:border-b-2 data-[state=active]:border-orange-400'
+                                        )}
+                                    >
+                                        List
+                                    </TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="monitoring" className="mt-6">
+                                    <MonitoringView />
+                                </TabsContent>
+                                <TabsContent value="list" className="mt-6">
+                                    <ListView 
+                                        sandboxes={sandboxes}
+                                        filter={filter}
+                                        setFilter={setFilter}
+                                        onSelectSandbox={setSelectedSandbox}
+                                    />
+                                </TabsContent>
+                            </Tabs>
                         </header>
-
-                        {/* Filters */}
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-2">
-                                {(['all', 'running', 'paused'] as const).map(f => (
-                                    <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)}
-                                        className={cn(filter === f ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/15 hover:bg-white/5')}>
-                                        {f.charAt(0).toUpperCase() + f.slice(1)}
-                                    </Button>
-                                ))}
-                            </div>
-                            <Button variant="outline" className="bg-black/30 border-white/15 hover:bg-white/5">
-                                <Filter className="w-4 h-4 mr-2" />
-                                Filter by Metadata
-                            </Button>
-                        </div>
-                        
-                        {/* Sandbox Grid */}
-                        <AnimatePresence>
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {filteredSandboxes.map(sandbox => (
-                                    <SandboxCard key={sandbox.sandboxId} sandbox={sandbox} onSelect={() => setSelectedSandbox(sandbox)} />
-                                ))}
-                            </div>
-                        </AnimatePresence>
                     </div>
                 </div>
 
@@ -455,12 +600,6 @@ export default function SandboxesPage() {
                 <CreateSandboxDialog open={isCreateDialogOpen} onOpenChange={setCreateDialogOpen} />
 
             </main>
-
-            <UserProfileSidebar
-                isExpanded={isUserSidebarExpanded}
-                onMouseEnter={() => setIsUserSidebarExpanded(true)}
-                onMouseLeave={() => setIsUserSidebarExpanded(false)}
-            />
         </div>
     );
 }

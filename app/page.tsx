@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 
 
 import { SectionReveal } from '@/components/ui/general/SectionReveal';
-import Header from '@/components/layout/Header'; 
+import Header from '@/components/layout/Header';
+import { cn } from '@/lib/utils'; 
 import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/ui/general/HeroSection';
 import LogosSection from '@/components/ui/general/LogosSection';
@@ -48,6 +49,7 @@ const testimonials = [
 export default function Page() {
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [isCompact, setIsCompact] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
   const lastY = React.useRef(0);
 
   React.useEffect(() => {
@@ -76,9 +78,16 @@ export default function Page() {
     return () => window.removeEventListener('scroll', onScroll);
   }, [isCompact]);
 
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
   return (
     <motion.main 
-      className="relative min-h-screen w-full bg-black text-white dark"
+      className={cn(
+        "relative min-h-screen w-full transition-colors duration-500 ease-in-out",
+        isDarkMode ? "bg-black text-white" : "bg-white text-black"
+      )}
       initial={{ opacity: 0 }}
       animate={{ opacity: isLoaded ? 1 : 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -89,45 +98,45 @@ export default function Page() {
         animate={{ y: isLoaded ? 0 : 20, opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
       >
-        <Header isCompact={isCompact} />
+        <Header isCompact={isCompact} isDarkMode={isDarkMode} onToggleTheme={toggleTheme} />
         
         <motion.div
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: isLoaded ? 0 : 30, opacity: isLoaded ? 1 : 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
         >
-          <HeroSection />
+          <HeroSection isDarkMode={isDarkMode} />
         </motion.div>
         <SectionReveal>
-        <div className="bg-black/50">
-          <LogosSection />
+        <div className={cn("transition-colors duration-500", isDarkMode ? "bg-black/50" : "bg-white/50")}>
+          <LogosSection isDarkMode={isDarkMode} />
         </div>
         </SectionReveal>
 
         <SectionReveal>
-        <div className="relative mx-auto my-8 max-w-7xl rounded-3xl bg-black/50 px-6 py-16">
-          <SolutionSection />
-          <HowItWorksSection />
-          <TestimonialHighlightSection />
-          <FeaturesSection />
+        <div className={cn("relative mx-auto my-8 max-w-7xl rounded-3xl px-6 py-16 transition-colors duration-500", isDarkMode ? "bg-black/50" : "bg-white/50")}>
+          <SolutionSection isDarkMode={isDarkMode} />
+          <HowItWorksSection isDarkMode={isDarkMode} />
+          <TestimonialHighlightSection isDarkMode={isDarkMode} />
+          <FeaturesSection isDarkMode={isDarkMode} />
         </div>
         </SectionReveal>
 
         <SectionReveal>
-        <div className="bg-black/30">
+        <div className={cn("transition-colors duration-500", isDarkMode ? "bg-black/30" : "bg-white/30")}>
           <ChallengeBentoGrid />
         </div>
         </SectionReveal>
         
         <SectionReveal>
-        <div className="bg-black/50">
+        <div className={cn("transition-colors duration-500", isDarkMode ? "bg-black/50" : "bg-white/50")}>
           <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
           <PricingSection />
         </div>
         </SectionReveal>
  
         <SectionReveal>
-        <div className="relative mx-auto my-8 max-w-7xl rounded-3xl bg-black/50 px-6 py-16">
+        <div className={cn("relative mx-auto my-8 max-w-7xl rounded-3xl px-6 py-16 transition-colors duration-500", isDarkMode ? "bg-black/50" : "bg-white/50")}>
           <FAQSection />
           <BlogSection />
           <CTASection />

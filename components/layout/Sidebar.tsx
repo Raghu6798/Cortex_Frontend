@@ -12,9 +12,9 @@ import {
   Plug,
   Search,
   Wrench,
-  Terminal,
   FolderOpen,
 } from 'lucide-react';
+import { GrCodeSandbox } from "react-icons/gr";
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
@@ -34,14 +34,13 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     { name: 'Voice Chat', icon: Mic, view: 'voice-chat' as const },
     { name: 'Connectors', icon: Plug, view: 'connectors' as const },
     { name: 'Secrets', icon: Shield, view: 'secrets' as const },
+    { name: 'OCR Parser', icon: FolderOpen, view: 'ocr' as const },
   ];
 
-  const features = [
-
+  const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox' }> = [
     { name: 'RAG', icon: Search },
     { name: 'Pre-built Tools', icon: Wrench },
-    { name: 'Code Sandbox', icon: Terminal },
-    { name: '.Cortex', icon: FolderOpen }
+    { name: 'Code Sandbox', icon: GrCodeSandbox },
   ];
 
   return (
@@ -85,6 +84,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
               case 'voice-chat': return '/dashboard?view=voice-chat';
               case 'connectors': return '/dashboard?view=connectors';
               case 'secrets': return '/dashboard?view=secrets';
+              case 'ocr': return '/dashboard?view=ocr';
               default: return '/dashboard';
             }
           };
@@ -152,7 +152,17 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
             href="#"
             className="flex items-center gap-4 rounded-lg p-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors"
           >
-            <feature.icon className="h-6 w-6 flex-shrink-0" />
+            {feature.icon === 'codesandbox' ? (
+              <Image
+                src="/codesandbox.svg"
+                alt="Code Sandbox"
+                width={24}
+                height={24}
+                className="h-6 w-6 flex-shrink-0"
+              />
+            ) : (
+              <feature.icon className="h-6 w-6 flex-shrink-0" />
+            )}
             <span
               className={cn(
                 'text-sm font-medium overflow-hidden whitespace-nowrap',

@@ -276,6 +276,7 @@ const MultiModalChatUI = ({
         adk: '/api/v1/ReActAgent/adk',
         pydantic_ai: '/api/v1/ReActAgent/pydantic_ai',
         langgraph: '/api/v1/ReActAgent/langgraph',
+        agno: '/api/v1/ReActAgent/agno',
       };
       const endpoint = frameworkEndpoints[activeSession.framework] || frameworkEndpoints.langchain;
       

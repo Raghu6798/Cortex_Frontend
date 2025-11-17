@@ -8,13 +8,16 @@ import Image from 'next/image';
 // --- Reusable Circle component from your example ---
 const Circle = forwardRef<
   HTMLDivElement,
-  { className?: string; children?: React.ReactNode }
->(({ className, children }, ref) => {
+  { className?: string; children?: React.ReactNode; isDarkMode?: boolean }
+>(({ className, children, isDarkMode = true }, ref) => {
   return (
     <div
       ref={ref}
       className={cn(
-        'z-10 flex size-14 items-center justify-center rounded-full border-2 border-neutral-700 bg-neutral-900 p-2.5 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]',
+        'z-10 flex size-14 items-center justify-center rounded-full border-2 p-2.5 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]',
+        isDarkMode 
+          ? 'border-neutral-700 bg-neutral-900' 
+          : 'border-neutral-300 bg-neutral-100',
         className,
       )}
     >
@@ -39,7 +42,11 @@ const outputLogos = [
   'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Postgresql_elephant.svg/640px-Postgresql_elephant.svg.png',
 ];
 
-export default function LogosSection() {
+interface LogosSectionProps {
+  isDarkMode?: boolean;
+}
+
+export default function LogosSection({ isDarkMode = true }: LogosSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Create refs for a grid layout
@@ -59,32 +66,37 @@ export default function LogosSection() {
   return (
     <section className="w-full py-20">
       <div className="container mx-auto max-w-7xl px-6 text-center">
-        <h2 className="text-sm font-semibold tracking-widest text-white/60 uppercase">
+        <h2 className={cn("text-sm font-semibold tracking-widest uppercase", isDarkMode ? "text-white/60" : "text-black/60")}>
           A UNIFIED, INTEGRATED BACKEND
         </h2>
-        <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <p className={cn("mt-2 text-3xl font-bold tracking-tight sm:text-4xl", isDarkMode ? "text-white" : "text-black")}>
           Connect Your Entire AI Stack
         </p>
 
         <div
-          className="relative mt-12 flex h-[500px] w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/50 p-10"
+          className={cn(
+            "relative mt-12 flex h-[500px] w-full items-center justify-center overflow-hidden rounded-2xl border p-10",
+            isDarkMode 
+              ? "border-white/10 bg-black/50" 
+              : "border-black/10 bg-white/50"
+          )}
           ref={containerRef}
         >
           <div className="grid h-full w-full max-w-lg grid-cols-3 grid-rows-3 items-center justify-items-center">
             {/* Row 1 */}
-            <Circle ref={topLeftRef}><Image src={inputLogos[0]} alt="Logo 1" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
-            <Circle ref={topMiddleRef}><Image src={inputLogos[1]} alt="Logo 2" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
-            <Circle ref={topRightRef}><Image src={inputLogos[2]} alt="Logo 3" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={topLeftRef} isDarkMode={isDarkMode}><Image src={inputLogos[0]} alt="Logo 1" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={topMiddleRef} isDarkMode={isDarkMode}><Image src={inputLogos[1]} alt="Logo 2" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={topRightRef} isDarkMode={isDarkMode}><Image src={inputLogos[2]} alt="Logo 3" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
             
             {/* Row 2 */}
-            <Circle ref={middleLeftRef}><Image src={outputLogos[0]} alt="Output 1" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
-            <Circle ref={centerRef} className="size-20 p-3"><Image src="/download.png" alt="Agenta Logo" width={64} height={64} className="rounded-sm" /></Circle>
-            <Circle ref={middleRightRef}><Image src={inputLogos[3]} alt="Logo 4" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={middleLeftRef} isDarkMode={isDarkMode}><Image src={outputLogos[0]} alt="Output 1" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={centerRef} isDarkMode={isDarkMode} className="size-20 p-3"><Image src="/download.png" alt="Agenta Logo" width={64} height={64} className="rounded-sm" /></Circle>
+            <Circle ref={middleRightRef} isDarkMode={isDarkMode}><Image src={inputLogos[3]} alt="Logo 4" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
 
             {/* Row 3 */}
-            <Circle ref={bottomLeftRef}><Image src={outputLogos[1]} alt="Output 2" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={bottomLeftRef} isDarkMode={isDarkMode}><Image src={outputLogos[1]} alt="Output 2" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
             <div></div> {/* Empty cell for alignment */}
-            <Circle ref={bottomRightRef}><Image src={inputLogos[4]} alt="Logo 5" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
+            <Circle ref={bottomRightRef} isDarkMode={isDarkMode}><Image src={inputLogos[4]} alt="Logo 5" width={40} height={40} className="max-h-full w-auto object-contain"/></Circle>
           </div>
 
           {/* AnimatedBeams connecting the nodes */}

@@ -14,6 +14,7 @@ import AgentList from '@/components/ui/agents_ui/AgentList';
 import AgentEditor from '@/components/ui/agents_ui/AgentEditor';
 import SecretsManagement from '@/components/ui/agents_ui/SecretsManagement';
 import ConnectorsPage from '@/components/ui/agents_ui/ConnectorsPage';
+import OCRPage from '@/components/ui/agents_ui/OCRPage';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton'; // Import the Skeleton component
@@ -71,7 +72,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
   const [agentToEdit, setAgentToEdit] = useState<{
@@ -87,8 +88,8 @@ function DashboardContent() {
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors'].includes(view)) {
-      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors');
+    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr');
     }
   }, [searchParams]);
 
@@ -153,6 +154,7 @@ function DashboardContent() {
       case 'agents': return 'Your Agents';
       case 'editor': return 'Edit Agent';
       case 'connectors': return 'Connectors';
+      case 'ocr': return '';
       case 'dashboard':
       default:
         return `Welcome Back, ${user?.firstName || 'Developer'}!`;
@@ -166,6 +168,7 @@ function DashboardContent() {
       case 'agents': return 'Manage and interact with your configured AI agents.';
       case 'editor': return 'Update your agent configuration.';
       case 'connectors': return 'Connect your favorite tools and services to enhance your AI agent capabilities.';
+      case 'ocr': return '';
       case 'dashboard':
       default:
         return "Here's a live overview of your agent operations.";
@@ -180,6 +183,7 @@ function DashboardContent() {
     if (activeView === 'editor' && agentToEdit) return <AgentEditor agent={agentToEdit} onSave={handleAgentSaved} onCancel={handleCancelEdit} />;
     if (activeView === 'secrets') return <SecretsManagement />;
     if (activeView === 'connectors') return <ConnectorsPage />;
+    if (activeView === 'ocr') return <OCRPage />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;
@@ -201,21 +205,23 @@ function DashboardContent() {
         isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
         isUserSidebarExpanded ? 'xl:mr-72' : 'xl:mr-24'
       )}>
-        <header className="mb-8 flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">{getHeaderText()}</h2>
-            <p className="text-white/60 mt-1">{getHeaderSubtitle()}</p>
-          </div>
-           {activeView !== 'dashboard' && (
-             <button
-               onClick={() => setActiveView('dashboard')}
-               className="flex items-center gap-2 rounded-lg py-2 px-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors"
-             >
-               <LayoutDashboard size={18} />
-               <span className="text-sm font-medium">Dashboard</span>
-             </button>
-           )}
-        </header>
+        {activeView !== 'ocr' && (
+          <header className="mb-8 flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">{getHeaderText()}</h2>
+              <p className="text-white/60 mt-1">{getHeaderSubtitle()}</p>
+            </div>
+             {activeView !== 'dashboard' && (
+               <button
+                 onClick={() => setActiveView('dashboard')}
+                 className="flex items-center gap-2 rounded-lg py-2 px-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+               >
+                 <LayoutDashboard size={18} />
+                 <span className="text-sm font-medium">Dashboard</span>
+               </button>
+             )}
+          </header>
+        )}
 
         {renderContent()}
 

@@ -7,21 +7,19 @@ import { cn } from '@/lib/utils';
 import { GrCodeSandbox } from "react-icons/gr";
 import { 
   Plus, 
-  Server, 
   Clock, 
   Trash2, 
   ChevronRight, 
   Filter, 
   LineChart,
   ListCollapse,
-  RefreshCw,
   Info,
   X,
-  Copy
+  Copy,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
-import { Badge } from '@/components/ui/shadcn/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -38,6 +36,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/shadcn
 
 // --- MOCK DATA BASED ON DOCUMENTATION ---
 type SandboxState = 'running' | 'paused';
+
+type SupportedLanguage = 'overview' | 'python' | 'javascript' | 'r' | 'java' | 'bash';
+
+const supportedLanguages: Array<{ id: SupportedLanguage; name: string }> = [
+  { id: 'overview', name: 'Overview' },
+  { id: 'python', name: 'Python' },
+  { id: 'javascript', name: 'JavaScript and TypeScript' },
+  { id: 'r', name: 'R' },
+  { id: 'java', name: 'Java' },
+  { id: 'bash', name: 'Bash' },
+];
 type Sandbox = {
   sandboxId: string;
   templateId: string;
@@ -297,14 +306,14 @@ const CreateSandboxDialog = ({ open, onOpenChange }: { open: boolean; onOpenChan
     );
 };
 
-const Field = ({ label, id, ...props }: { label: string, id: string, [key: string]: any }) => (
+const Field = ({ label, id, ...props }: { label: string, id: string, [key: string]: unknown }) => (
     <div className="space-y-2">
         <Label htmlFor={id}>{label}</Label>
         <Input id={id} className="bg-black/50 border-white/20" {...props} />
     </div>
 );
 
-const SwitchField = ({ label, id, ...props }: { label: string, id: string, [key: string]: any }) => (
+const SwitchField = ({ label, id, ...props }: { label: string, id: string, [key: string]: unknown }) => (
     <div className="flex items-center justify-between p-3 rounded-md border border-white/15 bg-black/40">
         <Label htmlFor={id}>{label}</Label>
         <Switch id={id} {...props} />
@@ -314,13 +323,58 @@ const SwitchField = ({ label, id, ...props }: { label: string, id: string, [key:
 
 // --- MAIN PAGE COMPONENT ---
 
+// Language Selection Sidebar Component
+const LanguageSidebar = ({ selectedLanguage, onLanguageSelect }: { selectedLanguage: SupportedLanguage; onLanguageSelect: (lang: SupportedLanguage) => void }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+
+    return (
+        <aside className={cn(
+            "w-64 border-r border-white/10 bg-black/30 flex flex-col transition-all duration-300",
+            isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+        )}>
+            <div className="p-4 border-b border-white/10">
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="flex items-center justify-between w-full text-white/80 hover:text-white transition-colors"
+                >
+                    <span className="text-sm font-semibold">Supported languages</span>
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded ? "rotate-180" : "")} />
+                </button>
+            </div>
+            <nav className="flex-1 p-2">
+                {supportedLanguages.map((lang) => {
+                    const isSelected = selectedLanguage === lang.id;
+                    return (
+                        <button
+                            key={lang.id}
+                            onClick={() => onLanguageSelect(lang.id)}
+                            className={cn(
+                                "w-full text-left px-3 py-2 rounded-md mb-1 transition-colors relative",
+                                isSelected
+                                    ? "text-orange-400 bg-orange-500/10"
+                                    : "text-white/70 hover:text-white hover:bg-white/5"
+                            )}
+                        >
+                            {isSelected && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-400 rounded-r" />
+                            )}
+                            <span className="text-sm">{lang.name}</span>
+                        </button>
+                    );
+                })}
+            </nav>
+        </aside>
+    );
+};
+
 export default function SandboxesPage() {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-    const [sandboxes, setSandboxes] = useState<Sandbox[]>(mockSandboxes);
+    const [sandboxes] = useState<Sandbox[]>(mockSandboxes);
     const [filter, setFilter] = useState<SandboxState | 'all'>('all');
     const [selectedSandbox, setSelectedSandbox] = useState<Sandbox | null>(null);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('bash');
 
     const filteredSandboxes = useMemo(() => {
         if (filter === 'all') return sandboxes;
@@ -334,52 +388,63 @@ export default function SandboxesPage() {
                 onMouseEnter={() => setIsSidebarExpanded(true)}
                 onMouseLeave={() => setIsSidebarExpanded(false)}
                 onNewAgentClick={() => {}}
-                activeView={'sandboxes'}
+                activeView={'sandbox'}
             />
 
             <main className={cn(
-                'flex-1 flex flex-col p-6 md:p-8 transition-all duration-300 ease-in-out',
+                'flex-1 flex flex-col transition-all duration-300 ease-in-out',
                 isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
                 isUserSidebarExpanded ? 'xl:mr-72' : 'xl:mr-24'
             )}>
-                {/* Header */}
-                <header className="mb-8 flex-shrink-0">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-3xl font-bold tracking-tight">Code Sandboxes</h2>
-                            <p className="text-white/60 mt-1">Manage isolated environments for your AI coding agents.</p>
-                        </div>
-                        <Button className="bg-purple-600 hover:bg-purple-500" onClick={() => setCreateDialogOpen(true)}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Sandbox
-                        </Button>
-                    </div>
-                </header>
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Language Selection Sidebar */}
+                    <LanguageSidebar 
+                        selectedLanguage={selectedLanguage} 
+                        onLanguageSelect={setSelectedLanguage} 
+                    />
+                    
+                    {/* Main Content Area */}
+                    <div className="flex-1 flex flex-col p-6 md:p-8 overflow-y-auto">
+                        {/* Header */}
+                        <header className="mb-8 flex-shrink-0">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-3xl font-bold tracking-tight">Code Sandboxes</h2>
+                                    <p className="text-white/60 mt-1">Manage isolated environments for your AI coding agents.</p>
+                                </div>
+                                <Button className="bg-purple-600 hover:bg-purple-500" onClick={() => setCreateDialogOpen(true)}>
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create Sandbox
+                                </Button>
+                            </div>
+                        </header>
 
-                {/* Filters */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        {(['all', 'running', 'paused'] as const).map(f => (
-                            <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)}
-                                className={cn(filter === f ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/15 hover:bg-white/5')}>
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                        {/* Filters */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-2">
+                                {(['all', 'running', 'paused'] as const).map(f => (
+                                    <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)}
+                                        className={cn(filter === f ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/15 hover:bg-white/5')}>
+                                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                                    </Button>
+                                ))}
+                            </div>
+                            <Button variant="outline" className="bg-black/30 border-white/15 hover:bg-white/5">
+                                <Filter className="w-4 h-4 mr-2" />
+                                Filter by Metadata
                             </Button>
-                        ))}
+                        </div>
+                        
+                        {/* Sandbox Grid */}
+                        <AnimatePresence>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {filteredSandboxes.map(sandbox => (
+                                    <SandboxCard key={sandbox.sandboxId} sandbox={sandbox} onSelect={() => setSelectedSandbox(sandbox)} />
+                                ))}
+                            </div>
+                        </AnimatePresence>
                     </div>
-                    <Button variant="outline" className="bg-black/30 border-white/15 hover:bg-white/5">
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filter by Metadata
-                    </Button>
                 </div>
-                
-                {/* Sandbox Grid */}
-                <AnimatePresence>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {filteredSandboxes.map(sandbox => (
-                            <SandboxCard key={sandbox.sandboxId} sandbox={sandbox} onSelect={() => setSelectedSandbox(sandbox)} />
-                        ))}
-                    </div>
-                </AnimatePresence>
 
                 {/* Detail View */}
                 <AnimatePresence>

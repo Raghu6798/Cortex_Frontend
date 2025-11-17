@@ -8,3 +8,5 @@ export { Label } from './label';
 export { Progress } from './progress';
 export { Skeleton } from './skeleton';
 export { Switch } from './switch';
+export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';

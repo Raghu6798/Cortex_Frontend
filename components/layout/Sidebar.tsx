@@ -24,7 +24,7 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
@@ -35,12 +35,12 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     { name: 'Connectors', icon: Plug, view: 'connectors' as const },
     { name: 'Secrets', icon: Shield, view: 'secrets' as const },
     { name: 'OCR Parser', icon: FolderOpen, view: 'ocr' as const },
+    { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const }
   ];
 
   const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox' }> = [
     { name: 'RAG', icon: Search },
-    { name: 'Pre-built Tools', icon: Wrench },
-    { name: 'Code Sandbox', icon: GrCodeSandbox },
+    { name: 'Pre-built Tools', icon: Wrench }
   ];
 
   return (
@@ -85,6 +85,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
               case 'connectors': return '/dashboard?view=connectors';
               case 'secrets': return '/dashboard?view=secrets';
               case 'ocr': return '/dashboard?view=ocr';
+              case 'sandbox': return '/dashboard/sandboxes';
               default: return '/dashboard';
             }
           };

@@ -1,33 +1,25 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
 import { cn } from '@/lib/utils';
 import { 
-  BookText, 
   Plus, 
   File, 
-  Globe,
   Settings2,
   ListChecks,
   UploadCloud,
   X,
   Loader2,
   CheckCircle2,
-  Trash2,
   ChevronRight,
   ChevronLeft,
-  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { Badge } from '@/components/ui/shadcn/badge';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Input } from "@/components/ui/shadcn/Input";
-import { Label } from "@/components/ui/shadcn/label";
-import { Textarea } from '@/components/ui/shadcn/textarea';
-import { Progress } from "@/components/ui/shadcn/progress";
 
 // --- MOCK DATA & TYPES ---
 type KnowledgeBaseStatus = 'Ready' | 'Processing' | 'Error';
@@ -103,7 +95,7 @@ export default function RAGPage() {
 // --- SUB-COMPONENTS ---
 
 const KnowledgeBaseList = ({ onCreateNew, onManage }: { onCreateNew: () => void; onManage: (kb: KnowledgeBase) => void }) => {
-    const [kbs, setKbs] = useState(mockKnowledgeBases);
+    const [kbs] = useState(mockKnowledgeBases);
     
     return (
         <>

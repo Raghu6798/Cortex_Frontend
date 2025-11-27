@@ -25,7 +25,7 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox' | 'rag';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {

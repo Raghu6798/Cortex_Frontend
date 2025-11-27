@@ -95,7 +95,7 @@ const tourSteps: TourStep[] = [
     content: (
       <div>
         <h3 className="font-bold text-lg mb-2">Sandboxes</h3>
-        <p>Safe environments to test and run your agent's code execution.</p>
+        <p>Safe environments to test and run your agent&apos;s code execution.</p>
       </div>
     ),
     position: "right",

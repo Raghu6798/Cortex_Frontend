@@ -21,3 +21,6 @@ export { default as Hyperspeed } from './HyperSpeed';
 export { default as BentoGrid } from './BentoGrid';
 export { default as ChallengeBentoGrid } from './ChallengeBentoGrid';
 export { NeonGradientCardDemo } from './NeonGradientCardDemo';
+
+export * from './tour';
+export * from './alert-dialog';

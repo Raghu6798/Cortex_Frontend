@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, FC, useMemo } from 'react';
 import * as THREE from 'three';
 import { BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset } from 'postprocessing';

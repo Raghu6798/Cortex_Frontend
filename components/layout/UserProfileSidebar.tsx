@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useUser, SignOutButton } from '@clerk/nextjs';
+import { TOUR_STEP_IDS } from '@/lib/tour-constants';
 import { 
   LogOut, 
   Settings, 
@@ -78,6 +79,7 @@ const UserProfileSidebar = ({
 
   return (
     <aside
+    id={TOUR_STEP_IDS.USER_PROFILE}
       className={cn(
         'fixed top-0 right-0 h-full border-l border-white/10 p-4 hidden xl:flex flex-col z-30 bg-black/50 backdrop-blur-xl',
         'transition-all duration-300 ease-in-out overflow-y-auto scrollbar-hide',

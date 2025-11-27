@@ -15,6 +15,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { GrCodeSandbox } from "react-icons/gr";
+import { TOUR_STEP_IDS } from '@/lib/tour-constants';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -29,22 +30,23 @@ interface SidebarProps {
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
   const navigationItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const },
-    { name: 'Your Agents', icon: Bot, view: 'agents' as const },
-    { name: 'Voice Chat', icon: Mic, view: 'voice-chat' as const },
-    { name: 'Connectors', icon: Plug, view: 'connectors' as const },
-    { name: 'Secrets', icon: Shield, view: 'secrets' as const },
-    { name: 'OCR Parser', icon: FolderOpen, view: 'ocr' as const },
-    { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const }
+    { name: 'Dashboard', icon: LayoutDashboard, view: 'dashboard' as const, id: TOUR_STEP_IDS.SIDEBAR_DASHBOARD },
+    { name: 'Your Agents', icon: Bot, view: 'agents' as const, id: TOUR_STEP_IDS.SIDEBAR_AGENTS },
+    { name: 'Voice Chat', icon: Mic, view: 'voice-chat' as const, id: TOUR_STEP_IDS.SIDEBAR_VOICE_CHAT },
+    { name: 'Connectors', icon: Plug, view: 'connectors' as const, id: TOUR_STEP_IDS.SIDEBAR_CONNECTORS },
+    { name: 'Secrets', icon: Shield, view: 'secrets' as const, id: TOUR_STEP_IDS.SIDEBAR_SECRETS },
+    { name: 'OCR Parser', icon: FolderOpen, view: 'ocr' as const, id: TOUR_STEP_IDS.SIDEBAR_OCR },
+    { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const, id: TOUR_STEP_IDS.SIDEBAR_SANDBOX }
   ];
 
-  const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox' }> = [
-    { name: 'RAG', icon: Search },
-    { name: 'Pre-built Tools', icon: Wrench }
+  const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox'; id: string }> = [
+    { name: 'RAG', icon: Search, id: TOUR_STEP_IDS.SIDEBAR_RAG },
+    { name: 'Pre-built Tools', icon: Wrench, id: TOUR_STEP_IDS.SIDEBAR_TOOLS }
   ];
 
   return (
     <aside
+    id={TOUR_STEP_IDS.SIDEBAR} 
       className={cn(
         'fixed top-0 left-0 h-full border-r border-white/10 hidden lg:flex flex-col z-30',
         'transition-all duration-300 ease-in-out',
@@ -93,6 +95,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
           return (
             <Link key={item.name} href={getHref(item.view)}>
               <button
+                id={item.id}
                 className={cn(
                   'flex items-center gap-4 rounded-lg p-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors w-full',
                   activeView === item.view && 'bg-white/10 text-white'
@@ -115,6 +118,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
 
         {/* Custom Agent Builder is now a special button */}
         <button
+          id={TOUR_STEP_IDS.CREATE_AGENT}
           onClick={onNewAgentClick}
           className="flex items-center gap-4 rounded-lg p-3 text-white bg-purple-600 hover:bg-purple-500 transition-colors mb-2"
         >
@@ -132,7 +136,9 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
 
         {/* Multi Agent Workflow Builder button */}
         <Link href="/dashboard/builder">
-          <button className="flex items-center gap-4 rounded-lg p-3 text-white bg-blue-600 hover:bg-blue-500 transition-colors mb-4 w-full">
+          <button 
+          id={TOUR_STEP_IDS.SIDEBAR_MULTI_AGENT}
+          className="flex items-center gap-4 rounded-lg p-3 text-white bg-blue-600 hover:bg-blue-500 transition-colors mb-4 w-full">
             <Workflow className="h-6 w-6 flex-shrink-0" />
             <span
               className={cn(
@@ -151,6 +157,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
           <a
             key={index}
             href="#"
+            id={feature.id}
             className="flex items-center gap-4 rounded-lg p-3 text-white/70 hover:bg-white/5 hover:text-white transition-colors"
           >
             {feature.icon === 'codesandbox' ? (

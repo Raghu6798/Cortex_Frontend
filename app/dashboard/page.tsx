@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react'; // Import useEffect and Suspense
 import { useUser } from '@clerk/nextjs';
+import { TOUR_STEP_IDS } from '@/lib/tour-constants';
 import { useSearchParams } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Users, LayoutDashboard } from 'lucide-react';
@@ -17,6 +18,7 @@ import ConnectorsPage from '@/components/ui/agents_ui/ConnectorsPage';
 import OCRPage from '@/components/ui/agents_ui/OCRPage';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
+import { TourAlertDialog, useTour, TourStep } from '@/components/ui/general/tour';
 import { Skeleton } from '@/components/ui/shadcn/skeleton'; // Import the Skeleton component
 
 // --- MOCK DATA ---
@@ -27,16 +29,154 @@ const throughputData = [{ hour: '09:00', requests: 1200 }, { hour: '10:00', requ
 const StatCard = ({ title, value, suffix, prefix, icon: Icon }: { title: string; value: number; suffix?: string; prefix?: string; icon?: React.ElementType; }) => (<div className="rounded-xl border border-white/15 bg-black/30 p-6"><div className="flex items-center gap-2">{Icon && <Icon className="h-4 w-4 text-white/70" />}<h3 className="text-sm font-medium text-white/70">{title}</h3></div><div className="mt-2"><NumberTicker value={value} suffix={suffix} prefix={prefix} className="text-4xl font-bold tracking-tighter" /></div></div>);
 const ChartCard = ({ title, children }: { title: string; children: React.ReactNode }) => (<div className="rounded-xl border border-white/15 bg-black/30 p-6"><h3 className="text-lg font-semibold mb-4">{title}</h3>{children}</div>);
 
+const tourSteps: TourStep[] = [
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_DASHBOARD,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Dashboard</h3>
+        <p>Your central hub for monitoring agent performance and system metrics.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_AGENTS,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Your Agents</h3>
+        <p>View, manage, and interact with all your deployed AI agents.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_VOICE_CHAT,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Voice Chat</h3>
+        <p>Talk to your agents using real-time voice interaction capabilities.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_CONNECTORS,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Connectors</h3>
+        <p>Integrate your agents with external tools, databases, and APIs.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_SECRETS,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Secrets Management</h3>
+        <p>Securely store and manage API keys and sensitive credentials.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_OCR,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">OCR Parser</h3>
+        <p>Extract text and data from documents and images using advanced OCR.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_SANDBOX,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Sandboxes</h3>
+        <p>Safe environments to test and run your agent's code execution.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.CREATE_AGENT,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Create New Agents</h3>
+        <p>Launch the Agent Builder to design and deploy custom AI agents.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_MULTI_AGENT,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Multi-Agent Workflows</h3>
+        <p>Orchestrate complex tasks involving multiple collaborating agents.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_RAG,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">RAG Knowledge Base</h3>
+        <p>Manage documents and knowledge sources for Retrieval-Augmented Generation.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.SIDEBAR_TOOLS,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Pre-built Tools</h3>
+        <p>Access a library of ready-to-use tools to enhance your agents.</p>
+      </div>
+    ),
+    position: "right",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.DASHBOARD_METRICS,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">Live Metrics</h3>
+        <p>Monitor your token usage, response latency, and active agent counts in real-time.</p>
+      </div>
+    ),
+    position: "bottom",
+  },
+  {
+    selectorId: TOUR_STEP_IDS.USER_PROFILE,
+    content: (
+      <div>
+        <h3 className="font-bold text-lg mb-2">User Profile</h3>
+        <p>Manage your account settings, billing, and API keys here.</p>
+      </div>
+    ),
+    position: "left",
+  },
+];
+
+
 // --- Dashboard View Component ---
 const DashboardMetricsView = () => (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div 
+      id={TOUR_STEP_IDS.DASHBOARD_METRICS}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         <StatCard title="Total Tokens Used" value={2478931} />
         <StatCard title="Avg. Response Time" value={197} suffix="ms" />
         <StatCard title="Memory Persisted" value={21.4} suffix="GB" />
         <StatCard title="Active Agents" value={42} icon={Users} />
       </div>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div 
+      id={TOUR_STEP_IDS.DASHBOARD_METRICS}
+      className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <ChartCard title="P95 Latency (Last 7 Mins)"><ResponsiveContainer width="100%" height={300}><LineChart data={latencyData}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="time" stroke="#888" fontSize={12} /><YAxis stroke="#888" fontSize={12} unit="ms" /><Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '0.5rem' }} labelStyle={{ color: '#fff', fontWeight: 'bold' }} /><Legend iconType="circle" /><Line type="monotone" dataKey="latency" name="Latency (ms)" stroke="#a855f7" strokeWidth={2} activeDot={{ r: 8 }} /></LineChart></ResponsiveContainer></ChartCard>
         <ChartCard title="Throughput (Requests/Hour)"><ResponsiveContainer width="100%" height={300}><BarChart data={throughputData}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="hour" stroke="#888" fontSize={12} /><YAxis stroke="#888" fontSize={12} /><Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '0.5rem' }} labelStyle={{ color: '#fff', fontWeight: 'bold' }} /><Legend iconType="square" /><Bar dataKey="requests" name="Requests" fill="#a855f7" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></ChartCard>
       </div>
@@ -84,7 +224,20 @@ function DashboardContent() {
     settings: Record<string, unknown>;
     tools: Record<string, unknown>[];
   } | null>(null);
+ const { setSteps } = useTour();
+ const [isTourAlertOpen, setIsTourAlertOpen] = useState(false);
+ useEffect(() => {
+    // Set the steps for the tour
+    setSteps(tourSteps);
 
+    // Trigger the tour alert after a short delay for smooth entrance
+    // In a real app, you might check localStorage like: if (!localStorage.getItem('tourCompleted'))
+    const timer = setTimeout(() => {
+      setIsTourAlertOpen(true);
+    }, 1500); // Wait for loading skeleton to mostly finish
+
+    return () => clearTimeout(timer);
+  }, [setSteps]);
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
@@ -171,7 +324,7 @@ function DashboardContent() {
       case 'ocr': return '';
       case 'dashboard':
       default:
-        return "Here&apos;s a live overview of your agent operations.";
+        return "Here's a live overview of your agent operations.";
     }
   };
 
@@ -232,6 +385,7 @@ function DashboardContent() {
         onMouseEnter={() => setIsUserSidebarExpanded(true)}
         onMouseLeave={() => setIsUserSidebarExpanded(false)}
       />
+      <TourAlertDialog isOpen={isTourAlertOpen} setIsOpen={setIsTourAlertOpen} />
     </div>
   );
 }

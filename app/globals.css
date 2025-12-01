@@ -130,3 +130,40 @@
     display: none;  /* Safari and Chrome */
   }
 }
+
+.react-flow__attribution {
+  background: transparent !important;
+  padding: 2px 4px !important;
+  font-size: 10px !important;
+  opacity: 0.4 !important;
+}
+
+.dark .react-flow__attribution {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.react-flow__pane {
+  cursor: grab !important;
+}
+
+.react-flow__pane:active {
+  cursor: grabbing !important;
+}
+
+.react-flow__node {
+  cursor: pointer !important;
+}
+
+.react-flow__handle {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid var(--border) !important;
+  background: var(--primary) !important;
+  cursor: crosshair !important;
+  z-index: 20 !important;
+}
+
+@keyframes dashdraw {
+  from { stroke-dashoffset: 10; }
+  to { stroke-dashoffset: 0; }
+}

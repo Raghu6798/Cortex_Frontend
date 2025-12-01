@@ -20,14 +20,15 @@ import FAQSection from '@/components/ui/general/FAQSection';
 import BlogSection from '@/components/ui/general/BlogSection';
 import CTASection from '@/components/ui/general/CTASection';
 import ChallengeBentoGrid from '@/components/ui/general/ChallengeBentoGrid';
+// [NEW] Import the useIsMobile hook
+import { useIsMobile } from '@/hooks/use-mobile'; 
 
-// --- THIS IS THE MODIFIED DATA ARRAY ---
+// --- TESTIMONIAL DATA (Original Content) ---
 const testimonials = [
   {
     quote: "Cortex transformed our development workflow. Building, testing, and deploying agents has never been this seamless. The ability to switch LLMs on the fly is a game-changer for our multi-tenant applications.",
     name: "Jane Doe",
     designation: "Lead AI Engineer, InnovateCorp",
-    // This URL will fetch a random 500x500 portrait image. The '&sig=1' ensures it's a unique image.
     src: "https://images.prismic.io/turing/652ec6fefbd9a45bcec81a1f_Coder_a63a8aeefd.webp?auto=format,compress", 
   },
   {
@@ -43,7 +44,7 @@ const testimonials = [
     src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZulXgU_VPgK8yPyn8bCVMOofRqjO3Kdlgqw&s",
   },
 ];
-// --- END OF MODIFIED DATA ---
+// --- END OF TESTIMONIAL DATA ---
 
 
 export default function Page() {
@@ -51,6 +52,9 @@ export default function Page() {
   const [isCompact, setIsCompact] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   const lastY = React.useRef(0);
+  
+  // [NEW] Use the hook
+  const isMobile = useIsMobile(); 
 
   React.useEffect(() => {
     // Trigger page load animation
@@ -65,6 +69,7 @@ export default function Page() {
       const y = window.scrollY || 0;
       const delta = y - lastY.current;
       
+      // The logic for isCompact is a common pattern for sticky headers
       if (y > 16 && delta > 0 && !isCompact) {
         setIsCompact(true);
       }
@@ -81,6 +86,11 @@ export default function Page() {
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
   };
+  
+  // [NEW] Example of using isMobile to adjust content
+  const heroSectionTitle = isMobile 
+    ? "The Future of AI Agents" 
+    : "The Neural-Inspired Runtime for AI Agents";
 
   return (
     <motion.main 
@@ -105,7 +115,11 @@ export default function Page() {
           animate={{ y: isLoaded ? 0 : 30, opacity: isLoaded ? 1 : 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
         >
-          <HeroSection isDarkMode={isDarkMode} />
+          {/* [NEW] Pass the responsive title */}
+          <HeroSection 
+            isDarkMode={isDarkMode} 
+            titleOverride={heroSectionTitle}
+          />
         </motion.div>
         <SectionReveal>
         <div className={cn("transition-colors duration-500", isDarkMode ? "bg-black/50" : "bg-white/50")}>

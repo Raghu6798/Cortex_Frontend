@@ -25,7 +25,7 @@ interface SidebarProps {
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox' | 'rag';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox' | 'rag' | 'workflow';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
@@ -88,6 +88,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
               case 'secrets': return '/dashboard?view=secrets';
               case 'ocr': return '/dashboard?view=ocr';
               case 'sandbox': return '/dashboard/sandboxes';
+              case 'workflow': return '/dashboard?view=workflow';
               default: return '/dashboard';
             }
           };
@@ -135,10 +136,13 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
         </button>
 
         {/* Multi Agent Workflow Builder button */}
-        <Link href="/dashboard/builder">
+        <Link href="/dashboard?view=workflow">
           <button 
           id={TOUR_STEP_IDS.SIDEBAR_MULTI_AGENT}
-          className="flex items-center gap-4 rounded-lg p-3 text-white bg-blue-600 hover:bg-blue-500 transition-colors mb-4 w-full">
+          className={cn(
+            'flex items-center gap-4 rounded-lg p-3 text-white bg-blue-600 hover:bg-blue-500 transition-colors mb-4 w-full',
+            activeView === 'workflow' && 'bg-blue-700'
+          )}>
             <Workflow className="h-6 w-6 flex-shrink-0" />
             <span
               className={cn(

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import {
   ClerkProvider,
 } from '@clerk/nextjs'
+import { ThemeProvider } from "@/components/workflow/ui/theme-provider";
 import { TourProvider } from "@/components/ui";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -41,9 +42,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
         <TourProvider>
         {children}
         </TourProvider>
+        </ThemeProvider>
       </body>
     </html>
     </ClerkProvider>

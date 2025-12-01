@@ -1,3 +1,5 @@
+import { buttonGroupVariants } from './button-group';
+
 // General UI Components - Only export what's actually used
 export { AnimatedTestimonials } from './animated-testimonials';
 export { AnimatedBeam } from './AnimatedBeamComponent';
@@ -19,8 +21,14 @@ export { default as TestimonialHighlightSection } from './TestimonialHighlightSe
 export { default as TextType } from './TextType';
 export { default as Hyperspeed } from './HyperSpeed';
 export { default as BentoGrid } from './BentoGrid';
+export { ButtonGroup,ButtonGroupSeparator,ButtonGroupText,buttonGroupVariants } from './button-group';
+export { CodeEditor } from './code-editor';
+export { TemplateBadgeInput } from './template-badge-input';
+export { TimezoneSelect } from './timezone-select';
 export { default as ChallengeBentoGrid } from './ChallengeBentoGrid';
 export { NeonGradientCardDemo } from './NeonGradientCardDemo';
+export { AnimatedBorder } from './animated-border';
+export { useIsMobile } from '@/hooks/use-mobile';
 
 export * from './tour';
-export * from './alert-dialog';
+export * from '../shadcn/alert-dialog';

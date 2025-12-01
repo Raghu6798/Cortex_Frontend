@@ -16,6 +16,7 @@ import AgentEditor from '@/components/ui/agents_ui/AgentEditor';
 import SecretsManagement from '@/components/ui/agents_ui/SecretsManagement';
 import ConnectorsPage from '@/components/ui/agents_ui/ConnectorsPage';
 import OCRPage from '@/components/ui/agents_ui/OCRPage';
+import MultiAgentWorkflowViewWithProviders from '@/components/ui/agents_ui/MultiAgentWorkflowView';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
 import { TourAlertDialog, useTour, TourStep } from '@/components/ui/general/tour';
@@ -212,7 +213,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr' | 'workflow'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
   const [agentToEdit, setAgentToEdit] = useState<{
@@ -241,8 +242,8 @@ function DashboardContent() {
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr'].includes(view)) {
-      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr');
+    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow');
     }
   }, [searchParams]);
 
@@ -307,6 +308,7 @@ function DashboardContent() {
       case 'agents': return 'Your Agents';
       case 'editor': return 'Edit Agent';
       case 'connectors': return 'Connectors';
+      case 'workflow': return 'Multi-Agent Workflow Builder';
       case 'ocr': return '';
       case 'dashboard':
       default:
@@ -321,6 +323,7 @@ function DashboardContent() {
       case 'agents': return 'Manage and interact with your configured AI agents.';
       case 'editor': return 'Update your agent configuration.';
       case 'connectors': return 'Connect your favorite tools and services to enhance your AI agent capabilities.';
+      case 'workflow': return 'Build complex multi-agent workflows by connecting triggers and actions.';
       case 'ocr': return '';
       case 'dashboard':
       default:
@@ -336,6 +339,7 @@ function DashboardContent() {
     if (activeView === 'editor' && agentToEdit) return <AgentEditor agent={agentToEdit} onSave={handleAgentSaved} onCancel={handleCancelEdit} />;
     if (activeView === 'secrets') return <SecretsManagement />;
     if (activeView === 'connectors') return <ConnectorsPage />;
+    if (activeView === 'workflow') return <MultiAgentWorkflowViewWithProviders />;
     if (activeView === 'ocr') return <OCRPage />;
     
     // For dashboard, show skeleton while loading
@@ -354,11 +358,12 @@ function DashboardContent() {
       />
 
       <main className={cn(
-        'flex-1 p-6 md:p-8 transition-all duration-300 ease-in-out',
+        'flex-1 transition-all duration-300 ease-in-out',
+        activeView === 'workflow' ? 'p-0 h-screen overflow-hidden' : 'p-6 md:p-8',
         isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
-        isUserSidebarExpanded ? 'xl:mr-72' : 'xl:mr-24'
+        isUserSidebarExpanded && activeView !== 'workflow' ? 'xl:mr-72' : activeView !== 'workflow' ? 'xl:mr-24' : ''
       )}>
-        {activeView !== 'ocr' && (
+        {activeView !== 'ocr' && activeView !== 'workflow' && (
           <header className="mb-8 flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">{getHeaderText()}</h2>

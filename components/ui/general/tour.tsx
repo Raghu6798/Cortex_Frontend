@@ -9,7 +9,7 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./alert-dialog";
+} from "../shadcn/alert-dialog";
 import { Button } from "@/components/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import { CircleDotDashed } from "lucide-react"; // Replaced Torus with CircleDotDashed as standard lucide

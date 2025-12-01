@@ -320,7 +320,10 @@ const useAuthHandlers = (options: AuthHandlersOptions): UseAuthHandlers => {
   ) => {
     try {
       setLoadingProvider(provider);
-      await signIn.social({ provider, callbackURL: window.location.pathname });
+      // `signIn.social` is available at runtime but not declared on the typed interface,
+      // so we access it via `any` to satisfy TypeScript while keeping behaviour.
+      const signInAny = signIn as any;
+      await signInAny.social?.({ provider, callbackURL: window.location.pathname });
     } catch {
       toast.error(`Failed to sign in with ${getProviderLabel(provider)}`);
       setLoadingProvider(null);

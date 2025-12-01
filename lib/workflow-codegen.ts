@@ -406,7 +406,7 @@ export function generateWorkflowCode(
       // Remove id field from each schema object
       const schemaWithoutIds = Array.isArray(parsedSchema)
         ? parsedSchema.map((field: Record<string, unknown>) => {
-            const { id: _id, ...rest } = field;
+            const { id: _, ...rest } = field;
             return rest;
           })
         : parsedSchema;

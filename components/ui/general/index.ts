@@ -21,7 +21,7 @@ export { default as TestimonialHighlightSection } from './TestimonialHighlightSe
 export { default as TextType } from './TextType';
 export { default as Hyperspeed } from './HyperSpeed';
 export { default as BentoGrid } from './BentoGrid';
-export { ButtonGroup,ButtonGroupSeparator,ButtonGroupText,buttonGroupVariants } from './button-group';
+export { ButtonGroup,ButtonGroupSeparator,ButtonGroupText } from './button-group';
 export { CodeEditor } from './code-editor';
 export { TemplateBadgeInput } from './template-badge-input';
 export { TimezoneSelect } from './timezone-select';

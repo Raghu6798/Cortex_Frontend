@@ -479,7 +479,7 @@ export function TemplateBadgeInput({
     if (shouldUpdateDisplay.current) {
       updateDisplay();
     }
-  }, [internalValue, isFocused]);
+  }, [internalValue, isFocused, updateDisplay]);
 
   return (
     <>

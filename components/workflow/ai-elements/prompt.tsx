@@ -31,7 +31,7 @@ export function AIPrompt({ workflowId, onWorkflowCreated }: AIPromptProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const nodes = useAtomValue(nodesAtom);
   const [edges, setEdges] = useAtom(edgesAtom);
-  const [_nodes, setNodes] = useAtom(nodesAtom);
+  const [, setNodes] = useAtom(nodesAtom);
   const [, setCurrentWorkflowId] = useAtom(currentWorkflowIdAtom);
   const [_currentWorkflowName, setCurrentWorkflowName] = useAtom(currentWorkflowNameAtom);
   const [, setSelectedNodeId] = useAtom(selectedNodeAtom);
@@ -273,7 +273,7 @@ export function AIPrompt({ workflowId, onWorkflowCreated }: AIPromptProps) {
       isGenerating,
       workflowId,
       hasNodes,
-      nodes,
+
       edges,
       setIsGenerating,
       setCurrentWorkflowId,

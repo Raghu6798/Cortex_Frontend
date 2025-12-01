@@ -52,7 +52,7 @@ type WorkflowExecution = {
 type WorkflowRunsProps = {
   isActive?: boolean;
   onRefreshRef?: React.MutableRefObject<(() => Promise<void>) | null>;
-  onStartRun?: (executionId: string) => void;
+  onStartRunAction?: (executionId: string) => void;
 };
 
 // Helper to detect if output is a base64 image from generateImage step
@@ -277,7 +277,7 @@ function ExecutionLogEntry({
 export function WorkflowRuns({
   isActive = false,
   onRefreshRef,
-  onStartRun,
+  onStartRunAction,
 }: WorkflowRunsProps) {
   const [currentWorkflowId] = useAtom(currentWorkflowIdAtom);
   const [selectedExecutionId, setSelectedExecutionId] = useAtom(
@@ -346,9 +346,7 @@ export function WorkflowRuns({
         completedAt: Date | null;
         duration: string | null;
       }>,
-      _workflow?: {
-        nodes: unknown;
-      }
+      _workflow?: unknown
     ): ExecutionLog[] =>
       logEntries.map((log) => ({
         id: log.id,
@@ -418,11 +416,11 @@ export function WorkflowRuns({
       loadExecutionLogs(latestExecution.id);
 
       // Notify parent
-      if (onStartRun) {
-        onStartRun(latestExecution.id);
+      if (onStartRunAction) {
+        onStartRunAction(latestExecution.id);
       }
     }
-  }, [executions, setSelectedExecutionId, loadExecutionLogs, onStartRun]);
+  }, [executions, setSelectedExecutionId, loadExecutionLogs, onStartRunAction]);
 
   // Helper to refresh logs for a single execution
   const refreshExecutionLogs = useCallback(

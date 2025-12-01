@@ -233,7 +233,7 @@ export function TemplateBadgeTextarea({
         selection?.removeAllRanges();
         selection?.addRange(range);
         contentRef.current.focus();
-      } catch (e) {
+      } catch {
         // If positioning fails, just focus the element
         contentRef.current.focus();
       }
@@ -271,7 +271,7 @@ export function TemplateBadgeTextarea({
     let match;
 
     while ((match = pattern.exec(text)) !== null) {
-      const [fullMatch, , displayPart] = match;
+      const [fullMatch] = match;
       const matchStart = match.index;
 
       // Add text before the template (preserving line breaks)
@@ -567,7 +567,7 @@ export function TemplateBadgeTextarea({
     if (shouldUpdateDisplay.current) {
       updateDisplay();
     }
-  }, [internalValue, isFocused]);
+  }, [internalValue, isFocused, updateDisplay]);
 
   // Calculate min height based on rows
   const minHeight = `${rows * 1.5}rem`;

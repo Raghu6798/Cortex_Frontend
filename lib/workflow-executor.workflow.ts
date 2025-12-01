@@ -11,6 +11,7 @@ import {
   getActionLabel,
   getStepImporter,
   type StepImporter,
+  type StepModule,
 } from "./step-registry";
 import type { StepContext } from "./steps/step-handler";
 import { triggerStep } from "./steps/trigger";
@@ -21,17 +22,17 @@ import type { WorkflowEdge, WorkflowNode } from "./workflow-store";
 const SYSTEM_ACTIONS: Record<string, StepImporter> = {
   "Database Query": {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic module import
-    importer: () => import("./steps/database-query") as Promise<any>,
+    importer: () => import("./steps/database-query") as Promise<StepModule>,
     stepFunction: "databaseQueryStep",
   },
   "HTTP Request": {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic module import
-    importer: () => import("./steps/http-request") as Promise<any>,
+    importer: () => import("./steps/http-request") as Promise<StepModule>,
     stepFunction: "httpRequestStep",
   },
   Condition: {
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic module import
-    importer: () => import("./steps/condition") as Promise<any>,
+    importer: () => import("./steps/condition") as Promise<StepModule>,
     stepFunction: "conditionStep",
   },
 };
@@ -83,7 +84,7 @@ function replaceTemplateVariable(
     const fieldPath = rest.substring(dotIndex + 1);
     const fields = fieldPath.split(".");
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic data traversal
-    let current: any = output.data;
+    let current: unknown = output.data;
 
     for (const field of fields) {
       if (current && typeof current === "object") {

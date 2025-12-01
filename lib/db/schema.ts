@@ -67,9 +67,9 @@ export const workflows = pgTable("workflows", {
     .notNull()
     .references(() => users.id),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - structure validated at application level
-  nodes: jsonb("nodes").notNull().$type<any[]>(),
+  nodes: jsonb("nodes").notNull().$type<unknown[]>(),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - structure validated at application level
-  edges: jsonb("edges").notNull().$type<any[]>(),
+  edges: jsonb("edges").notNull().$type<unknown[]>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -85,7 +85,7 @@ export const integrations = pgTable("integrations", {
   name: text("name").notNull(),
   type: text("type").notNull().$type<IntegrationType>(),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - encrypted credentials stored as JSON
-  config: jsonb("config").notNull().$type<any>(),
+  config: jsonb("config").notNull().$type<unknown>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -105,9 +105,9 @@ export const workflowExecutions = pgTable("workflow_executions", {
     .notNull()
     .$type<"pending" | "running" | "success" | "error" | "cancelled">(),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - structure validated at application level
-  input: jsonb("input").$type<Record<string, any>>(),
+  input: jsonb("input").$type<Record<string, unknown>>(),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - structure validated at application level
-  output: jsonb("output").$type<any>(),
+  output: jsonb("output").$type<unknown>(),
   error: text("error"),
   startedAt: timestamp("started_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
@@ -129,9 +129,9 @@ export const workflowExecutionLogs = pgTable("workflow_execution_logs", {
     .notNull()
     .$type<"pending" | "running" | "success" | "error">(),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - structure validated at application level
-  input: jsonb("input").$type<any>(),
+  input: jsonb("input").$type<unknown>(),
   // biome-ignore lint/suspicious/noExplicitAny: JSONB type - structure validated at application level
-  output: jsonb("output").$type<any>(),
+  output: jsonb("output").$type<unknown>(),
   error: text("error"),
   startedAt: timestamp("started_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),

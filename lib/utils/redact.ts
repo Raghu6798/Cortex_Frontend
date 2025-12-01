@@ -103,7 +103,7 @@ function maskValue(value: string): string {
  */
 // biome-ignore lint/suspicious/noExplicitAny: Redaction works on arbitrary data structures
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Function handles multiple data types and recursive structures
-function redactObject(obj: any, depth = 0): any {
+function redactObject(obj: unknown, depth = 0): unknown {
   // Prevent infinite recursion
   if (depth > 10) {
     return obj;
@@ -153,7 +153,7 @@ function redactObject(obj: any, depth = 0): any {
  * This is the main export that should be used throughout the application
  */
 // biome-ignore lint/suspicious/noExplicitAny: Redaction works on arbitrary data structures
-export function redactSensitiveData(data: any): any {
+export function redactSensitiveData(data: unknown): unknown {
   if (data === null || data === undefined) {
     return data;
   }
@@ -189,7 +189,7 @@ export function containsSensitiveData(obj: Record<string, unknown>): boolean {
  * Use this when you want to completely strip out sensitive data
  */
 // biome-ignore lint/suspicious/noExplicitAny: Works on arbitrary data structures
-export function stripCredentials(obj: any): any {
+export function stripCredentials(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
     return obj;
   }

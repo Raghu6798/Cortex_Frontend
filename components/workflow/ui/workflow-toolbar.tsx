@@ -18,6 +18,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { nanoid } from "nanoid";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -668,7 +669,7 @@ function useWorkflowState() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showCodeDialog, setShowCodeDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [generatedCode, _setGeneratedCode] = useState<string>("");
+  const [generatedCode] = useState<string>("");
   const [allWorkflows, setAllWorkflows] = useState<
     Array<{
       id: string;
@@ -1325,10 +1326,10 @@ function WorkflowMenuComponent({
             asChild
             className="flex items-center justify-between"
           >
-            <a href="/">
+            <Link href="/">
               New Workflow{" "}
               {!workflowId && <Check className="size-4 shrink-0" />}
-            </a>
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {state.allWorkflows.length === 0 ? (

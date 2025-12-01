@@ -36,11 +36,11 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     { name: 'Connectors', icon: Plug, view: 'connectors' as const, id: TOUR_STEP_IDS.SIDEBAR_CONNECTORS },
     { name: 'Secrets', icon: Shield, view: 'secrets' as const, id: TOUR_STEP_IDS.SIDEBAR_SECRETS },
     { name: 'OCR Parser', icon: FolderOpen, view: 'ocr' as const, id: TOUR_STEP_IDS.SIDEBAR_OCR },
+    { name: 'RAG', icon: Search, view: 'rag' as const, id: TOUR_STEP_IDS.SIDEBAR_RAG },
     { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const, id: TOUR_STEP_IDS.SIDEBAR_SANDBOX }
   ];
 
   const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox'; id: string }> = [
-    { name: 'RAG', icon: Search, id: TOUR_STEP_IDS.SIDEBAR_RAG },
     { name: 'Pre-built Tools', icon: Wrench, id: TOUR_STEP_IDS.SIDEBAR_TOOLS }
   ];
 
@@ -88,6 +88,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
               case 'secrets': return '/dashboard?view=secrets';
               case 'ocr': return '/dashboard?view=ocr';
               case 'sandbox': return '/dashboard/sandboxes';
+              case 'rag': return '/dashboard?view=rag';
               case 'workflow': return '/dashboard?view=workflow';
               default: return '/dashboard';
             }

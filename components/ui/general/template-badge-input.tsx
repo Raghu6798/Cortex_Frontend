@@ -86,20 +86,7 @@ export function TemplateBadgeInput({
   const [atSignPosition, setAtSignPosition] = useState<number | null>(null);
   const pendingCursorPosition = useRef<number | null>(null);
 
-  // Update internal value when prop changes from outside
-  useEffect(() => {
-    if (value !== internalValue && !isFocused) {
-      setInternalValue(value);
-      shouldUpdateDisplay.current = true;
-    }
-  }, [value, isFocused, internalValue]);
 
-  // Update display when nodes change (to reflect label updates)
-  useEffect(() => {
-    if (!isFocused && internalValue) {
-      shouldUpdateDisplay.current = true;
-    }
-  }, [nodes, isFocused, internalValue]);
 
   // Save cursor position
   const saveCursorPosition = (): { offset: number } | null => {

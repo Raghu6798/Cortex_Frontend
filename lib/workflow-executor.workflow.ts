@@ -205,14 +205,14 @@ async function executeActionStep(input: {
   // Special handling for Condition action - needs template evaluation
   if (actionType === "Condition") {
     const systemAction = SYSTEM_ACTIONS.Condition;
-    const module = await systemAction.importer();
+    const importedModule = await systemAction.importer();
     const evaluatedCondition = evaluateConditionExpression(
       stepInput.condition,
       outputs
     );
     console.log("[Condition] Final result:", evaluatedCondition);
 
-    return await module[systemAction.stepFunction]({
+    return await importedModule[systemAction.stepFunction]({
       condition: evaluatedCondition,
       _context: context,
     });
@@ -221,16 +221,16 @@ async function executeActionStep(input: {
   // Check system actions first (Database Query, HTTP Request)
   const systemAction = SYSTEM_ACTIONS[actionType];
   if (systemAction) {
-    const module = await systemAction.importer();
-    const stepFunction = module[systemAction.stepFunction];
+    const importedModule = await systemAction.importer();
+    const stepFunction = importedModule[systemAction.stepFunction];
     return await stepFunction(stepInput);
   }
 
   // Look up plugin action from the generated step registry
   const stepImporter = getStepImporter(actionType);
   if (stepImporter) {
-    const module = await stepImporter.importer();
-    const stepFunction = module[stepImporter.stepFunction];
+    const importedModule = await stepImporter.importer();
+    const stepFunction = importedModule[stepImporter.stepFunction];
     if (stepFunction) {
       return await stepFunction(stepInput);
     }
@@ -294,11 +294,11 @@ function processTemplates(
           const fieldPath = rest.substring(dotIndex + 1);
           const fields = fieldPath.split(".");
           // biome-ignore lint/suspicious/noExplicitAny: Dynamic output data traversal
-          let current: any = output.data;
+          let current: unknown = output.data;
 
           for (const field of fields) {
             if (current && typeof current === "object") {
-              current = current[field];
+              current = (current as Record<string, unknown>)[field];
             } else {
               // Field access failed, return empty string
               return "";

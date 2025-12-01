@@ -32,9 +32,9 @@ export function AIPrompt({ workflowId, onWorkflowCreated }: AIPromptProps) {
   const nodes = useAtomValue(nodesAtom);
   const [edges, setEdges] = useAtom(edgesAtom);
   const [_nodes, setNodes] = useAtom(nodesAtom);
-  const [_currentWorkflowId, setCurrentWorkflowId] = useAtom(currentWorkflowIdAtom);
+  const [, setCurrentWorkflowId] = useAtom(currentWorkflowIdAtom);
   const [_currentWorkflowName, setCurrentWorkflowName] = useAtom(currentWorkflowNameAtom);
-  const [_selectedNodeId, setSelectedNodeId] = useAtom(selectedNodeAtom);
+  const [, setSelectedNodeId] = useAtom(selectedNodeAtom);
   const { fitView } = useReactFlow();
 
   // Filter out placeholder "add" nodes to get real nodes
@@ -283,6 +283,8 @@ export function AIPrompt({ workflowId, onWorkflowCreated }: AIPromptProps) {
       setSelectedNodeId,
       onWorkflowCreated,
       fitView,
+      _currentWorkflowName,
+      realNodes,
     ]
   );
 
@@ -335,7 +337,7 @@ export function AIPrompt({ workflowId, onWorkflowCreated }: AIPromptProps) {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleGenerate(e as any);
+                  handleGenerate(e);
                 } else if (e.key === 'Escape') {
                   e.preventDefault();
                   setPrompt("");

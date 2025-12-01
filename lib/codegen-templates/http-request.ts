@@ -2,7 +2,7 @@
  * Code template for HTTP Request action step
  * This is a string template used for code generation - keep as string export
  */
-export default `export async function httpRequestStep(input: {
+const httpRequestTemplate = `export async function httpRequestStep(input: {
   endpoint: string;
   httpMethod: string;
   httpHeaders?: string;
@@ -45,3 +45,5 @@ export default `export async function httpRequestStep(input: {
   }
   return await response.text();
 }`;
+
+export default httpRequestTemplate;

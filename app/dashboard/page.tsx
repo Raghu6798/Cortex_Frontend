@@ -16,6 +16,7 @@ import AgentEditor from '@/components/ui/agents_ui/AgentEditor';
 import SecretsManagement from '@/components/ui/agents_ui/SecretsManagement';
 import ConnectorsPage from '@/components/ui/agents_ui/ConnectorsPage';
 import OCRPage from '@/components/ui/agents_ui/OCRPage';
+import RAGContent from '@/components/ui/agents_ui/RAGContent';
 import MultiAgentWorkflowViewWithProviders from '@/components/ui/agents_ui/MultiAgentWorkflowView';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
@@ -213,7 +214,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr' | 'workflow'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr' | 'workflow' | 'rag'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
   const [agentToEdit, setAgentToEdit] = useState<{
@@ -242,8 +243,8 @@ function DashboardContent() {
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow'].includes(view)) {
-      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow');
+    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow', 'rag'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow' | 'rag');
     }
   }, [searchParams]);
 
@@ -309,6 +310,7 @@ function DashboardContent() {
       case 'editor': return 'Edit Agent';
       case 'connectors': return 'Connectors';
       case 'workflow': return 'Multi-Agent Workflow Builder';
+      case 'rag': return '';
       case 'ocr': return '';
       case 'dashboard':
       default:
@@ -324,6 +326,7 @@ function DashboardContent() {
       case 'editor': return 'Update your agent configuration.';
       case 'connectors': return 'Connect your favorite tools and services to enhance your AI agent capabilities.';
       case 'workflow': return 'Build complex multi-agent workflows by connecting triggers and actions.';
+      case 'rag': return '';
       case 'ocr': return '';
       case 'dashboard':
       default:
@@ -341,6 +344,7 @@ function DashboardContent() {
     if (activeView === 'connectors') return <ConnectorsPage />;
     if (activeView === 'workflow') return <MultiAgentWorkflowViewWithProviders />;
     if (activeView === 'ocr') return <OCRPage />;
+    if (activeView === 'rag') return <RAGContent />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;
@@ -363,7 +367,7 @@ function DashboardContent() {
         isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
         isUserSidebarExpanded && activeView !== 'workflow' ? 'xl:mr-72' : activeView !== 'workflow' ? 'xl:mr-24' : ''
       )}>
-        {activeView !== 'ocr' && activeView !== 'workflow' && (
+        {activeView !== 'ocr' && activeView !== 'workflow' && activeView !== 'rag' && (
           <header className="mb-8 flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-bold tracking-tight">{getHeaderText()}</h2>

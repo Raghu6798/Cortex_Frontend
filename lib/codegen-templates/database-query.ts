@@ -2,7 +2,7 @@
  * Code template for Database Query action step
  * This is a string template used for code generation - keep as string export
  */
-export default `export async function databaseQueryStep(input: {
+const databaseQueryTemplate = `export async function databaseQueryStep(input: {
   query: string;
 }) {
   "use step";
@@ -19,3 +19,5 @@ export default `export async function databaseQueryStep(input: {
   
   throw new Error('Database Query not implemented - see comments in generated code');
 }`;
+
+export default databaseQueryTemplate;

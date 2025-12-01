@@ -1,7 +1,7 @@
 // app/dashboard/rag/page.tsx
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import UserProfileSidebar from '@/components/layout/UserProfileSidebar';
 import { cn } from '@/lib/utils';
@@ -19,21 +19,26 @@ import {
   Search,
   Zap,
   HardDrive,
-  Save
+  Save,
+  Key,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { Badge } from '@/components/ui/shadcn/badge';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AnimatedBeamComponent } from '@/components/ui/general/AnimatedBeamComponent'; // Import the AnimatedBeam component
+import { AnimatedBeamComponent } from '@/components/ui/general/AnimatedBeamComponent'; 
 import Image from 'next/image';
 import { Input } from '@/components/ui/shadcn/Input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Textarea } from '@/components/ui/shadcn/textarea';
 import { Switch } from '@/components/ui/shadcn/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/shadcn/select';
+import { useAuth } from '@clerk/nextjs'; // Import useAuth to get the token
 
-// --- MOCK DATA & ICONS ---
-type KnowledgeBaseStatus = 'Ready' | 'Processing' | 'Error';
+// --- TYPES AND MOCKS ---
+
+type KnowledgeBaseStatus = 'Draft' | 'Processing' | 'Ready' | 'Error';
 type KnowledgeBase = {
   id: string;
   name: string;
@@ -45,16 +50,21 @@ type KnowledgeBase = {
   lastUpdated: string;
 };
 
-// **1. Remove Placeholder KB Data**
+// Secret Metadata Type (based on your SecretResponse schema)
+type SecretMetadata = {
+    id: string;
+    name: string;
+    created_at: string;
+};
+
 const mockKnowledgeBases: KnowledgeBase[] = []; 
 
-// **2. Vector DB Data with Logos**
 const VectorDBs = [
     { name: 'Qdrant', logo: 'https://avatars.githubusercontent.com/u/73504361?s=280&v=4', status: 'ready', link: 'https://qdrant.tech' },
     { name: 'Chroma', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwgwHBIDmE0dMPTEitihmUXvAHTxEt8AyjvQ&s', status: 'ready', link: 'https://www.trychroma.com/' },
     { name: 'FAISS', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTniLzFNsjivwLiV6MNVgLMai5IWWHc0Frv3w&s', status: 'local', link: 'https://github.com/facebookresearch/faiss' },
     { name: 'Pinecone', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLhSrfueBZeHifvia4Vqhhd9QuqGQpi5UduA&s', status: 'ready', link: 'https://www.pinecone.io/' },
-    { name: 'AstraDB', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY3tmF34Qk83eoATfnEATfnS4oCB-URNI9sxVuulA&s', status: 'ready', link: 'https://www.datastax.com/products/datastax-astra' },
+    { name: 'AstraDB', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY3tmF34Qk83eoATfnS4oCB-URNI9sxVuulA&s', status: 'ready', link: 'https://www.datastax.com/products/datastax-astra' },
     { name: 'Neo4j', logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmOZuTqPb6LhxyTyEUio8xxNxspa0gm-NncQ&s', status: 'ready', link: 'https://neo4j.com/' },
 ];
 
@@ -65,14 +75,49 @@ const STEPS = [
   { id: 'process', name: '4. Index & Test', icon: CheckCircle2 },
 ];
 
-// --- RAG HOME VIEW COMPONENT (Refactored) ---
+// --- HOOK TO FETCH SECRETS ---
+const useUserSecrets = () => {
+    const { getToken } = useAuth();
+    const [secrets, setSecrets] = useState<SecretMetadata[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSecrets = async () => {
+            try {
+                const token = await getToken();
+                if (!token) throw new Error("Authentication token missing.");
+
+                // NOTE: Use the established Next.js API proxy route
+                const response = await fetch('/api/secrets', { 
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` } // Send token for proxy authentication
+                });
+                
+                if (!response.ok) throw new Error("Failed to fetch secrets from API.");
+
+                const data = await response.json();
+                setSecrets(data);
+            } catch (error) {
+                console.error("Error fetching user secrets:", error);
+                setSecrets([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchSecrets();
+    }, [getToken]);
+
+    return { secrets, isLoading };
+}
+
+// --- RAG HOME VIEW COMPONENT ---
 const RAGLandingView = ({ onCreateNew, onStartCreationWithDB }: { onCreateNew: () => void; onStartCreationWithDB: (dbName: string) => void; }) => {
     
     return (
         <div className='w-full'>
             <header className="mb-8 text-center">
                 <h2 className="text-3xl font-bold tracking-tight">Retrieval-Augmented Generation (RAG)</h2>
-                <p className="text-white/60 mt-1">Connect your agents to external knowledge bases using powerful vector and graph databases.</p>
+                <p className="text-white/60 mt-1">Select a vector backend to build your knowledge base.</p>
             </header>
 
             {/* Animated Beam Visualization */}
@@ -80,7 +125,7 @@ const RAGLandingView = ({ onCreateNew, onStartCreationWithDB }: { onCreateNew: (
                 <AnimatedBeamComponent 
                     nodes={VectorDBs} 
                     centerNode={{ name: 'Cortex Agent', logo: '/download.png', status: 'live' }}
-                    onNodeClick={onStartCreationWithDB} // Clicking starts the flow
+                    onNodeClick={onStartCreationWithDB}
                 />
             </div>
             
@@ -95,50 +140,7 @@ const RAGLandingView = ({ onCreateNew, onStartCreationWithDB }: { onCreateNew: (
 };
 
 
-// --- CARD AND DETAIL VIEWS (Modified to be empty) ---
-
-const KnowledgeBaseCard = ({ kb, onManage }: { kb: KnowledgeBase; onManage: () => void }) => {
-    // This component is kept but won't render if mockKnowledgeBases is empty
-    const statusStyles = {
-        Ready: { icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/10' },
-        Processing: { icon: Loader2, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-        Error: { icon: X, color: 'text-red-400', bg: 'bg-red-500/10' },
-    };
-    const StatusIcon = statusStyles[kb.status].icon;
-    const db = VectorDBs.find(d => d.name === kb.vectorDb);
-
-    return (
-        <Card className="bg-black/30 border-white/15 hover:border-purple-500/50 transition-all duration-300 group flex flex-col">
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div className='flex items-center gap-3'>
-                        {db?.logo && <Image src={db.logo} alt={db.name} width={24} height={24} className='rounded-sm object-contain'/>}
-                         <CardTitle className="text-white group-hover:text-purple-300 transition-colors">{kb.name}</CardTitle>
-                    </div>
-                    <Badge variant="outline" className={`border-none ${statusStyles[kb.status].bg} ${statusStyles[kb.status].color}`}>
-                        <StatusIcon className={`w-3 h-3 mr-1 ${kb.status === 'Processing' && 'animate-spin'}`} />
-                        {kb.status}
-                    </Badge>
-                </div>
-                <CardDescription className="text-white/70 pt-2">{kb.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 flex-grow">
-                <div className="flex justify-between text-sm text-white/60">
-                    <div className="flex items-center gap-2"><File className="w-4 h-4" /><span>{kb.documentCount} Documents</span></div>
-                    <div className="flex items-center gap-2"><ListChecks className="w-4 h-4" /><span>{kb.chunkCount} Chunks</span></div>
-                </div>
-            </CardContent>
-            <div className="p-6 pt-0 mt-auto">
-                <div className="flex justify-between items-center border-t border-white/10 pt-4">
-                     <p className="text-xs text-white/50">Updated {kb.lastUpdated}</p>
-                    <Button size="sm" className="bg-white/10 hover:bg-white/20" onClick={onManage}>
-                        Manage <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                </div>
-            </div>
-        </Card>
-    );
-};
+// --- DETAIL VIEWS ---
 
 const KnowledgeBaseDetailView = ({ knowledgeBase, onBack, initialVectorDb }: { knowledgeBase: KnowledgeBase | null; onBack: () => void; initialVectorDb: string | null }) => {
   const [activeStep, setActiveStep] = useState(0);
@@ -223,10 +225,13 @@ const KnowledgeBaseDetailView = ({ knowledgeBase, onBack, initialVectorDb }: { k
   );
 };
 
-// --- STEP 1: CONNECTION (Updated to use initialVectorDb)---
+// --- STEP 1: CONNECTION (Updated for Secrets)---
 const StepConnection = ({ setupData, initialVectorDb }: { setupData: KnowledgeBase | null; initialVectorDb: string | null }) => {
     const [selectedDB, setSelectedDB] = useState(setupData?.vectorDb || initialVectorDb || VectorDBs[0].name);
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+    const [selectedSecret, setSelectedSecret] = useState<string | null>(null);
+    const { secrets, isLoading: isLoadingSecrets } = useUserSecrets();
+
 
     const handleTestConnection = () => {
         setConnectionStatus('testing');
@@ -263,11 +268,49 @@ const StepConnection = ({ setupData, initialVectorDb }: { setupData: KnowledgeBa
 
             <Card className='bg-black/20 border-white/10 space-y-4 p-6'>
                 <h4 className='text-lg font-semibold'>{selectedDB} Connection</h4>
-                 <InputWithLabel label="API Key / Token" type="password" placeholder="Enter your secret key" />
+                 
+                 {/* API Key Selector (New Logic) */}
+                <div className="space-y-2">
+                    <Label className='text-white flex items-center gap-2'>
+                        <Key className='w-4 h-4'/> API Key / Token (from Secrets)
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                        {isLoadingSecrets ? (
+                            <div className="w-full h-10 bg-black/50 rounded-md animate-pulse flex items-center px-4">
+                                <Loader2 className='w-4 h-4 mr-2 animate-spin text-white/50'/> Loading Secrets...
+                            </div>
+                        ) : (
+                            <Select onValueChange={setSelectedSecret} value={selectedSecret || ""}>
+                                <SelectTrigger className="w-full bg-black/50 border-white/15 text-white placeholder:text-white/50">
+                                    <SelectValue placeholder={secrets.length === 0 ? "No secrets found. Create one first." : "Select an API Key Secret"} />
+                                </SelectTrigger>
+                                <SelectContent className='bg-black/80 border-white/15 text-white'>
+                                    {secrets.length > 0 ? (
+                                        secrets.map(secret => (
+                                            <SelectItem key={secret.id} value={secret.name}>
+                                                <div className='flex items-center gap-2'>
+                                                    <Shield className='w-3 h-3 text-purple-400'/>
+                                                    {secret.name}
+                                                </div>
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="no-secrets" disabled>No secrets available</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        <Button variant="outline" size="icon" className='bg-black/50 border-white/15 hover:bg-white/10' onClick={() => console.log('Go to Secrets')}>
+                            <Shield className='w-4 h-4 text-purple-400'/>
+                        </Button>
+                    </div>
+                    {selectedSecret && <p className='text-xs text-green-400 mt-1 flex items-center gap-1'><CheckCircle2 className='w-3 h-3'/> Using secret: **{selectedSecret}**</p>}
+                </div>
+                 
                  <InputWithLabel label="Environment / Host URL" placeholder="e.g., https://[id].svc.pinecone.io" />
                  <InputWithLabel label="Index / Collection Name" placeholder="e.g., cortex-rag-index" />
                 <div className='flex items-center justify-between pt-2'>
-                    <Button onClick={handleTestConnection} disabled={connectionStatus === 'testing'} className='bg-blue-600 hover:bg-blue-500'>
+                    <Button onClick={handleTestConnection} disabled={connectionStatus === 'testing' || !selectedSecret} className='bg-blue-600 hover:bg-blue-500'>
                         {connectionStatus === 'testing' ? <Loader2 className='w-4 h-4 mr-2 animate-spin'/> : <Zap className='w-4 h-4 mr-2'/>}
                         Test Connection
                     </Button>
@@ -345,6 +388,7 @@ const SourceCard = ({ icon: Icon, title, description, onClick }: { icon: React.E
 
 // --- STEP 3: CONFIGURATION ---
 const StepConfiguration = () => {
+    // NOTE: This step would also ideally use the secret selector for the Embedding API Key
     return (
         <div className='space-y-6 max-w-2xl mx-auto'>
             <h3 className='text-xl font-bold text-white'>3. Chunking and Embedding Configuration</h3>
@@ -363,7 +407,7 @@ const StepConfiguration = () => {
             <Card className='bg-black/20 border-white/10 p-6 space-y-4'>
                 <h4 className='text-lg font-semibold mb-3'>Embedding Model</h4>
                  <InputWithLabel label="Embedding Model" placeholder="Select Embedding Model" defaultValue="text-embedding-ada-002" />
-                 <InputWithLabel label="Embedding API Key" type="password" placeholder="Enter API Key" />
+                 <InputWithLabel label="Embedding API Key" type="password" placeholder="Enter API Key (Should be selected from Secrets)" />
                  <InputWithLabel label="Embedding Dimensions" type="number" defaultValue={1536} disabled/>
             </Card>
         </div>
@@ -446,18 +490,17 @@ export default function RAGPage() {
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
   const [view, setView] = useState<'landing' | 'detail'>('landing'); 
   const [selectedKb, setSelectedKb] = useState<KnowledgeBase | null>(null);
-  const [initialVectorDb, setInitialVectorDb] = useState<string | null>(null); // State to pass initial DB selection
+  const [initialVectorDb, setInitialVectorDb] = useState<string | null>(null); 
 
-  // **3. Simplified onCreateNew and added onStartCreationWithDB**
   const handleCreateNew = () => {
     setSelectedKb(null); 
-    setInitialVectorDb(null); // Default to first in list if button is clicked
+    setInitialVectorDb(null); 
     setView('detail');
   };
   
   const handleStartCreationWithDB = (dbName: string) => {
      setSelectedKb(null); 
-     setInitialVectorDb(dbName); // Set the DB selected from the graph
+     setInitialVectorDb(dbName); 
      setView('detail');
   };
 

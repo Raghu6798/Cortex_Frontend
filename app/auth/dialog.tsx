@@ -320,10 +320,15 @@ const useAuthHandlers = (options: AuthHandlersOptions): UseAuthHandlers => {
   ) => {
     try {
       setLoadingProvider(provider);
-      // `signIn.social` is available at runtime but not declared on the typed interface,
-      // so we access it via `any` to satisfy TypeScript while keeping behaviour.
-      const signInAny = signIn as any;
-      await signInAny.social?.({ provider, callbackURL: window.location.pathname });
+      // `signIn.social` exists at runtime but isn't declared on the typed interface,
+      // so we project just the shape we need without using `any`.
+      const signInWithSocial = signIn as unknown as {
+        social?: (args: { provider: string; callbackURL: string }) => Promise<void>;
+      };
+      await signInWithSocial.social?.({
+        provider,
+        callbackURL: window.location.pathname,
+      });
     } catch {
       toast.error(`Failed to sign in with ${getProviderLabel(provider)}`);
       setLoadingProvider(null);
@@ -335,42 +340,16 @@ const useAuthHandlers = (options: AuthHandlersOptions): UseAuthHandlers => {
     setError("");
   };
 
+  // These email/password flows are not wired to a real backend when using Clerk.
+  // We keep the UI but short‑circuit the handlers with a clear message.
   const handleSignUp = async () => {
-    const signUpResponse = await signUp.email({
-      email,
-      password,
-      name,
-    });
-    if (signUpResponse.error) {
-      setError(signUpResponse.error.message || "Sign up failed");
-      return false;
-    }
-
-    const signInResponse = await signIn.email({
-      email,
-      password,
-    });
-    if (signInResponse.error) {
-      setError(signInResponse.error.message || "Sign in failed");
-      return false;
-    }
-
-    toast.success("Account created and signed in successfully!");
-    return true;
+    toast.error("Email/password sign up is not available. Please use a social provider.");
+    return false;
   };
 
   const handleSignIn = async () => {
-    const response = await signIn.email({
-      email,
-      password,
-    });
-    if (response.error) {
-      setError(response.error.message || "Sign in failed");
-      return false;
-    }
-
-    toast.success("Signed in successfully!");
-    return true;
+    toast.error("Email/password sign in is not available. Please use a social provider.");
+    return false;
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {

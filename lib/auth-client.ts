@@ -9,9 +9,23 @@ export const useSession = () => {
   };
 };
 
+type EmailAuthArgs = {
+  email: string;
+  password: string;
+  name?: string;
+};
+
+type EmailAuthResult = {
+  error: { message?: string } | null;
+};
+
 export const signIn = {
-  email: async () => {
-    console.warn("signIn.email is not implemented with Clerk. Use Clerk's <SignIn /> component.");
+  // Stubbed implementation for local/email sign-in when using Clerk UI components.
+  // Accepts a payload so caller code can be typed correctly, but ignores it at runtime.
+  email: async (_args: EmailAuthArgs): Promise<EmailAuthResult> => {
+    console.warn(
+      "signIn.email is not implemented with Clerk. Use Clerk's <SignIn /> component."
+    );
     return { error: null };
   },
 };
@@ -22,8 +36,11 @@ export const signOut = async () => {
 };
 
 export const signUp = {
-  email: async () => {
-    console.warn("signUp.email is not implemented with Clerk. Use Clerk's <SignUp /> component.");
+  // Stubbed implementation for local/email sign-up when using Clerk UI components.
+  email: async (_args: EmailAuthArgs): Promise<EmailAuthResult> => {
+    console.warn(
+      "signUp.email is not implemented with Clerk. Use Clerk's <SignUp /> component."
+    );
     return { error: null };
   },
 };

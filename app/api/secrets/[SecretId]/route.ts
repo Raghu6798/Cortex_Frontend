@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onr
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { SecretId: string } }
+  context: { params: Promise<{ SecretId: string }> }
 ) {
   try {
     const { userId, getToken } = await auth();
@@ -21,7 +21,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'No authentication token' }, { status: 401 });
     }
 
-    const { SecretId } = params;
+    const { SecretId } = await context.params;
     const backendUrl = `${API_BASE_URL}/api/v1/secrets/${SecretId}`;
 
     // Proxy the DELETE request to the backend

@@ -6,6 +6,7 @@ import {
   TEMPLATE_PATTERN,
   toFriendlyVarName,
   toTypeScriptLiteral,
+  processAiSchema,
 } from "./workflow-codegen-shared";
 import type { WorkflowEdge, WorkflowNode } from "./workflow-store";
 
@@ -393,28 +394,6 @@ export function generateWorkflowCode(
       `${indent}  body: {},`,
       `${indent}});`,
     ];
-  }
-
-  // Helper to process AI schema and convert to TypeScript literal
-  function processAiSchema(aiSchema: string | undefined): string | null {
-    if (!aiSchema) {
-      return null;
-    }
-
-    try {
-      const parsedSchema = JSON.parse(aiSchema);
-      // Remove id field from each schema object
-      const schemaWithoutIds = Array.isArray(parsedSchema)
-        ? parsedSchema.map((field: Record<string, unknown>) => {
-            const { id: _, ...rest } = field;
-            return rest;
-          })
-        : parsedSchema;
-      return toTypeScriptLiteral(schemaWithoutIds);
-    } catch {
-      // If schema is invalid JSON, skip it
-      return null;
-    }
   }
 
   // Helper to generate prompt value with template handling

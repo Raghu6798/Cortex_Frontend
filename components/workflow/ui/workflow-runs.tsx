@@ -345,8 +345,7 @@ export function WorkflowRuns({
         startedAt: Date;
         completedAt: Date | null;
         duration: string | null;
-      }>,
-      _workflow?: unknown
+      }>
     ): ExecutionLog[] =>
       logEntries.map((log) => ({
         id: log.id,
@@ -368,7 +367,7 @@ export function WorkflowRuns({
     async (executionId: string) => {
       try {
         const data = await api.workflow.getExecutionLogs(executionId);
-        const mappedLogs = mapNodeLabels(data.logs, data.execution.workflow);
+        const mappedLogs = mapNodeLabels(data.logs);
         setLogs((prev) => ({
           ...prev,
           [executionId]: mappedLogs,

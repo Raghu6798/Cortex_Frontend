@@ -24,7 +24,7 @@ import {
   Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
+import { Card } from '@/components/ui/shadcn/card';
 import { Badge } from '@/components/ui/shadcn/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedBeamComponent } from '@/components/ui/general/AnimatedBeamComponent'; 
@@ -57,7 +57,7 @@ type SecretMetadata = {
     created_at: string;
 };
 
-const mockKnowledgeBases: KnowledgeBase[] = []; 
+// const mockKnowledgeBases: KnowledgeBase[] = []; 
 
 const VectorDBs = [
     { name: 'Qdrant', logo: 'https://avatars.githubusercontent.com/u/73504361?s=280&v=4', status: 'ready', link: 'https://qdrant.tech' },
@@ -351,7 +351,7 @@ const StepDataSources = () => {
                     {fileUploads.length === 0 ? (
                         <>
                             <UploadCloud className='w-6 h-6 mb-2'/>
-                            <p className='text-sm'>Drag & drop files here, or click "Upload Documents"</p>
+                            <p className='text-sm'>Drag & drop files here, or click &quot;Upload Documents&quot;</p>
                         </>
                     ) : (
                         <div className='w-full space-y-2'>
@@ -488,25 +488,19 @@ const StepProcessTest = () => {
 export default function RAGPage() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [view, setView] = useState<'landing' | 'detail'>('landing'); 
+  const [view, setView] = useState<'landing' | 'detail'>('landing');
   const [selectedKb, setSelectedKb] = useState<KnowledgeBase | null>(null);
-  const [initialVectorDb, setInitialVectorDb] = useState<string | null>(null); 
+  const [initialVectorDb, setInitialVectorDb] = useState<string | null>(null);
 
   const handleCreateNew = () => {
-    setSelectedKb(null); 
-    setInitialVectorDb(null); 
+    setSelectedKb(null);
+    setInitialVectorDb(null);
     setView('detail');
   };
-  
-  const handleStartCreationWithDB = (dbName: string) => {
-     setSelectedKb(null); 
-     setInitialVectorDb(dbName); 
-     setView('detail');
-  };
 
-  const handleManageKb = (kb: KnowledgeBase) => {
-    setSelectedKb(kb);
-    setInitialVectorDb(kb.vectorDb);
+  const handleStartCreationWithDB = (dbName: string) => {
+    setSelectedKb(null);
+    setInitialVectorDb(dbName);
     setView('detail');
   };
 
@@ -519,19 +513,40 @@ export default function RAGPage() {
         onNewAgentClick={() => {}}
         activeView={'rag'}
       />
-      <main className={cn(
-        'flex-1 flex flex-col p-6 md:p-8 transition-all duration-300 ease-in-out',
-        isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
-        isUserSidebarExpanded ? 'xl:mr-72' : 'xl:mr-24'
-      )}>
+      <main
+        className={cn(
+          'flex-1 flex flex-col p-6 md:p-8 transition-all duration-300 ease-in-out',
+          isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20',
+          isUserSidebarExpanded ? 'xl:mr-72' : 'xl:mr-24',
+        )}
+      >
         <AnimatePresence mode="wait">
           {view === 'landing' ? (
-            <motion.div key="landing" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className='w-full'>
-              <RAGLandingView onCreateNew={handleCreateNew} onStartCreationWithDB={handleStartCreationWithDB} />
+            <motion.div
+              key="landing"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="w-full"
+            >
+              <RAGLandingView
+                onCreateNew={handleCreateNew}
+                onStartCreationWithDB={handleStartCreationWithDB}
+              />
             </motion.div>
           ) : (
-            <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className='w-full'>
-              <KnowledgeBaseDetailView knowledgeBase={selectedKb} onBack={() => setView('landing')} initialVectorDb={initialVectorDb} />
+            <motion.div
+              key="detail"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="w-full"
+            >
+              <KnowledgeBaseDetailView
+                knowledgeBase={selectedKb}
+                onBack={() => setView('landing')}
+                initialVectorDb={initialVectorDb}
+              />
             </motion.div>
           )}
         </AnimatePresence>

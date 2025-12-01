@@ -274,7 +274,8 @@ export function processAiSchema(aiSchema: string | undefined): string | null {
     // Remove id field from each schema object
     const schemaWithoutIds = Array.isArray(parsedSchema)
       ? parsedSchema.map((field: Record<string, unknown>) => {
-          const { id: _, ...rest } = field;
+          const { id, ...rest } = field;
+          void id;
           return rest;
         })
       : parsedSchema;

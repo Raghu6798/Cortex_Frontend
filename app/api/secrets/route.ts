@@ -10,7 +10,7 @@ const BACKEND_ENDPOINT = `${API_BASE_URL}/api/v1/secrets`;
  * GET /api/secrets
  * Proxies the request to GET /api/v1/secrets to list all user secrets (metadata only).
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { userId, getToken } = await auth();
     

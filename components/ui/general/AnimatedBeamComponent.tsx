@@ -1,6 +1,7 @@
 "use client"
 
 import React, { RefObject, useEffect, useId, useState } from "react"
+import Image from "next/image"
 import { motion } from "motion/react"
 
 import { cn } from "@/lib/utils"
@@ -223,34 +224,6 @@ export const AnimatedBeamComponent: React.FC<AnimatedBeamComponentProps> = ({
     >
       <div className="flex h-full w-full flex-col items-stretch justify-between gap-10">
         <div className="flex flex-row justify-between gap-2">
-          {nodes.slice(0, 3).map((node, idx) => (
-            <div
-              key={node.name}
-              ref={nodeRefs[idx]}
-              className="z-10 flex flex-col items-center gap-2 cursor-pointer"
-              onClick={() => onNodeClick?.(node.name)}
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20 p-2 shadow-sm hover:scale-110 transition-transform">
-                <img src={node.logo} alt={node.name} className="h-full w-full object-contain rounded-full" />
-              </div>
-              <span className="text-xs font-medium text-white/70">{node.name}</span>
-            </div>
-          ))}
-        </div>
-        
-        <div className="flex flex-row justify-center">
-            <div
-              ref={centerRef}
-              className="z-10 flex flex-col items-center gap-2"
-            >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/20 border border-purple-500/50 p-3 shadow-lg shadow-purple-500/20">
-                 <img src={centerNode.logo} alt={centerNode.name} className="h-full w-full object-contain" />
-              </div>
-               <span className="text-sm font-bold text-white">{centerNode.name}</span>
-            </div>
-        </div>
-
-        <div className="flex flex-row justify-between gap-2">
            {nodes.slice(3).map((node, idx) => (
             <div
               key={node.name}
@@ -259,7 +232,7 @@ export const AnimatedBeamComponent: React.FC<AnimatedBeamComponentProps> = ({
               onClick={() => onNodeClick?.(node.name)}
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20 p-2 shadow-sm hover:scale-110 transition-transform">
-                <img src={node.logo} alt={node.name} className="h-full w-full object-contain rounded-full" />
+                <Image src={node.logo} alt={node.name} width={48} height={48} className="h-full w-full object-contain rounded-full" />
               </div>
               <span className="text-xs font-medium text-white/70">{node.name}</span>
             </div>

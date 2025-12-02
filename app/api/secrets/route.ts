@@ -1,4 +1,3 @@
-// raghu6798-cortex_frontend/app/api/secrets/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
@@ -10,7 +9,7 @@ const BACKEND_ENDPOINT = `${API_BASE_URL}/api/v1/secrets`;
  * GET /api/secrets
  * Proxies the request to GET /api/v1/secrets to list all user secrets (metadata only).
  */
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const { userId, getToken } = await auth();
     

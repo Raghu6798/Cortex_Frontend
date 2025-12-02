@@ -1,14 +1,15 @@
 "use client"
 
-import React, { RefObject, useEffect, useId, useState } from "react"
+import React, { RefObject, useEffect, useId, useState, useRef } from "react"
 import Image from "next/image"
-import { motion } from "motion/react"
-
+import { motion } from "framer-motion" // Or "motion/react" if using Motion One
 import { cn } from "@/lib/utils"
+
+// --- 1. Low-Level Beam Component ---
 
 export interface AnimatedBeamProps {
   className?: string
-  containerRef: RefObject<HTMLElement | null> // Container ref
+  containerRef: RefObject<HTMLElement | null>
   fromRef: RefObject<HTMLElement | null>
   toRef: RefObject<HTMLElement | null>
   curvature?: number
@@ -32,7 +33,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   fromRef,
   toRef,
   curvature = 0,
-  reverse = false, // Include the reverse prop
+  reverse = false,
   duration = Math.random() * 3 + 4,
   delay = 0,
   pathColor = "gray",
@@ -49,7 +50,6 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   const [pathD, setPathD] = useState("")
   const [svgDimensions, setSvgDimensions] = useState({ width: 0, height: 0 })
 
-  // Calculate the gradient coordinates based on the reverse prop
   const gradientCoordinates = reverse
     ? {
         x1: ["90%", "-10%"],
@@ -92,33 +92,11 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       }
     }
 
-    // Initialize ResizeObserver
-    const resizeObserver = new ResizeObserver(() => {
-      updatePath()
-    })
-
-    // Observe the container element
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current)
-    }
-
-    // Call the updatePath initially to set the initial path
+    const resizeObserver = new ResizeObserver(() => updatePath())
+    if (containerRef.current) resizeObserver.observe(containerRef.current)
     updatePath()
-
-    // Clean up the observer on component unmount
-    return () => {
-      resizeObserver.disconnect()
-    }
-  }, [
-    containerRef,
-    fromRef,
-    toRef,
-    curvature,
-    startXOffset,
-    startYOffset,
-    endXOffset,
-    endYOffset,
-  ])
+    return () => resizeObserver.disconnect()
+  }, [containerRef, fromRef, toRef, curvature, startXOffset, startYOffset, endXOffset, endYOffset])
 
   return (
     <svg
@@ -151,12 +129,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           className="transform-gpu"
           id={id}
           gradientUnits={"userSpaceOnUse"}
-          initial={{
-            x1: "0%",
-            x2: "0%",
-            y1: "0%",
-            y2: "0%",
-          }}
+          initial={{ x1: "0%", x2: "0%", y1: "0%", y2: "0%" }}
           animate={{
             x1: gradientCoordinates.x1,
             x2: gradientCoordinates.x2,
@@ -166,7 +139,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           transition={{
             delay,
             duration,
-            ease: [0.16, 1, 0.3, 1], // https://easings.net/#easeOutExpo
+            ease: [0.16, 1, 0.3, 1],
             repeat: Infinity,
             repeatDelay: 0,
           }}
@@ -174,80 +147,131 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           <stop stopColor={gradientStartColor} stopOpacity="0"></stop>
           <stop stopColor={gradientStartColor}></stop>
           <stop offset="32.5%" stopColor={gradientStopColor}></stop>
-          <stop
-            offset="100%"
-            stopColor={gradientStopColor}
-            stopOpacity="0"
-          ></stop>
+          <stop offset="100%" stopColor={gradientStopColor} stopOpacity="0"></stop>
         </motion.linearGradient>
       </defs>
     </svg>
   )
 }
 
-// --- High-Level Component Implementation ---
+// --- 2. High-Level Component Implementation ---
 
-interface NodeData {
-  name: string;
-  logo: string;
-  status: string;
-  link?: string;
+export interface NodeData {
+  name: string
+  logo: string
+  status: string
+  link?: string
 }
 
-interface AnimatedBeamComponentProps {
-  nodes: NodeData[];
-  onNodeClick?: (nodeName: string) => void;
+export interface AnimatedBeamComponentProps {
+  nodes: NodeData[]
+  centerNode: { name: string; logo: string; status: string }
+  onNodeClick?: (nodeName: string) => void
 }
+
+const Circle = React.forwardRef<
+  HTMLDivElement,
+  { className?: string; children?: React.ReactNode; onClick?: () => void }
+>(({ className, children, onClick }, ref) => {
+  return (
+    <div
+      ref={ref}
+      onClick={onClick}
+      className={cn(
+        "z-10 flex h-16 w-16 items-center justify-center rounded-full border-2 bg-white p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)] hover:scale-110 transition-transform cursor-pointer",
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+})
+Circle.displayName = "Circle"
 
 export const AnimatedBeamComponent: React.FC<AnimatedBeamComponentProps> = ({
   nodes,
+  centerNode,
   onNodeClick,
 }) => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const centerRef = React.useRef<HTMLDivElement>(null);
-  const [nodeRefs, setNodeRefs] = useState<React.RefObject<HTMLDivElement>[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null)
+  const centerRef = useRef<HTMLDivElement>(null)
+  
+  // We split nodes into left and right columns for a balanced graph look
+  const midPoint = Math.ceil(nodes.length / 2)
+  const leftNodes = nodes.slice(0, midPoint)
+  const rightNodes = nodes.slice(midPoint)
+
+  const [leftRefs, setLeftRefs] = useState<RefObject<HTMLDivElement | null>[]>([])
+  const [rightRefs, setRightRefs] = useState<RefObject<HTMLDivElement | null>[]>([])
 
   useEffect(() => {
-    setNodeRefs((refs) =>
-      Array(nodes.length)
-        .fill(0)
-        .map((_, i) => refs[i] || React.createRef())
-    );
-  }, [nodes.length]);
+    setLeftRefs((el) => Array(leftNodes.length).fill(0).map((_, i) => el[i] || React.createRef()))
+    setRightRefs((el) => Array(rightNodes.length).fill(0).map((_, i) => el[i] || React.createRef()))
+  }, [leftNodes.length, rightNodes.length])
 
   return (
     <div
-      className="relative flex w-full max-w-4xl items-center justify-center overflow-hidden rounded-lg bg-background p-10 md:shadow-xl"
+      className="relative flex h-[400px] w-full items-center justify-between overflow-hidden rounded-lg border border-white/10 bg-background p-10 md:shadow-xl"
       ref={containerRef}
     >
-      <div className="flex h-full w-full flex-col items-stretch justify-between gap-10">
-        <div className="flex flex-row justify-between gap-2">
-           {nodes.slice(3).map((node, idx) => (
-            <div
-              key={node.name}
-              ref={nodeRefs[idx + 3]}
-              className="z-10 flex flex-col items-center gap-2 cursor-pointer"
-              onClick={() => onNodeClick?.(node.name)}
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20 p-2 shadow-sm hover:scale-110 transition-transform">
-                <Image src={node.logo} alt={node.name} width={48} height={48} className="h-full w-full object-contain rounded-full" />
-              </div>
-              <span className="text-xs font-medium text-white/70">{node.name}</span>
-            </div>
-          ))}
-        </div>
+      {/* Left Column */}
+      <div className="flex flex-col justify-between gap-8 h-full">
+        {leftNodes.map((node, idx) => (
+          <div key={node.name} className="flex flex-col items-center gap-1">
+             <Circle ref={leftRefs[idx]} onClick={() => onNodeClick?.(node.name)} className="border-white/20 bg-black/50">
+               <Image src={node.logo} alt={node.name} width={40} height={40} className="object-contain rounded-full" />
+             </Circle>
+             <span className="text-xs text-white/70 font-medium">{node.name}</span>
+          </div>
+        ))}
       </div>
 
-      {nodeRefs.map((ref, idx) => (
+      {/* Center Node */}
+      <div className="flex flex-col items-center z-20">
+        <Circle ref={centerRef} className="h-24 w-24 border-purple-500/50 bg-black/80 shadow-[0_0_30px_-5px_rgba(168,85,247,0.4)]">
+           <Image src={centerNode.logo} alt={centerNode.name} width={60} height={60} className="object-contain rounded-md" />
+        </Circle>
+        <span className="text-sm text-white font-bold mt-2 bg-black/50 px-2 py-0.5 rounded">{centerNode.name}</span>
+      </div>
+
+      {/* Right Column */}
+      <div className="flex flex-col justify-between gap-8 h-full">
+        {rightNodes.map((node, idx) => (
+          <div key={node.name} className="flex flex-col items-center gap-1">
+             <Circle ref={rightRefs[idx]} onClick={() => onNodeClick?.(node.name)} className="border-white/20 bg-black/50">
+               <Image src={node.logo} alt={node.name} width={40} height={40} className="object-contain rounded-full" />
+             </Circle>
+             <span className="text-xs text-white/70 font-medium">{node.name}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Beams: Left to Center */}
+      {leftRefs.map((ref, idx) => (
         <AnimatedBeam
-          key={idx}
+          key={`left-${idx}`}
           containerRef={containerRef}
           fromRef={ref}
           toRef={centerRef}
           duration={3}
-          reverse={true}
+          curvature={20}
+          endXOffset={-10}
+        />
+      ))}
+
+      {/* Beams: Right to Center */}
+      {rightRefs.map((ref, idx) => (
+        <AnimatedBeam
+          key={`right-${idx}`}
+          containerRef={containerRef}
+          fromRef={ref} // Direction: From Node To Center
+          toRef={centerRef}
+          duration={3}
+          curvature={-20}
+          reverse={true} // Animate outwards or inwards depending on preference
+          startXOffset={10}
         />
       ))}
     </div>
-  );
-};
+  )
+}

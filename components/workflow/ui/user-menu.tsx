@@ -33,7 +33,7 @@ export const UserMenu = () => {
 
   // Fetch provider info when session is available
   useEffect(() => {
-    if (session?.user && !session.user.name?.startsWith("Anonymous")) {
+    if (session?.user && !session.user.fullName?.startsWith("Anonymous")) {
       api.user
         .get()
         .then((user) => setProviderId(user.providerId))
@@ -52,16 +52,16 @@ export const UserMenu = () => {
     providerId === "google";
 
   const getUserInitials = () => {
-    if (session?.user?.name) {
-      return session.user.name
+    if (session?.user?.fullName) {
+      return session.user.fullName
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase()
         .slice(0, 2);
     }
-    if (session?.user?.email) {
-      return session.user.email.slice(0, 2).toUpperCase();
+    if (session?.user?.primaryEmailAddress?.emailAddress) {
+      return session.user.primaryEmailAddress.emailAddress.slice(0, 2).toUpperCase();
     }
     return "U";
   };
@@ -80,8 +80,8 @@ export const UserMenu = () => {
   // Better Auth anonymous plugin creates users with name "Anonymous" and temp- email
   const isAnonymous =
     !session?.user ||
-    session.user.name === "Anonymous" ||
-    session.user.email?.startsWith("temp-");
+    session.user.fullName === "Anonymous" ||
+    session.user.primaryEmailAddress?.emailAddress?.startsWith("temp-");
 
   // Show Sign In button if user is anonymous or not logged in
   if (isAnonymous) {
@@ -109,8 +109,8 @@ export const UserMenu = () => {
         >
           <Avatar className="h-9 w-9">
             <AvatarImage
-              alt={session?.user?.name || ""}
-              src={session?.user?.image || ""}
+              alt={session?.user?.fullName || ""}
+              src={session?.user?.imageUrl || ""}
             />
             <AvatarFallback>{getUserInitials()}</AvatarFallback>
           </Avatar>
@@ -120,10 +120,10 @@ export const UserMenu = () => {
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="font-medium text-sm leading-none">
-              {session?.user?.name || "User"}
+              {session?.user?.fullName || "User"}
             </p>
             <p className="text-muted-foreground text-xs leading-none">
-              {session?.user?.email}
+              {session?.user?.primaryEmailAddress?.emailAddress}
             </p>
           </div>
         </DropdownMenuLabel>

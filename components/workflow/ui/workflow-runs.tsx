@@ -426,10 +426,7 @@ export function WorkflowRuns({
     async (executionId: string) => {
       try {
         const logsData = await api.workflow.getExecutionLogs(executionId);
-        const mappedLogs = mapNodeLabels(
-          logsData.logs,
-          logsData.execution.workflow
-        );
+        const mappedLogs = mapNodeLabels(logsData.logs);
         setLogs((prev) => ({
           ...prev,
           [executionId]: mappedLogs,

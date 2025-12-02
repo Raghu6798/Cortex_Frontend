@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { 
   FileText, File, FileSpreadsheet, Image as ImageIcon, 
-  Upload, CheckCircle, X, Loader2, AlertCircle, 
+  Upload, X, Loader2, AlertCircle, 
   Server, Cloud, FileOutput
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import { Badge } from '@/components/ui/shadcn/badge';
 import { Switch } from '@/components/ui/shadcn/switch';
@@ -92,9 +92,9 @@ export default function OCRPage() {
       setStatus('complete');
       toast.success("Document processed successfully!");
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Processing failed");
+      setError(err instanceof Error ? err.message : "Processing failed");
       setStatus('error');
     }
   };

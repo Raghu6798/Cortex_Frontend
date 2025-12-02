@@ -12,7 +12,7 @@ import {
   Plug,
   Search,
   Wrench,
-  FolderOpen,
+  // FolderOpen,
 } from 'lucide-react';
 import { GrCodeSandbox } from "react-icons/gr";
 import { TOUR_STEP_IDS } from '@/lib/tour-constants';
@@ -104,9 +104,11 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
                 )}
               >
                 {item.icon === 'custom' && item.src ? (
-                  <img 
+                  <Image 
                     src={item.src} 
                     alt={item.name} 
+                    width={24}
+                    height={24}
                     className="h-6 w-6 flex-shrink-0 invert opacity-70" 
                   />
                 ) : (

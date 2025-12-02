@@ -9,11 +9,11 @@ export const useSession = () => {
   };
 };
 
-type EmailAuthArgs = {
-  email: string;
-  password: string;
-  name?: string;
-};
+// type EmailAuthArgs = {
+//   email: string;
+//   password: string;
+//   name?: string;
+// };
 
 type EmailAuthResult = {
   error: { message?: string } | null;

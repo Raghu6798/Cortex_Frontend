@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/";
 import { Label } from "@/components/ui/";
 import { Separator } from "@/components/ui/";
 import { Spinner } from "@/components/ui";
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 import {
   getEnabledAuthProviders,
   getSingleProvider,
@@ -306,9 +306,9 @@ const useAuthHandlers = (options: AuthHandlersOptions): UseAuthHandlers => {
   const {
     mode,
     setMode,
-    email,
-    password,
-    name,
+    // email,
+    // password,
+    // name,
     setError,
     setLoading,
     setLoadingProvider,

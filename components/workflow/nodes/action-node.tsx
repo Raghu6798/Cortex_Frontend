@@ -140,7 +140,7 @@ const getProviderLogo = (actionType: string) => {
 
   const action = findActionById(actionType);
   if (action) {
-    const ActionIcon = (action as any).icon;
+    const ActionIcon = (action as unknown as { icon: React.ElementType }).icon;
     return <ActionIcon className="size-12" />;
   }
   // Fallback for unknown actions

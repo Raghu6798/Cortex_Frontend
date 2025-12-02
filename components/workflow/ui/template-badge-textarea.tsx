@@ -214,7 +214,7 @@ export function TemplateBadgeTextarea({
         }
 
         if (!isInsideBadge) {
-          const textLength = (node.textContent || "").length;
+          // const textLength = (node.textContent || "").length;
           // Check if the cursor is within this text node
           if (
             node === range.endContainer ||

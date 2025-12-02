@@ -22,7 +22,7 @@ type EmailAuthResult = {
 export const signIn = {
   // Stubbed implementation for local/email sign-in when using Clerk UI components.
   // Accepts a payload so caller code can be typed correctly, but ignores it at runtime.
-  email: async (_args: EmailAuthArgs): Promise<EmailAuthResult> => {
+  email: async (): Promise<EmailAuthResult> => {
     console.warn(
       "signIn.email is not implemented with Clerk. Use Clerk's <SignIn /> component."
     );
@@ -37,7 +37,7 @@ export const signOut = async () => {
 
 export const signUp = {
   // Stubbed implementation for local/email sign-up when using Clerk UI components.
-  email: async (_args: EmailAuthArgs): Promise<EmailAuthResult> => {
+  email: async (): Promise<EmailAuthResult> => {
     console.warn(
       "signUp.email is not implemented with Clerk. Use Clerk's <SignUp /> component."
     );

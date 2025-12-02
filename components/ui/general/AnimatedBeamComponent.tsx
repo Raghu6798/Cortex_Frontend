@@ -196,13 +196,11 @@ interface NodeData {
 
 interface AnimatedBeamComponentProps {
   nodes: NodeData[];
-  centerNode: NodeData;
   onNodeClick?: (nodeName: string) => void;
 }
 
 export const AnimatedBeamComponent: React.FC<AnimatedBeamComponentProps> = ({
   nodes,
-  centerNode,
   onNodeClick,
 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);

@@ -89,7 +89,7 @@ export function TemplateBadgeInput({
 
 
   // Save cursor position
-  const saveCursorPosition = (): { offset: number } | null => {
+  const saveCursorPosition = useCallback((): { offset: number } | null => {
     if (!contentRef.current) return null;
     
     const selection = window.getSelection();
@@ -136,10 +136,10 @@ export function TemplateBadgeInput({
     }
     
     return { offset };
-  };
+  }, []);
   
   // Restore cursor position
-  const restoreCursorPosition = (cursorPos: { offset: number } | null) => {
+  const restoreCursorPosition = useCallback((cursorPos: { offset: number } | null) => {
     if (!contentRef.current || !cursorPos) {
       return;
     }
@@ -199,10 +199,10 @@ export function TemplateBadgeInput({
         contentRef.current.focus();
       }
     }
-  };
+  }, []);
 
   // Parse text and render with badges
-  const updateDisplay = () => {
+  const updateDisplay = useCallback(() => {
     if (!contentRef.current || !shouldUpdateDisplay.current) return;
 
     const container = contentRef.current;
@@ -276,7 +276,7 @@ export function TemplateBadgeInput({
       // Use requestAnimationFrame to ensure DOM is fully updated
       requestAnimationFrame(() => restoreCursorPosition(cursorPos));
     }
-  };
+  }, [internalValue, isFocused, nodes, placeholder, saveCursorPosition, restoreCursorPosition]);
 
   // Extract plain text from content
   const extractValue = (): string => {

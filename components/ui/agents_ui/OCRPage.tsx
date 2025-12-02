@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
   FileText, File, FileSpreadsheet, Image as ImageIcon, 
-  Upload, CheckCircle, X, Loader2, AlertCircle, 
+  Upload, X, Loader2, AlertCircle, 
   Server, Cloud, FileOutput
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
@@ -93,9 +93,12 @@ export default function OCRPage() {
       setStatus('complete');
       toast.success("Document processed successfully!");
 
-    } catch (err: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Processing failed");
+      // Safe error handling for strict mode
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      setError(errorMessage);
       setStatus('error');
     }
   };
@@ -126,7 +129,6 @@ export default function OCRPage() {
             key={parser.id}
             className={`bg-black/30 border-white/15 cursor-pointer transition-all ${selectedParser === parser.id ? 'ring-2 ring-purple-500 bg-purple-500/10' : 'hover:bg-black/50'}`}
             onClick={() => {
-                // FIXED LINE: Just select the parser and reset state
                 setSelectedParser(parser.id);
                 setUploadedFile(null);
                 setStatus('idle');
@@ -150,11 +152,22 @@ export default function OCRPage() {
       {/* Upload & Results Area */}
       <AnimatePresence mode="wait">
         {selectedParser && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
             
             {/* LEFT: Upload Card */}
             <Card className="bg-black/30 border-white/15">
-              <CardHeader><CardTitle>Upload Document</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Upload Document</CardTitle>
+                {/* USED: CardDescription used here to fix lint error */}
+                <CardDescription className="text-white/50">
+                  Supported formats: {parserOptions.find(p => p.id === selectedParser)?.supportedFormats.join(', ')}
+                </CardDescription>
+              </CardHeader>
               <CardContent className="space-y-4">
                 {!uploadedFile ? (
                    <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:bg-white/5 transition cursor-pointer relative">
@@ -217,7 +230,7 @@ export default function OCRPage() {
                   )}
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

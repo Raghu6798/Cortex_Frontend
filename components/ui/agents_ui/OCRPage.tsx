@@ -93,10 +93,8 @@ export default function OCRPage() {
       setStatus('complete');
       toast.success("Document processed successfully!");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: unknown) {
       console.error(err);
-      // Safe error handling for strict mode
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       setError(errorMessage);
       setStatus('error');
@@ -163,7 +161,6 @@ export default function OCRPage() {
             <Card className="bg-black/30 border-white/15">
               <CardHeader>
                 <CardTitle>Upload Document</CardTitle>
-                {/* USED: CardDescription used here to fix lint error */}
                 <CardDescription className="text-white/50">
                   Supported formats: {parserOptions.find(p => p.id === selectedParser)?.supportedFormats.join(', ')}
                 </CardDescription>

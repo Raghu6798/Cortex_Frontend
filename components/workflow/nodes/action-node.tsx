@@ -133,17 +133,16 @@ const getProviderLogo = (actionType: string) => {
     case "Condition":
       return <GitBranch className="size-12 text-pink-300" strokeWidth={1.5} />;
     default:
-      // Not a system action, continue to check plugin registry
+
       break;
   }
 
-  // Look up action in plugin registry
+
   const action = findActionById(actionType);
   if (action) {
-    const ActionIcon = action.icon;
+    const ActionIcon = (action as any).icon;
     return <ActionIcon className="size-12" />;
   }
-
   // Fallback for unknown actions
   return <Zap className="size-12 text-amber-300" strokeWidth={1.5} />;
 };

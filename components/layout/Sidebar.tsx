@@ -35,7 +35,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     { name: 'Voice Chat', icon: Mic, view: 'voice-chat' as const, id: TOUR_STEP_IDS.SIDEBAR_VOICE_CHAT },
     { name: 'Connectors', icon: Plug, view: 'connectors' as const, id: TOUR_STEP_IDS.SIDEBAR_CONNECTORS },
     { name: 'Secrets', icon: Shield, view: 'secrets' as const, id: TOUR_STEP_IDS.SIDEBAR_SECRETS },
-    { name: 'OCR Parser', icon: FolderOpen, view: 'ocr' as const, id: TOUR_STEP_IDS.SIDEBAR_OCR },
+    { name: 'OCR Parser', icon:'custom', view: 'ocr' as const, id: TOUR_STEP_IDS.SIDEBAR_OCR, src: 'https://cdn-icons-png.flaticon.com/512/5137/5137270.png'},
     { name: 'RAG', icon: Search, view: 'rag' as const, id: TOUR_STEP_IDS.SIDEBAR_RAG },
     { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const, id: TOUR_STEP_IDS.SIDEBAR_SANDBOX }
   ];
@@ -103,7 +103,15 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
                   activeView === item.view && 'bg-white/10 text-white'
                 )}
               >
-                <item.icon className="h-6 w-6 flex-shrink-0" />
+                {item.icon === 'custom' && item.src ? (
+                  <img 
+                    src={item.src} 
+                    alt={item.name} 
+                    className="h-6 w-6 flex-shrink-0 invert opacity-70" 
+                  />
+                ) : (
+                  typeof item.icon !== 'string' && <item.icon className="h-6 w-6 flex-shrink-0" />
+                )}
                 <span
                   className={cn(
                     'text-sm font-medium overflow-hidden whitespace-nowrap',

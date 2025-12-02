@@ -11,14 +11,17 @@ import {
   ChevronLeft, 
   ChevronRight,
   Play,
-  Edit
+  Edit,
+  Download, // Import Download icon
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/shadcn/button';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
+import { toast } from 'sonner'; // Assuming you use sonner for toasts
 
 // Types
 interface Agent {
-  id: string;
+  id: string; // This matches the AgentId from backend
   name: string;
   description: string;
   architecture: string;
@@ -69,6 +72,8 @@ const AgentCard = ({
   onDelete: (agentId: string) => void;
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { getToken } = useAuth();
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,19 +87,67 @@ const AgentCard = ({
     setIsDeleting(true);
     
     try {
+      const token = await getToken();
       const response = await fetch(`/api/agents/${agent.id}`, {
         method: 'DELETE',
+        headers: {
+           Authorization: `Bearer ${token}`
+        }
       });
       
       if (response.ok) {
         onDelete(agent.id);
+        toast.success("Agent deleted successfully");
       } else {
         console.error('Failed to delete agent');
+        toast.error("Failed to delete agent");
       }
     } catch (error) {
       console.error('Error deleting agent:', error);
+      toast.error("Error deleting agent");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDownloading(true);
+    try {
+        const token = await getToken();
+        // Call the backend export endpoint
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/agents/${agent.id}/export`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Export failed: ${response.statusText}`);
+        }
+
+        // Create a blob from the response
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create a temporary link to trigger download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${agent.name.replace(/\s+/g, '_')}.af`; // The filename
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success("Agent exported successfully");
+
+    } catch (error) {
+        console.error("Download error:", error);
+        toast.error("Failed to export agent");
+    } finally {
+        setIsDownloading(false);
     }
   };
 
@@ -128,23 +181,39 @@ const AgentCard = ({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+           {/* Download Button */}
+           <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="h-8 w-8 text-white/40 hover:text-green-400 hover:bg-green-900/20"
+            title="Export Agent (.af)"
+          >
+            {isDownloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+                <Download className="h-4 w-4" />
+            )}
+          </Button>
+
           {onEdit && (
             <Button
-              size="sm"
+              size="icon"
               variant="ghost"
               onClick={handleEdit}
-              className="text-white/40 hover:text-purple-400 hover:bg-purple-900/20"
+              className="h-8 w-8 text-white/40 hover:text-purple-400 hover:bg-purple-900/20"
             >
               <Edit className="h-4 w-4" />
             </Button>
           )}
           <Button
-            size="sm"
+            size="icon"
             variant="ghost"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-white/40 hover:text-red-400 hover:bg-red-900/20"
+            className="h-8 w-8 text-white/40 hover:text-red-400 hover:bg-red-900/20"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -184,7 +253,7 @@ const AgentCard = ({
   );
 };
 
-// Pagination component
+// Pagination component (Unchanged)
 const Pagination = ({ 
   currentPage, 
   totalPages, 
@@ -261,7 +330,12 @@ export default function AgentList({ onAgentSelect, onAgentEdit, onCreateNew, sho
         throw new Error('No authentication token available');
       }
 
-      const response = await fetch(`/api/agents?page=${page}&limit=6`);
+      // Use the frontend API route which proxies to backend
+      const response = await fetch(`/api/agents?page=${page}&limit=6`, {
+          headers: {
+             Authorization: `Bearer ${token}`
+          }
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch agents: ${response.statusText}`);

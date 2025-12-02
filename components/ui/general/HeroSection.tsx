@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils';
 
 interface HeroSectionProps {
   isDarkMode?: boolean;
+  // Optional override for the main hero title text. When not provided,
+  // the default animated TextType content is used.
+  titleOverride?: string;
 }
 
 export default function HeroSection({ isDarkMode = true }: HeroSectionProps) {

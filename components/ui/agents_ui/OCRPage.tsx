@@ -1,23 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FileText, 
-  File, 
-  FileSpreadsheet, 
-  Image as ImageIcon,
-  Upload,
-  CheckCircle,
-  X,
-  Loader2
+  FileText, File, FileSpreadsheet, Image as ImageIcon, 
+  Upload, CheckCircle, X, Loader2, AlertCircle, 
+  Server, Cloud, FileOutput
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import { Badge } from '@/components/ui/shadcn/badge';
+import { Switch } from '@/components/ui/shadcn/switch';
+import { toast } from 'sonner';
 
+// ... [Keep your existing ParserOption interface and array here] ...
 type ParserType = 'pdf' | 'docx' | 'excel' | 'image' | null;
-
 interface ParserOption {
   id: ParserType;
   name: string;
@@ -26,341 +24,194 @@ interface ParserOption {
   supportedFormats: string[];
   color: string;
 }
-
 const parserOptions: ParserOption[] = [
-  {
-    id: 'pdf',
-    name: 'PDF Parser',
-    description: 'Extract text, tables, and structured data from PDF documents. Supports multi-page documents and complex layouts.',
-    icon: FileText,
-    supportedFormats: ['.pdf'],
-    color: 'bg-red-500/10 text-red-400 border-red-500/20'
-  },
-  {
-    id: 'docx',
-    name: 'DOCX Parser',
-    description: 'Parse Microsoft Word documents (.docx) with support for formatting, tables, and embedded content.',
-    icon: File,
-    supportedFormats: ['.docx', '.doc'],
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-  },
-  {
-    id: 'excel',
-    name: 'Excel/CSV Parser',
-    description: 'Extract data from Excel spreadsheets and CSV files. Supports formulas, multiple sheets, and data validation.',
-    icon: FileSpreadsheet,
-    supportedFormats: ['.xlsx', '.xls', '.csv'],
-    color: 'bg-green-500/10 text-green-400 border-green-500/20'
-  },
-  {
-    id: 'image',
-    name: 'Image Parser',
-    description: 'OCR capabilities for images. Extract text from scanned documents, photos, and screenshots using advanced OCR technology.',
-    icon: ImageIcon,
-    supportedFormats: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'],
-    color: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-  }
+    { id: 'pdf', name: 'PDF Parser', description: 'LlamaParse for complex PDFs.', icon: FileText, supportedFormats: ['.pdf'], color: 'bg-red-500/10 text-red-400' },
+    { id: 'docx', name: 'DOCX Parser', description: 'Standard Word extraction.', icon: File, supportedFormats: ['.docx'], color: 'bg-blue-500/10 text-blue-400' },
+    { id: 'excel', name: 'Excel Parser', description: 'Structured spreadsheet data.', icon: FileSpreadsheet, supportedFormats: ['.xlsx', '.csv'], color: 'bg-green-500/10 text-green-400' },
+    { id: 'image', name: 'Image Analysis', description: 'Gemini Vision processing.', icon: ImageIcon, supportedFormats: ['.png', '.jpg', '.jpeg'], color: 'bg-purple-500/10 text-purple-400' }
 ];
 
 export default function OCRPage() {
+  const { getToken } = useAuth();
   const [selectedParser, setSelectedParser] = useState<ParserType>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingResult, setProcessingResult] = useState<string | null>(null);
-  const [dragActive, setDragActive] = useState(false);
+  
+  // States for process flow
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'parsing' | 'complete' | 'error'>('idle');
+  const [parsedContent, setParsedContent] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  
+  const [useAWS, setUseAWS] = useState(false); 
 
   const handleFileSelect = (file: File) => {
-    if (!selectedParser) {
-      alert('Please select a parser type first');
-      return;
-    }
-
-    // Validate file type based on selected parser
-    const parser = parserOptions.find(p => p.id === selectedParser);
-    if (parser) {
-      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      if (!parser.supportedFormats.includes(fileExtension)) {
-        alert(`This file type is not supported for ${parser.name}. Supported formats: ${parser.supportedFormats.join(', ')}`);
-        return;
-      }
-    }
-
     setUploadedFile(file);
-    setProcessingResult(null);
+    setStatus('idle');
+    setParsedContent("");
+    setError(null);
   };
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  const handleProcess = async () => {
+  const handleUploadAndParse = async () => {
     if (!uploadedFile || !selectedParser) return;
 
-    setIsProcessing(true);
-    setProcessingResult(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      const backendUrl = 'https://cortex-l8hf.onrender.com';
 
-    // Simulate processing
-    setTimeout(() => {
-      setProcessingResult(`Successfully processed ${uploadedFile.name} using ${parserOptions.find(p => p.id === selectedParser)?.name}. This is a demo - actual processing would extract and return the parsed content.`);
-      setIsProcessing(false);
-    }, 2000);
-  };
+      // --- STEP 1: UPLOAD ---
+      setStatus('uploading');
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
 
-  const handleReset = () => {
-    setSelectedParser(null);
-    setUploadedFile(null);
-    setProcessingResult(null);
-    setIsProcessing(false);
+      const uploadRes = await fetch(`${backendUrl}/api/v1/object-storage/upload?use_s3=${useAWS}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const uploadData = await uploadRes.json();
+      const objectName = uploadData.object_name;
+
+      // --- STEP 2: PARSE ---
+      setStatus('parsing');
+      
+      const parseRes = await fetch(`${backendUrl}/api/v1/ocr/parse`, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ object_name: objectName }),
+      });
+
+      if (!parseRes.ok) throw new Error("Parsing failed");
+      const parseData = await parseRes.json();
+
+      setParsedContent(parseData.content);
+      setStatus('complete');
+      toast.success("Document processed successfully!");
+
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Processing failed");
+      setStatus('error');
+    }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="p-6 space-y-6 bg-black min-h-screen"
-    >
-      {/* Header */}
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-white">OCR & Document Parser</h2>
-        <p className="text-white/60">
-          Choose a parser type and upload your document to extract text and structured data.
-        </p>
+    <div className="p-6 space-y-6 bg-black min-h-screen text-white">
+      <div className="flex justify-between items-end">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">AI Document Intelligence</h2>
+          <p className="text-white/60">Upload, Extract, and Analyze using LlamaParse & Gemini.</p>
+        </div>
+        {/* Toggle Switch */}
+        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-lg border border-white/10">
+          <div className={`flex items-center gap-2 text-sm ${!useAWS ? 'text-purple-400 font-bold' : 'text-white/50'}`}>
+            <Server className="w-4 h-4" /> <span>MinIO</span>
+          </div>
+          <Switch checked={useAWS} onCheckedChange={setUseAWS} className="data-[state=checked]:bg-orange-500 data-[state=unchecked]:bg-purple-600"/>
+          <div className={`flex items-center gap-2 text-sm ${useAWS ? 'text-orange-400 font-bold' : 'text-white/50'}`}>
+            <Cloud className="w-4 h-4" /> <span>AWS S3</span>
+          </div>
+        </div>
       </div>
 
-      {/* Parser Selection Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {parserOptions.map((parser) => {
-          const IconComponent = parser.icon;
-          const isSelected = selectedParser === parser.id;
-
-          return (
-            <motion.div
-              key={parser.id}
-              whileHover={{ y: -5, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Card
-                className={`bg-black/30 border-white/15 backdrop-blur-sm cursor-pointer transition-all duration-300 ${
-                  isSelected
-                    ? 'ring-2 ring-purple-500/50 bg-purple-500/10'
-                    : 'hover:bg-black/50'
-                }`}
-                onClick={() => {
-                  setSelectedParser(parser.id);
-                  setUploadedFile(null);
-                  setProcessingResult(null);
-                }}
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-lg bg-black/30 border border-white/15 flex items-center justify-center ${
-                      isSelected ? 'bg-purple-500/20 border-purple-500/30' : ''
-                    }`}>
-                      <IconComponent className={`w-6 h-6 ${isSelected ? 'text-purple-400' : 'text-white/70'}`} />
+      {/* Parser Selection */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {parserOptions.map((parser) => (
+          <Card 
+            key={parser.id}
+            className={`bg-black/30 border-white/15 cursor-pointer transition-all ${selectedParser === parser.id ? 'ring-2 ring-purple-500 bg-purple-500/10' : 'hover:bg-black/50'}`}
+            onClick={() => handleFileSelect && setSelectedParser(parser.id)}
+          >
+            <CardHeader className="pb-2">
+                <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded ${parser.color.split(' ')[0]}`}>
+                        <parser.icon className={`w-5 h-5 ${parser.color.split(' ')[1]}`} />
                     </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-white text-lg">{parser.name}</CardTitle>
-                      {isSelected && (
-                        <Badge className={`mt-1 ${parser.color}`}>
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Selected
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <CardDescription className="text-white/70 text-sm">
-                    {parser.description}
-                  </CardDescription>
-                  <div className="flex flex-wrap gap-1">
-                    {parser.supportedFormats.map((format, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="outline"
-                        className="text-xs bg-white/5 border-white/10 text-white/70"
-                      >
-                        {format}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
+                    <CardTitle className="text-base">{parser.name}</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent><p className="text-xs text-white/60">{parser.description}</p></CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* File Upload Section */}
+      {/* Upload & Results Area */}
       <AnimatePresence mode="wait">
         {selectedParser && (
-          <motion.div
-            key={selectedParser}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="bg-black/30 border-white/15 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white">Upload Document</CardTitle>
-                <CardDescription className="text-white/70">
-                  Select or drag and drop your file to process
-                </CardDescription>
-              </CardHeader>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* LEFT: Upload Card */}
+            <Card className="bg-black/30 border-white/15">
+              <CardHeader><CardTitle>Upload Document</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {!uploadedFile ? (
-                  <div
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-                      dragActive
-                        ? 'border-purple-500/50 bg-purple-500/10'
-                        : 'border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
-                    <p className="text-white/70 mb-2">
-                      Drag and drop your file here, or click to browse
-                    </p>
-                    <p className="text-white/50 text-sm mb-4">
-                      Supported formats:{' '}
-                      {parserOptions
-                        .find(p => p.id === selectedParser)
-                        ?.supportedFormats.join(', ')}
-                    </p>
-                    <input
-                      type="file"
-                      id="file-upload"
-                      className="hidden"
-                      accept={parserOptions
-                        .find(p => p.id === selectedParser)
-                        ?.supportedFormats.join(',')}
-                      onChange={handleFileInput}
-                    />
-                    <Button
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                      className="bg-purple-600 hover:bg-purple-500 text-white"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose File
-                    </Button>
-                  </div>
+                   <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:bg-white/5 transition cursor-pointer relative">
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => e.target.files?.[0] && setUploadedFile(e.target.files[0])} />
+                      <Upload className="w-10 h-10 mx-auto mb-2 text-white/40" />
+                      <p className="text-sm text-white/70">Click to browse</p>
+                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-black/30 rounded-lg border border-white/15">
+                   <div className="flex justify-between items-center p-4 bg-white/5 rounded border border-white/10">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                          {selectedParser === 'pdf' && <FileText className="w-5 h-5 text-purple-400" />}
-                          {selectedParser === 'docx' && <File className="w-5 h-5 text-blue-400" />}
-                          {selectedParser === 'excel' && <FileSpreadsheet className="w-5 h-5 text-green-400" />}
-                          {selectedParser === 'image' && <ImageIcon className="w-5 h-5 text-purple-400" />}
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">{uploadedFile.name}</p>
-                          <p className="text-white/50 text-sm">
-                            {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
+                          <FileText className="text-purple-400" />
+                          <span className="font-medium">{uploadedFile.name}</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setUploadedFile(null);
-                          setProcessingResult(null);
-                        }}
-                        className="text-white/40 hover:text-white hover:bg-white/10"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={handleProcess}
-                        disabled={isProcessing}
-                        className="flex-1 bg-purple-600 hover:bg-purple-500 text-white"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 mr-2" />
-                            Process Document
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={handleReset}
-                        variant="outline"
-                        className="bg-black/30 border-white/15 text-white hover:bg-white/10"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                  </div>
+                      <Button variant="ghost" size="icon" onClick={() => setUploadedFile(null)} disabled={status === 'parsing' || status === 'uploading'}><X className="w-4 h-4"/></Button>
+                   </div>
                 )}
 
-                {processingResult && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg"
-                  >
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-green-400 text-sm">{processingResult}</p>
-                    </div>
-                  </motion.div>
-                )}
+                <Button 
+                    onClick={handleUploadAndParse} 
+                    disabled={!uploadedFile || status === 'uploading' || status === 'parsing'}
+                    className="w-full bg-purple-600 hover:bg-purple-500"
+                >
+                    {status === 'uploading' && <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Uploading...</>}
+                    {status === 'parsing' && <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> AI Parsing...</>}
+                    {(status === 'idle' || status === 'complete' || status === 'error') && <><FileOutput className="mr-2 h-4 w-4"/> Process File</>}
+                </Button>
               </CardContent>
             </Card>
-          </motion.div>
+
+            {/* RIGHT: Results Card */}
+            <Card className="bg-black/30 border-white/15 flex flex-col h-[500px]">
+              <CardHeader className="pb-2 border-b border-white/10">
+                  <div className="flex justify-between items-center">
+                      <CardTitle>Extracted Content</CardTitle>
+                      {status === 'complete' && <Badge className="bg-green-500/20 text-green-400">Success</Badge>}
+                  </div>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-auto p-4 font-mono text-sm text-white/80">
+                  {status === 'parsing' && (
+                      <div className="h-full flex flex-col items-center justify-center text-white/50 gap-4">
+                          <div className="relative w-16 h-16">
+                              <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full"></div>
+                              <div className="absolute inset-0 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                          <p>Extracting structured data...</p>
+                      </div>
+                  )}
+                  
+                  {status === 'error' && (
+                      <div className="h-full flex flex-col items-center justify-center text-red-400 gap-2">
+                          <AlertCircle className="w-10 h-10" />
+                          <p>{error}</p>
+                      </div>
+                  )}
+
+                  {status === 'complete' && parsedContent ? (
+                      <pre className="whitespace-pre-wrap leading-relaxed">{parsedContent}</pre>
+                  ) : (
+                      status !== 'parsing' && status !== 'error' && <p className="text-white/30 italic">No content processed yet.</p>
+                  )}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </AnimatePresence>
-
-      {/* Info Section */}
-      {!selectedParser && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="p-6 bg-black/30 border border-white/15 rounded-lg"
-        >
-          <p className="text-white/70 text-center">
-            Select a parser type above to get started with document processing
-          </p>
-        </motion.div>
-      )}
-    </motion.div>
+    </div>
   );
 }
-

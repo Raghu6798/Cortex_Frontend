@@ -2,20 +2,20 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, File, FileSpreadsheet, Image as ImageIcon, 
-  Upload, X, Loader2, AlertCircle, 
+  Upload, CheckCircle, X, Loader2, AlertCircle, 
   Server, Cloud, FileOutput
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import { Badge } from '@/components/ui/shadcn/badge';
 import { Switch } from '@/components/ui/shadcn/switch';
 import { toast } from 'sonner';
 
-// ... [Keep your existing ParserOption interface and array here] ...
 type ParserType = 'pdf' | 'docx' | 'excel' | 'image' | null;
+
 interface ParserOption {
   id: ParserType;
   name: string;
@@ -24,6 +24,7 @@ interface ParserOption {
   supportedFormats: string[];
   color: string;
 }
+
 const parserOptions: ParserOption[] = [
     { id: 'pdf', name: 'PDF Parser', description: 'LlamaParse for complex PDFs.', icon: FileText, supportedFormats: ['.pdf'], color: 'bg-red-500/10 text-red-400' },
     { id: 'docx', name: 'DOCX Parser', description: 'Standard Word extraction.', icon: File, supportedFormats: ['.docx'], color: 'bg-blue-500/10 text-blue-400' },
@@ -56,7 +57,7 @@ export default function OCRPage() {
     try {
       const token = await getToken();
       if (!token) throw new Error("Not authenticated");
-      const backendUrl = 'https://cortex-l8hf.onrender.com';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com';
 
       // --- STEP 1: UPLOAD ---
       setStatus('uploading');
@@ -92,9 +93,9 @@ export default function OCRPage() {
       setStatus('complete');
       toast.success("Document processed successfully!");
 
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Processing failed");
+      setError(err.message || "Processing failed");
       setStatus('error');
     }
   };
@@ -124,7 +125,14 @@ export default function OCRPage() {
           <Card 
             key={parser.id}
             className={`bg-black/30 border-white/15 cursor-pointer transition-all ${selectedParser === parser.id ? 'ring-2 ring-purple-500 bg-purple-500/10' : 'hover:bg-black/50'}`}
-            onClick={() => handleFileSelect && setSelectedParser(parser.id)}
+            onClick={() => {
+                // FIXED LINE: Just select the parser and reset state
+                setSelectedParser(parser.id);
+                setUploadedFile(null);
+                setStatus('idle');
+                setParsedContent("");
+                setError(null);
+            }}
           >
             <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
@@ -150,7 +158,7 @@ export default function OCRPage() {
               <CardContent className="space-y-4">
                 {!uploadedFile ? (
                    <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center hover:bg-white/5 transition cursor-pointer relative">
-                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => e.target.files?.[0] && setUploadedFile(e.target.files[0])} />
+                      <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
                       <Upload className="w-10 h-10 mx-auto mb-2 text-white/40" />
                       <p className="text-sm text-white/70">Click to browse</p>
                    </div>

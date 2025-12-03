@@ -3,7 +3,7 @@ import "server-only";
 import { LinearClient } from "@linear/sdk";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type CreateTicketResult =
   | { success: true; id: string; url: string; title: string }
@@ -74,7 +74,7 @@ async function createTicket(input: CreateTicketInput): Promise<CreateTicketResul
   } catch (error) {
     return {
       success: false,
-      error: `Failed to create ticket: ${getErrorMessage(error)}`,
+      error: `Failed to create ticket: ${await getErrorMessageAsync(error)}`,
     };
   }
 }

@@ -13,7 +13,9 @@
 import "server-only";
 
 // biome-ignore lint/suspicious/noExplicitAny: Dynamic step module types
-export type StepModule = Record<string, (input: unknown) => Promise<unknown>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type StepModule = Record<string, any>;
+
 
 export type StepImporter = {
   importer: () => Promise<StepModule>;

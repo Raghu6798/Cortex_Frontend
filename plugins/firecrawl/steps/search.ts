@@ -3,7 +3,7 @@ import "server-only";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type SearchResult = {
   web?: unknown[];
@@ -43,7 +43,7 @@ async function search(input: FirecrawlSearchInput): Promise<SearchResult> {
       web: result.web,
     };
   } catch (error) {
-    throw new Error(`Failed to search: ${getErrorMessage(error)}`);
+    throw new Error(`Failed to search: ${await getErrorMessageAsync(error)}`);
   }
 }
 

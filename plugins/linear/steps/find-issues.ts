@@ -3,7 +3,7 @@ import "server-only";
 import { LinearClient } from "@linear/sdk";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type LinearIssue = {
   id: string;
@@ -90,7 +90,7 @@ async function findIssues(input: FindIssuesInput): Promise<FindIssuesResult> {
   } catch (error) {
     return {
       success: false,
-      error: `Failed to find issues: ${getErrorMessage(error)}`,
+      error: `Failed to find issues: ${await getErrorMessageAsync(error)}`,
     };
   }
 }

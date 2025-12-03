@@ -3,7 +3,7 @@ import "server-only";
 import { createClient, type ChatsSendMessageResponse } from "v0-sdk";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type SendMessageResult =
   | { success: true; chatId: string; demoUrl?: string }
@@ -49,7 +49,7 @@ async function sendMessage(input: SendMessageInput): Promise<SendMessageResult> 
   } catch (error) {
     return {
       success: false,
-      error: `Failed to send message: ${getErrorMessage(error)}`,
+      error: `Failed to send message: ${await getErrorMessageAsync(error)}`,
     };
   }
 }

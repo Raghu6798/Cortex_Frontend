@@ -3,7 +3,7 @@ import "server-only";
 import { createClient, type ChatsCreateResponse } from "v0-sdk";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type CreateChatResult =
   | { success: true; chatId: string; url: string; demoUrl?: string }
@@ -50,7 +50,7 @@ async function createChat(input: CreateChatInput): Promise<CreateChatResult> {
   } catch (error) {
     return {
       success: false,
-      error: `Failed to create chat: ${getErrorMessage(error)}`,
+      error: `Failed to create chat: ${await getErrorMessageAsync(error)}`,
     };
   }
 }

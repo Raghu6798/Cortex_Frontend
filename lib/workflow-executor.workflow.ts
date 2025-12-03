@@ -88,7 +88,7 @@ function replaceTemplateVariable(
 
     for (const field of fields) {
       if (current && typeof current === "object") {
-        current = current[field];
+        current = (current as Record<string, unknown>)[field];
       } else {
         console.log("[Condition] Field access failed:", fieldPath);
         value = undefined;

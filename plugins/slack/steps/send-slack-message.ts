@@ -3,7 +3,7 @@ import "server-only";
 import { WebClient } from "@slack/web-api";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type SendSlackMessageResult =
   | { success: true; ts: string; channel: string }
@@ -58,7 +58,7 @@ async function sendSlackMessage(
   } catch (error) {
     return {
       success: false,
-      error: `Failed to send Slack message: ${getErrorMessage(error)}`,
+      error: `Failed to send Slack message: ${await getErrorMessageAsync(error)}`,
     };
   }
 }

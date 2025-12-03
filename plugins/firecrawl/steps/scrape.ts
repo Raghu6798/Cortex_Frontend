@@ -3,7 +3,7 @@ import "server-only";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type ScrapeResult = {
   markdown?: string;
@@ -41,7 +41,7 @@ async function scrape(input: FirecrawlScrapeInput): Promise<ScrapeResult> {
       metadata: result.metadata,
     };
   } catch (error) {
-    throw new Error(`Failed to scrape: ${getErrorMessage(error)}`);
+    throw new Error(`Failed to scrape: ${await getErrorMessageAsync(error)}`);
   }
 }
 

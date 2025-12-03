@@ -3,7 +3,7 @@ import "server-only";
 import { Resend } from "resend";
 import { fetchCredentials } from "@/lib/credential-fetcher";
 import { type StepInput, withStepLogging } from "@/lib/steps/step-handler";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessageAsync } from "@/lib/utils";
 
 type SendEmailResult =
   | { success: true; id: string }
@@ -64,7 +64,7 @@ async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   } catch (error) {
     return {
       success: false,
-      error: `Failed to send email: ${getErrorMessage(error)}`,
+      error: `Failed to send email: ${await getErrorMessageAsync(error)}`,
     };
   }
 }

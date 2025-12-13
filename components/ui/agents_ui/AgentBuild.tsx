@@ -246,8 +246,9 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 if (agentState.architecture === 'multi') {
                     router.push('/dashboard/builder');
                 } else {
-                    // For mono agents, redirect to chat interface
-                    router.push('/dashboard?view=chat');
+                    // For mono agents, the parent component handles the view switch via onAgentCreated
+                    // We don't need to push to router here as it might cause race conditions
+                    // router.push('/dashboard?view=chat'); 
                 }
             } else {
                 console.error('Failed to create agent:', await response.text());

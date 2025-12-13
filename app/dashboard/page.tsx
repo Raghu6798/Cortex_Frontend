@@ -228,14 +228,16 @@ function DashboardContent() {
   } | null>(null);
  const { setSteps } = useTour();
  const [isTourAlertOpen, setIsTourAlertOpen] = useState(false);
- useEffect(() => {
+  useEffect(() => {
     // Set the steps for the tour
     setSteps(tourSteps);
 
     // Trigger the tour alert after a short delay for smooth entrance
-    // In a real app, you might check localStorage like: if (!localStorage.getItem('tourCompleted'))
     const timer = setTimeout(() => {
-      setIsTourAlertOpen(true);
+      const isTourCompleted = localStorage.getItem('tourCompleted');
+      if (!isTourCompleted) {
+        setIsTourAlertOpen(true);
+      }
     }, 1500); // Wait for loading skeleton to mostly finish
 
     return () => clearTimeout(timer);
@@ -268,6 +270,10 @@ function DashboardContent() {
   const handleAgentCreated = (config: AgentState) => {
     console.log("A new agent was created with this configuration:", config);
     setInitialAgentConfig(config); // Store the config
+    // Update the URL to reflect the new view, this prevents searchParams effect from reverting it
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('view', 'chat');
+    window.history.pushState(null, '', `?${params.toString()}`);
     setActiveView('chat'); // Switch to the chat view
   };
 

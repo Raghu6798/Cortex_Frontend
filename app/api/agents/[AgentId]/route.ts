@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://qgk3bzwknxgc2o347buk6d2ra40lhnfx.lambda-url.us-east-1.on.aws';
+import { API_BASE_URL } from '@/lib/apiClient';
 
 export async function GET(
   request: NextRequest,

@@ -243,8 +243,8 @@ function DashboardContent() {
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow', 'rag'].includes(view)) {
-      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow' | 'rag');
+    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow', 'rag', 'chat', 'builder', 'editor'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow' | 'rag' | 'chat' | 'builder' | 'editor');
     }
   }, [searchParams]);
 

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/shadcn/button';
 import { Badge } from '@/components/ui/shadcn/badge';
 import { Switch } from '@/components/ui/shadcn/switch';
 import { toast } from 'sonner';
+import { API_BASE_URL } from '@/lib/apiClient';
 
 type ParserType = 'pdf' | 'docx' | 'excel' | 'image' | null;
 
@@ -57,7 +58,8 @@ export default function OCRPage() {
     try {
       const token = await getToken();
       if (!token) throw new Error("Not authenticated");
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com';
+      if (!token) throw new Error("Not authenticated");
+      const backendUrl = API_BASE_URL;
 
       // --- STEP 1: UPLOAD ---
       setStatus('uploading');

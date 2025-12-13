@@ -1,7 +1,6 @@
 // lib/apiClient.ts
-
 // API client configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://qgk3bzwknxgc2o347buk6d2ra40lhnfx.lambda-url.us-east-1.on.aws';
 
 export interface Provider {
   id: string;

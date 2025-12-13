@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 // Ensure this environment variable is set in your Next.js configuration or .env file
-const API_BASE_URL = 'https://cortex-l8hf.onrender.com';
+const API_BASE_URL = 'https://qgk3bzwknxgc2o347buk6d2ra40lhnfx.lambda-url.us-east-1.on.aws';
 const BACKEND_ENDPOINT = `${API_BASE_URL}/api/v1/secrets`;
 
 /**

@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/shadcn/button';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
 import { toast } from 'sonner'; // Assuming you use sonner for toasts
+import { API_BASE_URL } from '@/lib/apiClient';
 
 // Types
 interface Agent {
@@ -116,7 +117,7 @@ const AgentCard = ({
     try {
         const token = await getToken();
         // Call the backend export endpoint
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/agents/${agent.id}/export`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/agents/${agent.id}/export`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

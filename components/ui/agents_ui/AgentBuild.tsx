@@ -148,10 +148,6 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     };
 
     const handleConfigSubmit = (settings: ConfigFormData) => {
-        console.log('✅ Configuration form submitted with settings:', settings);
-        console.log('📋 Provider ID:', settings.providerId);
-        console.log('🤖 Model ID:', settings.modelId);
-        console.log('🔑 API Key:', settings.apiKey ? `${settings.apiKey.substring(0, 10)}...` : 'Not provided');
         setAgentState((prev) => ({ ...prev, settings }));
         handleNext();
     };
@@ -162,8 +158,6 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     }
 
     const handleFinalSubmit = async () => {
-        console.log('🚀 Final Agent Configuration:', agentState);
-        console.log('⚙️ Settings being sent:', agentState.settings);
         setIsLoading(true);
         
         try {
@@ -237,7 +231,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
 
             if (response.ok) {
                 const createdAgent = await response.json();
-                console.log('Agent created successfully:', createdAgent);
+    
                 
                 // Add provider and model info to the agent state
                 const enhancedAgentState = {

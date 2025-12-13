@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/shadcn/skeleton';
 import { AgentState, ToolConfig, ToolParam } from './AgentBuild';
+import { API_BASE_URL } from '@/lib/apiClient';
 
 // --- FRAMEWORK CONFIGURATION & TYPES ---
 const FRAMEWORK_DETAILS = {
@@ -202,7 +203,9 @@ const MultiModalChatUI = ({
           const token = await getToken();
           if (!token) throw new Error('No auth token');
           
-          const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/sessions/`, {
+          if (!token) throw new Error('No auth token');
+          
+          const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/sessions/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ framework, title: `New ${FRAMEWORK_DETAILS[framework]?.name || 'Agent'} Chat`, agent_config: agentConfigForBackend }),
@@ -231,7 +234,9 @@ const MultiModalChatUI = ({
         const token = await getToken();
         if (!token) throw new Error('No auth token');
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}/api/v1/sessions/`, {
+        if (!token) throw new Error('No auth token');
+        
+        const response = await fetch(`${API_BASE_URL}/api/v1/sessions/`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!response.ok) throw new Error(`Failed to fetch sessions: ${response.statusText}`);
@@ -295,7 +300,9 @@ const MultiModalChatUI = ({
        if (providerId === 'openai' && !requestBody.api_key.startsWith('sk-')) throw new Error('Invalid OpenAI API key format.');
        if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) throw new Error('Invalid Groq API key format.');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cortex-l8hf.onrender.com'}${endpoint}`, {
+       if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) throw new Error('Invalid Groq API key format.');
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(requestBody),

@@ -269,7 +269,14 @@ const MultiModalChatUI = ({
   const addMessageToSession = async (message: Message) => {
     if (!activeSessionId || !activeSession?.agentConfig || !activeSession?.framework) return;
     
+    // Add user message immediately
     setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, message] }));
+    
+    // Create placeholder for agent message
+    const agentMessageId = `msg-agent-${Date.now()}`;
+    const initialAgentMessage: Message = { id: agentMessageId, sender: 'agent', text: '' };
+    setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, initialAgentMessage] }));
+    
     setIsLoading(true);
 
     try {
@@ -300,7 +307,8 @@ const MultiModalChatUI = ({
        if (providerId === 'openai' && !requestBody.api_key.startsWith('sk-')) throw new Error('Invalid OpenAI API key format.');
        if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) throw new Error('Invalid Groq API key format.');
 
-       if (providerId === 'groq' && !requestBody.api_key.startsWith('gsk_')) throw new Error('Invalid Groq API key format.');
+       // Force streaming on frontend request as well (though backend enforces it now)
+       // requestBody.stream = true; 
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
@@ -312,14 +320,71 @@ const MultiModalChatUI = ({
         const errorBody = await response.text();
         throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorBody}`);
       }
-      const responseData = await response.json();
-      const agentResponse: Message = { id: `msg-agent-${Date.now()}`, sender: 'agent', text: responseData.response };
-      setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, agentResponse] }));
+      
+      if (!response.body) throw new Error('ReadableStream not supported.');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        const lines = buffer.split('\n');
+        
+        // Process all complete lines
+        buffer = lines.pop() || ""; // Keep the last partial line in the buffer
+        
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
+            
+            if (trimmedLine.startsWith('data: ')) {
+                try {
+                    const jsonStr = trimmedLine.slice(6);
+                    const data = JSON.parse(jsonStr);
+                    
+                    if (data.token) {
+                        accumulatedText += data.token;
+                        
+                        // Functional update to avoid closure staleness issues, targeting the specific message
+                        setSessions(prev => prev.map(s => {
+                            if (s.id !== activeSessionId) return s;
+                            return {
+                                ...s,
+                                messages: s.messages.map(msg => 
+                                    msg.id === agentMessageId ? { ...msg, text: accumulatedText } : msg
+                                )
+                            };
+                        }));
+                    }
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse SSE line", trimmedLine, e);
+                }
+            }
+        }
+      }
+      
     } catch (error) {
       let errorMessageText = 'An unknown error occurred.';
       if (error instanceof Error) errorMessageText = error.message;
-      const errorMessage: Message = { id: `msg-error-${Date.now()}`, sender: 'agent', text: `Error: ${errorMessageText}` };
-      setSessions(prev => prev.map(s => s.id !== activeSessionId ? s : { ...s, messages: [...s.messages, errorMessage] }));
+      
+      // Update the placeholder message with the error or add a new error message?
+      // Since we already created a message for the agent, let's update it to show the error if it's empty, 
+      // or append the error.
+      setSessions(prev => prev.map(s => {
+          if (s.id !== activeSessionId) return s;
+          // If we have some text, maybe keep it and append error, or just add error message.
+          // For simplicity, let's add a separate error message if we fail.
+           return { ...s, messages: [...s.messages, { id: `msg-error-${Date.now()}`, sender: 'agent', text: `Error: ${errorMessageText}` }] };
+      }));
     } finally {
       setIsLoading(false);
     }

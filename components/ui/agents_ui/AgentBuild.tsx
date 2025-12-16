@@ -1,6 +1,4 @@
-// components/ui/AgentBuild.tsx
 "use client";
-
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -232,7 +230,6 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
             if (response.ok) {
                 const createdAgent = await response.json();
     
-                
                 // Add provider and model info to the agent state
                 const enhancedAgentState = {
                     ...agentState,
@@ -240,39 +237,34 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                     provider_id: agentState.settings.providerId,
                     model_id: agentState.settings.modelId
                 };
+                
+                // Switch view first
                 onAgentCreated(enhancedAgentState);
                 
-                // Redirect based on architecture
+                // Only redirect if it's explicitly a multi-agent workflow
+                // For mono/textual, onAgentCreated switches the view component to 'chat' within DashboardContent
                 if (agentState.architecture === 'multi') {
                     router.push('/dashboard/builder');
-                } else {
-                    router.push('/dashboard?view=chat'); 
                 }
             } else {
                 console.error('Failed to create agent:', await response.text());
-                // Still call onAgentCreated for now, but show error
+                // Fallback: still show chat UI with what we have, but don't redirect to builder
                 const enhancedAgentState = {
                     ...agentState,
                     provider_id: agentState.settings.providerId,
                     model_id: agentState.settings.modelId
                 };
                 onAgentCreated(enhancedAgentState);
-                
-                // Redirect to dashboard/builder page even on error
-                router.push('/dashboard/builder');
             }
         } catch (error) {
             console.error('Error creating agent:', error);
-            // Fallback - still call onAgentCreated
+            // Fallback: still show chat UI with what we have, but don't redirect to builder
             const enhancedAgentState = {
                 ...agentState,
                 provider_id: agentState.settings.providerId,
                 model_id: agentState.settings.modelId
             };
             onAgentCreated(enhancedAgentState);
-            
-            // Redirect to dashboard/builder page even on error
-            router.push('/dashboard/builder');
         } finally {
             setIsLoading(false);
         }

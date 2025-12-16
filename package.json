@@ -86,5 +86,10 @@
     "eslint": "^9.35.0",
     "eslint-config-next": "15.5.3",
     "@eslint/eslintrc": "^3"
+  },
+  "overrides": {
+    "better-auth": {
+      "drizzle-orm": "$drizzle-orm"
+    }
   }
 }

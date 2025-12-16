@@ -1,3 +1,4 @@
+// components/ui/agents_ui/AgentBuild.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -31,6 +32,11 @@ interface ConfigFormData {
   systemPrompt: string;
   providerId: string;
   modelId: string;
+  
+  // MCP Configuration
+  mcp_adapter: boolean;
+  mcp_transport: 'sse' | 'http';
+  mcp_url: string;
 }
 
 // Tool Configuration
@@ -50,7 +56,7 @@ export interface ToolConfig {
   api_query_params: ToolParam[] | Record<string, string>;
   api_path_params: ToolParam[] | Record<string, string>;
   dynamic_boolean: boolean;
-  dynamic_variables:Record<string, string>;
+  dynamic_variables: Record<string, string>;
   request_payload: string;
 }
 
@@ -248,7 +254,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 }
             } else {
                 console.error('Failed to create agent:', await response.text());
-                // Fallback: still show chat UI with what we have, but don't redirect to builder
+                // Fallback: still show chat UI with what we have
                 const enhancedAgentState = {
                     ...agentState,
                     provider_id: agentState.settings.providerId,
@@ -258,7 +264,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
             }
         } catch (error) {
             console.error('Error creating agent:', error);
-            // Fallback: still show chat UI with what we have, but don't redirect to builder
+            // Fallback - still call onAgentCreated
             const enhancedAgentState = {
                 ...agentState,
                 provider_id: agentState.settings.providerId,
@@ -402,428 +408,493 @@ const StepHeader = ({ title, description }: { title: string; description: string
     </div>
 );
 
-    const StepAgentType = ({ onSelect }: { onSelect: (type: 'textual' | 'voice' | 'coding') => void; }) => (
-        <div className="w-full">
-          <StepHeader title="Choose Agent Type" description="Select the type of AI agent you want to build." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <ChoiceCard 
-              icon={<Bot />} 
-              title="Textual Agent" 
-              description="Traditional text-based AI agent for chat interfaces and API interactions." 
-              onClick={() => onSelect('textual')} 
-            />
-            <ChoiceCard 
-              icon={<Mic />} 
-              title="Voice Agent" 
-              description="Real-time voice AI agent with LiveKit integration for audio conversations." 
-              onClick={() => onSelect('voice')} 
-            />
-            <ChoiceCard 
-              icon={<Terminal />} 
-              title="Coding Agent" 
-              description="Secure Python coding assistant with E2B sandbox execution for safe code running." 
-              onClick={() => onSelect('coding')} 
-            />
-          </div>
+const StepAgentType = ({ onSelect }: { onSelect: (type: 'textual' | 'voice' | 'coding') => void; }) => (
+    <div className="w-full">
+        <StepHeader title="Choose Agent Type" description="Select the type of AI agent you want to build." />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <ChoiceCard 
+            icon={<Bot />} 
+            title="Textual Agent" 
+            description="Traditional text-based AI agent for chat interfaces and API interactions." 
+            onClick={() => onSelect('textual')} 
+        />
+        <ChoiceCard 
+            icon={<Mic />} 
+            title="Voice Agent" 
+            description="Real-time voice AI agent with LiveKit integration for audio conversations." 
+            onClick={() => onSelect('voice')} 
+        />
+        <ChoiceCard 
+            icon={<Terminal />} 
+            title="Coding Agent" 
+            description="Secure Python coding assistant with E2B sandbox execution for safe code running." 
+            onClick={() => onSelect('coding')} 
+        />
         </div>
-    );
+    </div>
+);
 
 const StepArchitecture = ({ onSelect }: { onSelect: (arch: 'mono' | 'multi') => void; }) => (
     <div className="w-full">
-      <StepHeader title="Select Agent Architecture" description="Choose between a single agent or a team of collaborating agents." />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-lg mx-auto">
+        <StepHeader title="Select Agent Architecture" description="Choose between a single agent or a team of collaborating agents." />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-lg mx-auto">
         <ChoiceCard icon={<Bot />} title="Mono-Agent" description="A single, powerful agent for handling various tasks." onClick={() => onSelect('mono')} />
         <ChoiceCard icon={<Users />} title="Multi-Agent" description="A team of specialized agents that collaborate on complex goals." onClick={() => onSelect('multi')} />
-      </div>
+        </div>
     </div>
 );
-  
+
 const StepFramework = ({ architecture, onSelect }: { architecture: 'mono' | 'multi'; onSelect: (fw: string) => void; }) => {
     const availableFrameworks = frameworks[architecture];
     return (
-      <div className="w-full">
+        <div className="w-full">
         <StepHeader title="Choose Your Framework" description={`Select the ${architecture === 'mono' ? 'mono-agent' : 'multi-agent'} framework you want to build with.`} />
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {availableFrameworks.map((fw) => (
+            {availableFrameworks.map((fw) => (
             <FrameworkCard key={fw.id} {...fw} onClick={() => onSelect(fw.id)} />
-          ))}
+            ))}
         </div>
-      </div>
+        </div>
     );
 };
 
 const StepConfigure = ({ onSubmit, defaultValues }: { onSubmit: SubmitHandler<ConfigFormData>; defaultValues: Partial<ConfigFormData> }) => {
-  const [selectedProvider, setSelectedProvider] = useState(defaultValues.providerId || '');
-  const [selectedModel, setSelectedModel] = useState(defaultValues.modelId || '');
-  
-  
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<ConfigFormData>({
+    const [selectedProvider, setSelectedProvider] = useState(defaultValues.providerId || '');
+    const [selectedModel, setSelectedModel] = useState(defaultValues.modelId || '');
+    
+    const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<ConfigFormData>({
     defaultValues: {
-      apiKey: defaultValues.apiKey || '',
-      modelName: defaultValues.modelName || '',
-      temperature: defaultValues.temperature ?? 0.7,
-      baseUrl: defaultValues.baseUrl || '',
-      systemPrompt: defaultValues.systemPrompt || '',
-      providerId: defaultValues.providerId || '',
-      modelId: defaultValues.modelId || '',
+        apiKey: defaultValues.apiKey || '',
+        modelName: defaultValues.modelName || '',
+        temperature: defaultValues.temperature ?? 0.7,
+        baseUrl: defaultValues.baseUrl || '',
+        systemPrompt: defaultValues.systemPrompt || 'You are a helpful AI assistant.',
+        providerId: defaultValues.providerId || '',
+        modelId: defaultValues.modelId || '',
+        mcp_adapter: defaultValues.mcp_adapter || false,
+        mcp_transport: defaultValues.mcp_transport || 'http',
+        mcp_url: defaultValues.mcp_url || ''
     },
-  });
+    });
 
-  const handleProviderChange = (providerName: string) => {
-    console.log('Provider changed to:', providerName);
-    setSelectedProvider(providerName);
-    setValue('providerId', providerName);
-  };
+    const mcpEnabled = watch("mcp_adapter");
 
-  const handleModelChange = (modelId: string) => {
-    setSelectedModel(modelId);
-    setValue('modelId', modelId);
-    setValue('modelName', modelId);
-  };
+    const handleProviderChange = (providerName: string) => {
+        console.log('Provider changed to:', providerName);
+        setSelectedProvider(providerName);
+        setValue('providerId', providerName);
+    };
+
+    const handleModelChange = (modelId: string) => {
+        setSelectedModel(modelId);
+        setValue('modelId', modelId);
+        setValue('modelName', modelId);
+    };
 
 
-  return (
+    return (
     <div className="w-full">
-      <StepHeader title="Configure LangChain Agent" description="Select your LLM provider and model, then configure the settings." />
-      
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
+        <StepHeader title="Configure LangChain Agent" description="Select your LLM provider and model, then configure the settings." />
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
         {/* Provider and Model Selection */}
         <div className="bg-black/20 p-6 rounded-lg border border-white/15">
-          <ProviderSelector
+            <ProviderSelector
             selectedProvider={selectedProvider}
             selectedModel={selectedModel}
             onProviderChange={handleProviderChange}
             onModelChange={handleModelChange}
-          />
+            />
         </div>
 
         {/* API Configuration */}
         <div className="space-y-4">
-          <div>
+            <div>
             <Label htmlFor="apiKey">API Key</Label>
             <Input 
-              id="apiKey" 
-              type="password" 
-              placeholder="sk-..." 
-              {...register('apiKey', { required: 'API Key is required.' })} 
-              className={cn(errors.apiKey && 'border-destructive')}
+                id="apiKey" 
+                type="password" 
+                placeholder="sk-..." 
+                {...register('apiKey', { required: 'API Key is required.' })} 
+                className={cn(errors.apiKey && 'border-destructive')}
             />
             {errors.apiKey && <p className="text-sm text-destructive mt-1">{errors.apiKey.message}</p>}
-          </div>
-          
-
-          
-          <div>
+            </div>
+            
+            <div>
             <Label htmlFor="temperature">Temperature</Label>
             <Input 
-              id="temperature" 
-              type="number" 
-              step="0.1" 
-              {...register('temperature', { valueAsNumber: true, min: 0, max: 2 })} 
-              className={cn(errors.temperature && 'border-destructive')}
+                id="temperature" 
+                type="number" 
+                step="0.1" 
+                {...register('temperature', { valueAsNumber: true, min: 0, max: 2 })} 
+                className={cn(errors.temperature && 'border-destructive')}
             />
             {errors.temperature && <p className="text-sm text-destructive mt-1">{errors.temperature.message}</p>}
-          </div>
-          
+            </div>
+            
             <div>
-              <Label htmlFor="systemPrompt">System Prompt</Label>
-              <textarea 
+                <Label htmlFor="systemPrompt">System Prompt</Label>
+                <textarea 
                 id="systemPrompt" 
                 placeholder="You are a helpful assistant." 
                 {...register('systemPrompt')}
                 className="flex min-h-[80px] w-full rounded-md border border-white/15 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 rows={4}
-              />
+                />
+            </div>
+
+            {/* --- NEW MCP ADAPTER SECTION --- */}
+            <div className="bg-black/20 p-6 rounded-lg border border-white/15 space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/10 p-1.5 rounded-md">
+                            <Image 
+                                src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/mcp.png" 
+                                alt="MCP Logo" 
+                                width={24} 
+                                height={24} 
+                                className="object-contain"
+                            />
+                        </div>
+                        <div className="space-y-0.5">
+                            <Label className="text-base font-medium text-white">MCP Adapter</Label>
+                            <p className="text-sm text-white/60">Connect to Model Context Protocol servers</p>
+                        </div>
+                    </div>
+                    <Switch
+                        checked={mcpEnabled}
+                        onCheckedChange={(checked) => setValue("mcp_adapter", checked)}
+                        className="data-[state=checked]:bg-purple-600"
+                    />
+                </div>
+
+                {mcpEnabled && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="space-y-4 pt-4 border-t border-white/10"
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="md:col-span-1">
+                                <Label htmlFor="mcp_transport">Transport Mode</Label>
+                                <select
+                                    {...register("mcp_transport")}
+                                    className="flex h-10 w-full rounded-md border border-white/15 bg-black/50 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-500 focus:outline-none mt-2"
+                                >
+                                    <option value="http">Streamable HTTP</option>
+                                    <option value="sse">SSE (Server-Sent Events)</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2">
+                                <Label htmlFor="mcp_url">MCP Server URL</Label>
+                                <Input
+                                    id="mcp_url"
+                                    placeholder={mcpEnabled ? "http://localhost:8000/mcp" : ""}
+                                    {...register("mcp_url", { 
+                                        required: mcpEnabled ? "MCP URL is required when adapter is enabled" : false 
+                                    })}
+                                    className="bg-black/50 border-white/15 text-white mt-2"
+                                />
+                                {errors.mcp_url && <p className="text-sm text-destructive mt-1">{errors.mcp_url.message}</p>}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 p-3 rounded bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200">
+                            <Shield className="h-4 w-4" />
+                            <span>Tools from this server will be dynamically loaded and available to the agent at runtime.</span>
+                        </div>
+                    </motion.div>
+                )}
             </div>
         </div>
         
         {/* Hidden submit button - triggered by form's submit event */}
         <div className="flex justify-end pt-6 border-t border-white/15">
-          <Button 
+            <Button 
             type="submit" 
             className="bg-white text-black hover:bg-gray-100"
-          >
+            >
             Save Configuration <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+            </Button>
         </div>
-      </form>
+        </form>
     </div>
-  );
+    );
 };
 
 const StepConfigureTools = ({ onSubmit, defaultTools }: { onSubmit: (tools: ToolConfig[]) => void; defaultTools: ToolConfig[] }) => {
-  const { getToken } = useAuth();
-  const [secrets, setSecrets] = useState<Secret[]>([]);
-  
-  const [tools, setTools] = useState<ToolConfig[]>(defaultTools.length > 0 ? defaultTools : [
+    const { getToken } = useAuth();
+    const [secrets, setSecrets] = useState<Secret[]>([]);
+    
+    const [tools, setTools] = useState<ToolConfig[]>(defaultTools.length > 0 ? defaultTools : [
     { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], dynamic_boolean: false, dynamic_variables: {}, request_payload: '' }
-  ]);
+    ]);
 
-  const loadSecrets = React.useCallback(async () => {
+    const loadSecrets = React.useCallback(async () => {
     try {
-      const token = await getToken();
-      if (token) {
+        const token = await getToken();
+        if (token) {
         const secretsData = await apiClient.getSecrets(token);
         setSecrets(secretsData);
-      }
+        }
     } catch (error) {
-      console.error('Failed to load secrets:', error);
+        console.error('Failed to load secrets:', error);
     }
-  }, [getToken]);
+    }, [getToken]);
 
-  // Load secrets on component mount
-  useEffect(() => {
+    // Load secrets on component mount
+    useEffect(() => {
     loadSecrets();
-  }, [loadSecrets]);
+    }, [loadSecrets]);
 
-  const addTool = () => {
+    const addTool = () => {
     setTools([...tools, { id: `tool-${Date.now()}`, name: '', description: '', api_url: '', api_method: 'GET', api_headers: [], api_query_params: [], api_path_params: [], dynamic_boolean: false, dynamic_variables: {}, request_payload: '' }]);
-  };
+    };
 
-  const removeTool = (id: string) => {
+    const removeTool = (id: string) => {
     setTools(tools.filter(t => t.id !== id));
-  };
-  
-  const updateToolField = (id: string, field: keyof ToolConfig, value: string | ToolParam[] | boolean | Record<string, string>) => {
+    };
+    
+    const updateToolField = (id: string, field: keyof ToolConfig, value: string | ToolParam[] | boolean | Record<string, string>) => {
     setTools(tools.map(t => t.id === id ? { ...t, [field]: value } : t));
-  };
+    };
 
-  const updateToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string, field: 'key' | 'value', value: string) => {
+    const updateToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string, field: 'key' | 'value', value: string) => {
     setTools(tools.map(tool => {
-      if (tool.id !== toolId) return tool;
-      const currentParams = tool[paramType];
-      if (Array.isArray(currentParams)) {
+        if (tool.id !== toolId) return tool;
+        const currentParams = tool[paramType];
+        if (Array.isArray(currentParams)) {
         const updatedParams = currentParams.map(p => p.id === paramId ? { ...p, [field]: value } : p);
         return { ...tool, [paramType]: updatedParams };
-      }
-      return tool;
+        }
+        return tool;
     }));
-  };
+    };
 
-  const addToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params') => {
+    const addToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params') => {
     setTools(tools.map(tool => {
-      if (tool.id !== toolId) return tool;
-      const currentParams = tool[paramType];
-      if (Array.isArray(currentParams)) {
+        if (tool.id !== toolId) return tool;
+        const currentParams = tool[paramType];
+        if (Array.isArray(currentParams)) {
         const newParam: ToolParam = { id: `param-${Date.now()}`, key: '', value: '' };
         return { ...tool, [paramType]: [...currentParams, newParam] };
-      }
-      return tool;
+        }
+        return tool;
     }));
-  };
+    };
 
-  const removeToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string) => {
+    const removeToolParam = (toolId: string, paramType: 'api_headers' | 'api_query_params' | 'api_path_params', paramId: string) => {
     setTools(tools.map(tool => {
-      if (tool.id !== toolId) return tool;
-      const currentParams = tool[paramType];
-      if (Array.isArray(currentParams)) {
+        if (tool.id !== toolId) return tool;
+        const currentParams = tool[paramType];
+        if (Array.isArray(currentParams)) {
         return { ...tool, [paramType]: currentParams.filter(p => p.id !== paramId) };
-      }
-      return tool;
+        }
+        return tool;
     }));
-  };
+    };
 
-  const addSecretAsHeader = (toolId: string, secretName: string) => {
+    const addSecretAsHeader = (toolId: string, secretName: string) => {
     const newHeader: ToolParam = { 
-      id: `header-${Date.now()}`, 
-      key: 'Authorization', 
-      value: `Bearer {{${secretName}}}` 
+        id: `header-${Date.now()}`, 
+        key: 'Authorization', 
+        value: `Bearer {{${secretName}}}` 
     };
     setTools(tools.map(tool => {
-      if (tool.id !== toolId) return tool;
-      const currentHeaders = tool.api_headers;
-      if (Array.isArray(currentHeaders)) {
+        if (tool.id !== toolId) return tool;
+        const currentHeaders = tool.api_headers;
+        if (Array.isArray(currentHeaders)) {
         return { ...tool, api_headers: [...currentHeaders, newHeader] };
-      }
-      return tool;
+        }
+        return tool;
     }));
-  };
+    };
 
-  return (
+    return (
     <div className="w-full">
-      <StepHeader title="Configure Agent Tools (Optional)" description="Define external APIs your agent can call. The LLM will decide when to use them." />
-      <div className="space-y-4 min-h-[200px] max-h-[800px] overflow-y-auto scrollbar-hide">
+        <StepHeader title="Configure Agent Tools (Optional)" description="Define external APIs your agent can call. The LLM will decide when to use them." />
+        <div className="space-y-4 min-h-[200px] max-h-[800px] overflow-y-auto scrollbar-hide">
         <AnimatePresence>
-          {tools.map((tool) => (
+            {tools.map((tool) => (
             <motion.div 
-              key={tool.id} 
-              initial={{ opacity: 0, height: 0, y: -20 }}
-              animate={{ opacity: 1, height: "auto", y: 0 }}
-              exit={{ opacity: 0, height: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="p-4 border border-white/15 rounded-lg bg-black/20 space-y-3"
+                key={tool.id} 
+                initial={{ opacity: 0, height: 0, y: -20 }}
+                animate={{ opacity: 1, height: "auto", y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="p-4 border border-white/15 rounded-lg bg-black/20 space-y-3"
             >
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg text-purple-300">New API Tool</h3>
-              <Button size="icon" variant="ghost" className="text-red-400 hover:bg-red-900/50 hover:text-red-300" onClick={() => removeTool(tool.id)}><Trash2 size={16} /></Button>
+                <h3 className="font-semibold text-lg text-purple-300">New API Tool</h3>
+                <Button size="icon" variant="ghost" className="text-red-400 hover:bg-red-900/50 hover:text-red-300" onClick={() => removeTool(tool.id)}><Trash2 size={16} /></Button>
             </div>
             <div className="space-y-2">
-              <Input 
+                <Input 
                 placeholder="Tool Name (e.g., searchWeather)" 
                 value={tool.name} 
                 onChange={e => updateToolField(tool.id, 'name', e.target.value)}
                 className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-              />
-              <Input 
+                />
+                <Input 
                 placeholder="Description (e.g., 'Finds the weather for a city')" 
                 value={tool.description} 
                 onChange={e => updateToolField(tool.id, 'description', e.target.value)}
                 className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-              />
-              <div className="flex gap-2">
+                />
+                <div className="flex gap-2">
                 <select value={tool.api_method} onChange={e => updateToolField(tool.id, 'api_method', e.target.value as ToolConfig['api_method'])} className="bg-black/50 border border-white/15 rounded-md px-2 py-2 text-sm">
-                  <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
+                    <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
                 </select>
                 <Input 
-                  placeholder={tool.dynamic_boolean ? "API URL (e.g., https://api.weather.com/{{city}})" : "API URL (e.g., https://api.weather.com/find)"}
-                  value={tool.api_url} 
-                  onChange={e => updateToolField(tool.id, 'api_url', e.target.value)}
-                  className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
+                    placeholder={tool.dynamic_boolean ? "API URL (e.g., https://api.weather.com/{{city}})" : "API URL (e.g., https://api.weather.com/find)"}
+                    value={tool.api_url} 
+                    onChange={e => updateToolField(tool.id, 'api_url', e.target.value)}
+                    className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
                 />
-              </div>
+                </div>
             </div>
 
             {/* Dynamic Variables Toggle */}
             <div className="space-y-2 pt-2 border-t border-white/10">
-              <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium text-white/80">Enable Dynamic Variable Injection</h4>
                 <Switch
-                  checked={tool.dynamic_boolean || false}
-                  onCheckedChange={(checked) => updateToolField(tool.id, 'dynamic_boolean', checked)}
-                  className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-500 border-purple-500/30"
+                    checked={tool.dynamic_boolean || false}
+                    onCheckedChange={(checked) => updateToolField(tool.id, 'dynamic_boolean', checked)}
+                    className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-500 border-purple-500/30"
                 />
-              </div>
-              {tool.dynamic_boolean && (
+                </div>
+                {tool.dynamic_boolean && (
                 <p className="text-xs text-purple-300/80">When enabled, {`{{ }}`} placeholders in any field will be replaced by the agent&apos;s tool call arguments.</p>
-              )}
+                )}
             </div>
 
             {/* Request Payload */}
             <div className="space-y-2 pt-2">
-              <h4 className="text-sm font-medium text-white/80">Request Payload (Optional)</h4>
-              <textarea
+                <h4 className="text-sm font-medium text-white/80">Request Payload (Optional)</h4>
+                <textarea
                 placeholder={tool.dynamic_boolean ? "Enter JSON payload (e.g., {\"name\": \"{{userName}}\", \"email\": \"{{userEmail}}\"}) - {{ }} values replaced by agent's tool call arguments" : "Enter JSON payload (e.g., {\"name\": \"John\", \"email\": \"john@example.com\"})"}
                 value={tool.request_payload}
                 onChange={e => updateToolField(tool.id, 'request_payload', e.target.value)}
                 className="flex min-h-[100px] w-full rounded-md border border-white/15 bg-black/50 px-3 py-2 text-sm text-white placeholder:text-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 rows={4}
-              />
+                />
             </div>
 
             {/* Path Parameters */}
             <div className="space-y-2 pt-2">
-              <h4 className="text-sm font-medium text-white/80">Path Parameters</h4>
-              {Array.isArray(tool.api_path_params) && tool.api_path_params.map(p => (
+                <h4 className="text-sm font-medium text-white/80">Path Parameters</h4>
+                {Array.isArray(tool.api_path_params) && tool.api_path_params.map(p => (
                 <div key={p.id} className="flex gap-2 items-center">
-                  <Input 
+                    <Input 
                     placeholder="key (e.g., 'userId')" 
                     value={p.key} 
                     onChange={e => updateToolParam(tool.id, 'api_path_params', p.id, 'key', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-                  />
-                  <Input 
+                    />
+                    <Input 
                     placeholder={tool.dynamic_boolean ? "value (e.g., '{{userId}}') - replaced by agent's tool call arguments" : "value (e.g., '123')"}
                     value={p.value} 
                     onChange={e => updateToolParam(tool.id, 'api_path_params', p.id, 'value', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-                  />
-                  <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_path_params', p.id)}><Trash2 size={14}/></Button>
+                    />
+                    <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_path_params', p.id)}><Trash2 size={14}/></Button>
                 </div>
-              ))}
-              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_path_params')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Path Param</Button>
+                ))}
+                <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_path_params')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Path Param</Button>
             </div>
 
             {/* Query Parameters */}
             <div className="space-y-2 pt-2">
-              <h4 className="text-sm font-medium text-white/80">Query Parameters</h4>
-              {Array.isArray(tool.api_query_params) && tool.api_query_params.map(p => (
+                <h4 className="text-sm font-medium text-white/80">Query Parameters</h4>
+                {Array.isArray(tool.api_query_params) && tool.api_query_params.map(p => (
                 <div key={p.id} className="flex gap-2 items-center">
-                  <Input 
+                    <Input 
                     placeholder="key (e.g., 'city')" 
                     value={p.key} 
                     onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'key', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-                  />
-                  <Input 
+                    />
+                    <Input 
                     placeholder={tool.dynamic_boolean ? "value (e.g., '{{city}}') - replaced by agent's tool call arguments" : "value (e.g., 'New York')"}
                     value={p.value} 
                     onChange={e => updateToolParam(tool.id, 'api_query_params', p.id, 'value', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-                  />
-                  <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_query_params', p.id)}><Trash2 size={14}/></Button>
+                    />
+                    <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_query_params', p.id)}><Trash2 size={14}/></Button>
                 </div>
-              ))}
-              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_query_params')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Query Param</Button>
+                ))}
+                <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_query_params')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Query Param</Button>
             </div>
 
             {/* Headers */}
             <div className="space-y-2 pt-2">
-              <h4 className="text-sm font-medium text-white/80">Headers</h4>
-              {Array.isArray(tool.api_headers) && tool.api_headers.map(h => (
+                <h4 className="text-sm font-medium text-white/80">Headers</h4>
+                {Array.isArray(tool.api_headers) && tool.api_headers.map(h => (
                 <div key={h.id} className="flex gap-2 items-center">
-                  <Input 
+                    <Input 
                     placeholder="Header Name (e.g., 'Authorization')" 
                     value={h.key} 
                     onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'key', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-                  />
-                  <Input 
+                    />
+                    <Input 
                     placeholder={tool.dynamic_boolean ? "Header Value (e.g., 'Bearer {{token}}') - {{ }} replaced by agent's tool call arguments" : "Header Value (e.g., 'Bearer abc123')"}
                     value={h.value} 
                     onChange={e => updateToolParam(tool.id, 'api_headers', h.id, 'value', e.target.value)}
                     className="bg-black/50 border-white/15 text-white placeholder:text-white/50"
-                  />
-                  <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_headers', h.id)}><Trash2 size={14}/></Button>
+                    />
+                    <Button size="icon" variant="ghost" onClick={() => removeToolParam(tool.id, 'api_headers', h.id)}><Trash2 size={14}/></Button>
                 </div>
-              ))}
-              <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_headers')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Header</Button>
+                ))}
+                <Button size="sm" variant="outline" onClick={() => addToolParam(tool.id, 'api_headers')} className="bg-black/50 border-white/15 text-white hover:bg-black/70 hover:border-white/25"><PlusCircle size={14} className="mr-2"/>Add Header</Button>
             </div>
 
             {/* Secret Selection for Authentication */}
             {secrets.length > 0 && (
-              <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-2">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-blue-400" />
-                  <h4 className="text-sm font-medium text-white/80">Use Saved Secret for Authentication</h4>
+                    <Shield className="h-4 w-4 text-blue-400" />
+                    <h4 className="text-sm font-medium text-white/80">Use Saved Secret for Authentication</h4>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {secrets.map(secret => (
+                    {secrets.map(secret => (
                     <Button
-                      key={secret.id}
-                      size="sm"
-                      variant="outline"
-                      onClick={() => addSecretAsHeader(tool.id, secret.name)}
-                      className="bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30 hover:border-blue-400"
+                        key={secret.id}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => addSecretAsHeader(tool.id, secret.name)}
+                        className="bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30 hover:border-blue-400"
                     >
-                      <Key className="h-3 w-3 mr-1" />
-                      {secret.name}
+                        <Key className="h-3 w-3 mr-1" />
+                        {secret.name}
                     </Button>
-                  ))}
+                    ))}
                 </div>
                 <p className="text-xs text-white/60">
-                  This will add an Authorization header with your secret value
+                    This will add an Authorization header with your secret value
                 </p>
-              </div>
+                </div>
             )}
 
             </motion.div>
-          ))}
+            ))}
         </AnimatePresence>
-      </div>
-      <div className="flex justify-between pt-4 border-t border-white/10">
+        </div>
+        <div className="flex justify-between pt-4 border-t border-white/10">
         <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.2 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.2 }}
         >
-          <Button variant="outline" onClick={addTool} className="bg-white text-black hover:bg-gray-100 border-white"><PlusCircle size={16} className="mr-2"/>Add New Tool</Button>
+            <Button variant="outline" onClick={addTool} className="bg-white text-black hover:bg-gray-100 border-white"><PlusCircle size={16} className="mr-2"/>Add New Tool</Button>
         </motion.div>
-      </div>
-         <div className="flex justify-between pt-4 border-t border-white/10">
+        </div>
+            <div className="flex justify-between pt-4 border-t border-white/10">
         <Button onClick={() => onSubmit(tools)} className="bg-purple-600 hover:bg-purple-500">Save Tools & Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
-      </div>
+        </div>
     </div>
-  );
+    );
 };
 
 const StepReview = ({ agentState }: { agentState: AgentState }) => {
@@ -841,6 +912,14 @@ const StepReview = ({ agentState }: { agentState: AgentState }) => {
                         <div className="flex justify-between"><span className="text-white/70">Base URL:</span> <span className="font-medium text-white">{agentState.settings.baseUrl}</span></div>
                         <div className="flex justify-between"><span className="text-white/70">Temperature:</span> <span className="font-medium text-white">{agentState.settings.temperature}</span></div>
                         <div className="flex justify-between"><span className="text-white/70">API Key:</span> <span className="font-medium text-white font-mono">************</span></div>
+                        
+                        {agentState.settings.mcp_adapter && (
+                            <div className="flex flex-col pt-2 border-t border-white/10">
+                                <div className="flex justify-between"><span className="text-white/70">MCP Adapter:</span> <span className="font-medium text-green-400">Enabled</span></div>
+                                <div className="flex justify-between"><span className="text-white/70">Transport:</span> <span className="font-medium text-white uppercase">{agentState.settings.mcp_transport}</span></div>
+                                <div className="flex justify-between"><span className="text-white/70">URL:</span> <span className="font-medium text-white truncate max-w-[200px]">{agentState.settings.mcp_url}</span></div>
+                            </div>
+                        )}
                     </>
                 )}
                 {agentState.tools.length > 0 && (

@@ -90,6 +90,8 @@
   "overrides": {
     "better-auth": {
       "drizzle-orm": "$drizzle-orm"
-    }
+    },
+    "@types/react": "$@types/react",
+    "@types/react-dom": "$@types/react-dom"
   }
 }

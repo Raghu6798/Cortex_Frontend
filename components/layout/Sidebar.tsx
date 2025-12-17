@@ -8,10 +8,10 @@ import {
   Bot,
   Shield,
   Workflow,
-  Mic,
-  Plug,
   Search,
   Wrench,
+  Mic,
+  Plug
   // FolderOpen,
 } from 'lucide-react';
 import { GrCodeSandbox } from "react-icons/gr";
@@ -20,12 +20,15 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
+import { MCP } from '@lobehub/icons';
+
+
 interface SidebarProps {
   isExpanded: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onNewAgentClick: () => void;
-  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox' | 'rag' | 'workflow';
+  activeView?: 'dashboard' | 'agents' | 'builder' | 'chat' | 'voice-chat' | 'secrets' | 'connectors' | 'ocr' | 'sandbox' | 'rag' | 'workflow' | 'mcp';
 }
 
 const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, activeView }: SidebarProps) => {
@@ -37,7 +40,14 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     { name: 'Secrets', icon: Shield, view: 'secrets' as const, id: TOUR_STEP_IDS.SIDEBAR_SECRETS },
     { name: 'OCR Parser', icon:'custom', view: 'ocr' as const, id: TOUR_STEP_IDS.SIDEBAR_OCR, src: 'https://cdn-icons-png.flaticon.com/512/5137/5137270.png'},
     { name: 'RAG', icon: Search, view: 'rag' as const, id: TOUR_STEP_IDS.SIDEBAR_RAG },
-    { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const, id: TOUR_STEP_IDS.SIDEBAR_SANDBOX }
+    { name: 'Sandboxes', icon: GrCodeSandbox, view: 'sandbox' as const, id: TOUR_STEP_IDS.SIDEBAR_SANDBOX },
+    {
+    name: 'MCP',
+    icon: MCP,
+    view: 'mcp' as const,
+    id: 'sidebar-mcp',
+    iconSize: 56,
+  },,
   ];
 
   const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox'; id: string }> = [
@@ -90,6 +100,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
               case 'sandbox': return '/dashboard/sandboxes';
               case 'rag': return '/dashboard?view=rag';
               case 'workflow': return '/dashboard?view=workflow';
+              case 'mcp': return '/dashboard?view=mcp';
               default: return '/dashboard';
             }
           };

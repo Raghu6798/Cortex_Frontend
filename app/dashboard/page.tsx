@@ -17,6 +17,7 @@ import SecretsManagement from '@/components/ui/agents_ui/SecretsManagement';
 import ConnectorsPage from '@/components/ui/agents_ui/ConnectorsPage';
 import OCRPage from '@/components/ui/agents_ui/OCRPage';
 import RAGContent from '@/components/ui/agents_ui/RAGContent';
+import MCPServersView from '@/components/mcp/MCPServersView';
 import MultiAgentWorkflowViewWithProviders from '@/components/ui/agents_ui/MultiAgentWorkflowView';
 import { NumberTicker } from '@/components/ui/general/CountingNumbers';
 import { cn } from '@/lib/utils';
@@ -214,7 +215,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isUserSidebarExpanded, setIsUserSidebarExpanded] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr' | 'workflow' | 'rag'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'builder' | 'chat' | 'voice-chat' | 'agents' | 'editor' | 'secrets' | 'connectors' | 'ocr' | 'workflow' | 'rag' | 'mcp'>('dashboard');
   const [isLoading, setIsLoading] = useState(true); // State to control the skeleton
   const [initialAgentConfig, setInitialAgentConfig] = useState<AgentState | null>(null);
   const [agentToEdit, setAgentToEdit] = useState<{
@@ -245,8 +246,8 @@ function DashboardContent() {
   // Handle URL parameters for navigation
   useEffect(() => {
     const view = searchParams.get('view');
-    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow', 'rag', 'chat', 'builder', 'editor'].includes(view)) {
-      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow' | 'rag' | 'chat' | 'builder' | 'editor');
+    if (view && ['dashboard', 'agents', 'secrets', 'voice-chat', 'connectors', 'ocr', 'workflow', 'rag', 'chat', 'builder', 'editor', 'mcp'].includes(view)) {
+      setActiveView(view as 'dashboard' | 'agents' | 'secrets' | 'voice-chat' | 'connectors' | 'ocr' | 'workflow' | 'rag' | 'chat' | 'builder' | 'editor' | 'mcp');
     }
   }, [searchParams]);
 
@@ -316,6 +317,7 @@ function DashboardContent() {
       case 'editor': return 'Edit Agent';
       case 'connectors': return 'Connectors';
       case 'workflow': return 'Multi-Agent Workflow Builder';
+      case 'mcp': return 'MCP Servers';
       case 'rag': return '';
       case 'ocr': return '';
       case 'dashboard':
@@ -332,6 +334,7 @@ function DashboardContent() {
       case 'editor': return 'Update your agent configuration.';
       case 'connectors': return 'Connect your favorite tools and services to enhance your AI agent capabilities.';
       case 'workflow': return 'Build complex multi-agent workflows by connecting triggers and actions.';
+      case 'mcp': return 'Discover and manage Model Context Protocol servers.';
       case 'rag': return '';
       case 'ocr': return '';
       case 'dashboard':
@@ -351,6 +354,7 @@ function DashboardContent() {
     if (activeView === 'workflow') return <MultiAgentWorkflowViewWithProviders />;
     if (activeView === 'ocr') return <OCRPage />;
     if (activeView === 'rag') return <RAGContent />;
+    if (activeView === 'mcp') return <MCPServersView />;
     
     // For dashboard, show skeleton while loading
     if (isLoading) return <DashboardMetricsViewSkeleton />;

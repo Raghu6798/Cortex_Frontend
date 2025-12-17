@@ -162,16 +162,25 @@ const MessageItemSkeleton = () => (
 // --- MAIN CHAT UI COMPONENT ---
 const MultiModalChatUI = ({
   initialAgentConfig,
+  initialSessionId
 }: {
   initialAgentConfig?: AgentState | null;
+  initialSessionId?: string;
 }) => {
   const { userId, getToken } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(initialSessionId || null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSessionsLoaded, setIsSessionsLoaded] = useState(false);
   const activeSession = useMemo(() => sessions.find(s => s.id === activeSessionId), [sessions, activeSessionId]);
   const initialSessionCreated = useRef(false);
+
+  // If initialSessionId changes (e.g. navigation), update activeSessionId
+  useEffect(() => {
+    if (initialSessionId) {
+        setActiveSessionId(initialSessionId);
+    }
+  }, [initialSessionId]);
 
   useEffect(() => {
     const createInitialSession = async () => {
@@ -249,7 +258,12 @@ const MultiModalChatUI = ({
             framework: session.framework, agentId: session.agent_id || '',
           }));
           setSessions(frontendSessions);
-          setActiveSessionId(frontendSessions[0].id);
+          
+          if (initialSessionId && frontendSessions.find(s => s.id === initialSessionId)) {
+            setActiveSessionId(initialSessionId);
+          } else if (frontendSessions.length > 0) {
+            setActiveSessionId(frontendSessions[0].id);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch sessions:", error);

@@ -1,7 +1,7 @@
 // Shadcn UI Components
 export { Badge } from './badge';
 export { Button } from './button';
-export { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 export { Dialog, DialogContent,DialogTrigger,DialogClose,DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './dialog';
 export { Input } from './Input';
 export { Label } from './label';
@@ -19,4 +19,5 @@ export { Drawer, DrawerPortal, DrawerOverlay, DrawerTrigger, DrawerClose, Drawer
 export { Alert, AlertTitle, AlertDescription } from './alert';
 export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from './dropdown-menu';
 export { Avatar, AvatarImage, AvatarFallback } from './avatar';
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './tooltip';
 

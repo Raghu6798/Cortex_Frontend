@@ -92,7 +92,8 @@
     "better-auth": {
       "drizzle-orm": "^0.44.7"
     },
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@lynx-js/react": {
+      "@types/react": "^19.0.0"
+    }
   }
 }

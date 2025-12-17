@@ -47,7 +47,7 @@ const Sidebar = ({ isExpanded, onMouseEnter, onMouseLeave, onNewAgentClick, acti
     view: 'mcp' as const,
     id: 'sidebar-mcp',
     iconSize: 56,
-  },,
+  },
   ];
 
   const features: Array<{ name: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | 'codesandbox'; id: string }> = [

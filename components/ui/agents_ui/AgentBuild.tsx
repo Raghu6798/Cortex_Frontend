@@ -19,6 +19,7 @@ import {
   CheckCircle2, ArrowRight, ArrowLeft, Bot, Users, BrainCircuit, PlusCircle, Trash2, Key, Shield, Mic, Terminal
 } from 'lucide-react';
 import { Switch } from '@/components/ui/shadcn/switch';
+import { toast } from 'sonner';
 
 
 //--- TYPES AND SCHEMAS ---
@@ -37,6 +38,9 @@ interface ConfigFormData {
   mcp_adapter: boolean;
   mcp_transport: 'sse' | 'http';
   mcp_url: string;
+
+  // Sandbox Configuration
+  attached_sandbox_id?: string;
 }
 
 // Tool Configuration
@@ -98,6 +102,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingText, setLoadingText] = useState<string | null>(null);
     const [agentState, setAgentState] = useState<AgentState>({
       agentType: null,
       architecture: null,
@@ -163,8 +168,45 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
 
     const handleFinalSubmit = async () => {
         setIsLoading(true);
+        setLoadingText(null);
         
         try {
+            // Check for Coding Agent - Trigger Sandbox Creation
+            let attachedSandboxId: string | undefined = undefined;
+
+            if (agentState.agentType === 'coding') {
+                setLoadingText("Spinning up secure cloud runtime...");
+                toast.info("Initializing E2B Cloud Sandbox...");
+                
+                try {
+                    const sandboxRes = await fetch('/api/v1/sandboxes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            template_id: 'base',
+                            timeout_seconds: 300,
+                            metadata: {
+                                created_by: 'agent_builder',
+                                type: 'coding_agent_runtime'
+                            }
+                        })
+                    });
+
+                    if (sandboxRes.ok) {
+                        const sandboxData = await sandboxRes.json();
+                        attachedSandboxId = sandboxData.id;
+                        toast.success("Secure Cloud Runtime Ready!");
+                    } else {
+                        throw new Error("Failed to create sandbox");
+                    }
+                } catch (sbxError) {
+                    console.error("Sandbox creation failed:", sbxError);
+                    toast.error("Failed to provision cloud sandbox. Agent will operate without isolated runtime.");
+                }
+            }
+            
+            setLoadingText("Finalizing Agent...");
+
             // Transform tools to backend format
             const transformedTools = (agentState.tools || []).map(tool => {
                 // Convert ToolParam arrays to simple key-value objects
@@ -221,7 +263,10 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                 description: `A ${agentState.architecture} agent built with ${agentState.framework}`,
                 architecture: agentState.architecture,
                 framework: agentState.framework,
-                settings: agentState.settings,
+                settings: {
+                    ...agentState.settings,
+                    attached_sandbox_id: attachedSandboxId
+                },
                 tools: transformedTools
             };
 
@@ -273,6 +318,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
             onAgentCreated(enhancedAgentState);
         } finally {
             setIsLoading(false);
+            setLoadingText(null);
         }
     };
 
@@ -297,7 +343,7 @@ export default function AgentBuilder({ onAgentCreated }: { onAgentCreated: (conf
                     <div className="flex flex-col items-center gap-4">
                         <ClassicLoader />
                         <p className="text-white/80 text-sm">
-                            {currentStep === STEPS.length - 1 ? 'Creating your agent...' : 'Loading...'}
+                            {loadingText || (currentStep === STEPS.length - 1 ? 'Creating your agent...' : 'Loading...')}
                         </p>
                     </div>
                 </div>
